@@ -1,0 +1,29 @@
+[
+  {
+    "id": "xsolla-offer-1",
+    "provider": "xsolla",
+    "title": "Complete KYC Verification",
+    "description": "Verify your identity securely with Xsolla to unlock higher payouts and premium offers.",
+    "rewardCents": 150,
+    "isActive": true,
+    "url": "https://sandbox.xsolla.com/mock-offer/1"
+  },
+  {
+    "id": "adgem-offer-1",
+    "provider": "adgem",
+    "title": "Reach Level 10 in Clash of Kings",
+    "description": "Play Clash of Kings and reach level 10 to earn your reward. New users only.",
+    "rewardCents": 300,
+    "isActive": true,
+    "url": "https://sandbox.adgem.com/mock-offer/1"
+  },
+  {
+    "id": "xsolla-offer-2",
+    "provider": "xsolla",
+    "title": "Purchase a Starter Pack",
+    "description": "Buy the $0.99 starter pack in a partner game to earn cash back instantly.",
+    "rewardCents": 200,
+    "isActive": true,
+    "url": "https://sandbox.xsolla.com/mock-offer/2"
+  }
+]
