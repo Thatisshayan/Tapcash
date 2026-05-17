@@ -1,24 +1,23 @@
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
-  let credential;
-  try {
-    // For local development, try to use the serviceAccountKey.json
-    const serviceAccount = require("../../serviceAccountKey.json");
-    credential = admin.credential.cert(serviceAccount);
-  } catch (error) {
-    // For production (Vercel), parse it from environment variables
-    console.log("Using environment variables for Firebase Admin");
-    credential = admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    });
-  }
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\\\n/g, "\n");
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  admin.initializeApp({
-    credential,
-  });
+  if (privateKey && clientEmail && projectId) {
+    admin.initializeApp({
+      credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+    });
+  } else {
+    try {
+      // Local dev fallback
+      const serviceAccount = require("../../serviceAccountKey.json");
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    } catch (e) {
+      console.error("Firebase Admin: no credentials found. Set FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, FIREBASE_PROJECT_ID.");
+    }
+  }
 }
 
 export const adminDb = admin.firestore();
