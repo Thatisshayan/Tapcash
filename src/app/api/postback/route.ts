@@ -1,112 +1,123 @@
-import { NextResponse } from "next/server";
-import { adminDb } from "../../../../lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import admin from 'firebase-admin';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
-// GET handler because most offerwalls send postbacks via Server-to-Server GET requests
-export async function GET(request: Request) {
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
+}
+
+const db = getFirestore();
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  
+  // Lootably params
+  const uid = searchParams.get('uid') || searchParams.get('user_id');
+  const amountStr = searchParams.get('amount');
+  const txId = searchParams.get('tx_id');
+  const offerId = searchParams.get('offer_id');
+  const sig = searchParams.get('sig');
+  
+  // Validate required params
+  if (!uid || !amountStr || !txId || !offerId || !sig) {
+    console.warn('[Lootably] Missing required parameters');
+    return new NextResponse('Missing parameters', { status: 400 });
+  }
+  
+  const amount = parseInt(amountStr, 10);
+  if (isNaN(amount) || amount <= 0) {
+    console.warn('[Lootably] Invalid amount:', amountStr);
+    return new NextResponse('Invalid amount', { status: 400 });
+  }
+  
+  // Signature verification
+  const secretKey = process.env.LOOTABLY_SECRET_KEY;
+  
+  if (secretKey) {
+    const computedSig = crypto
+      .createHash('md5')
+      .update(uid + amount + txId + secretKey)
+      .digest('hex');
+    
+    if (computedSig.toLowerCase() !== sig.toLowerCase()) {
+      console.error('[Lootably] Fraud attempt detected - signature mismatch');
+      console.error(`[Lootably] Expected: ${computedSig}, Received: ${sig}`);
+      return new NextResponse('Invalid signature', { status: 403 });
+    }
+  } else {
+    console.warn('[Lootably] LOOTABLY_SECRET_KEY not set - running in dev mode without verification');
+  }
+  
   try {
-    const { searchParams } = new URL(request.url);
+    // Dedup check using Firestore transaction
+    const txRef = db.collection('transactions').doc(txId);
     
-    // Standard offerwall parameters
-    const uid = searchParams.get("uid"); // User ID
-    const amount = searchParams.get("amount"); // Amount in cents or points
-    const txId = searchParams.get("tx_id"); // Unique transaction ID from offerwall
-    const offerId = searchParams.get("offer_id");
-    const signature = searchParams.get("sig"); // Security signature
-    
-    // Fraud Control v1: Log IP Address
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-
-    if (!uid || !amount || !txId) {
-      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
-    }
-
-    const rewardCents = parseInt(amount, 10);
-    if (isNaN(rewardCents) || rewardCents <= 0) {
-      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-    }
-
-    // TODO: Verify signature using offerwall secret key
-    // if (!verifySignature(searchParams, secret)) { return 401 }
-
-    const txRef = adminDb.collection("transactions").doc(txId);
-    const userRef = adminDb.collection("users").doc(uid);
-    const walletRef = userRef.collection("wallet").doc("balance");
-
-    let success = false;
-
-    await adminDb.runTransaction(async (transaction) => {
+    await db.runTransaction(async (transaction) => {
       const txDoc = await transaction.get(txRef);
+      
       if (txDoc.exists) {
-        throw new Error("Transaction already processed");
+        console.warn('[Lootably] Duplicate transaction detected:', txId);
+        throw new Error('DUPLICATE');
       }
-
-      // Fraud checks v1: Check if IP is blacklisted or has too many recent hits
-      // (Simplified for v1: just logging it in the transaction for manual review)
-
-      // 1. Record the transaction
+      
+      // Create transaction record
       transaction.set(txRef, {
-        userId: uid,
-        offerId: offerId || "unknown",
-        amountCents: rewardCents,
-        ipAddress: ip,
-        type: "offerwall_postback",
-        status: "completed",
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        uid,
+        amount,
+        txId,
+        offerId,
+        provider: 'lootably',
+        status: 'completed',
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        timestamp: Timestamp.now(),
       });
-
-      // 2. Update wallet
-      transaction.set(walletRef, {
-        balanceCents: admin.firestore.FieldValue.increment(rewardCents),
-        totalEarnedCents: admin.firestore.FieldValue.increment(rewardCents),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      // 3. Referral Commission (20%)
+      
+      // Update user balance (referral commission logic)
+      const userRef = db.collection('users').doc(uid);
+      transaction.update(userRef, {
+        balance: admin.firestore.FieldValue.increment(amount),
+        totalEarned: admin.firestore.FieldValue.increment(amount),
+      });
+      
+      // Check for referrer and add commission
       const userDoc = await transaction.get(userRef);
       if (userDoc.exists) {
         const userData = userDoc.data();
         if (userData?.referredBy) {
-          const referrerUid = userData.referredBy;
-          const commissionCents = Math.floor(rewardCents * 0.20);
+          const commission = Math.floor(amount * 0.1); // 10% referral commission
+          const referrerRef = db.collection('users').doc(userData.referredBy);
+          transaction.update(referrerRef, {
+            balance: admin.firestore.FieldValue.increment(commission),
+            referralEarnings: admin.firestore.FieldValue.increment(commission),
+          });
           
-          if (commissionCents > 0) {
-            const referrerWalletRef = adminDb.collection("users").doc(referrerUid).collection("wallet").doc("balance");
-            const commissionTxRef = adminDb.collection("transactions").doc(`comm_${txId}`);
-            
-            transaction.set(commissionTxRef, {
-              userId: referrerUid,
-              sourceUserId: uid,
-              amountCents: commissionCents,
-              type: "referral_commission",
-              status: "completed",
-              createdAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-
-            transaction.set(referrerWalletRef, {
-              balanceCents: admin.firestore.FieldValue.increment(commissionCents),
-              totalEarnedCents: admin.firestore.FieldValue.increment(commissionCents),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-          }
+          // Log referral commission
+          const commissionRef = db.collection('commissions').doc();
+          transaction.set(commissionRef, {
+            fromTx: txId,
+            fromUid: uid,
+            toUid: userData.referredBy,
+            amount: commission,
+            type: 'lootably_referral',
+            timestamp: Timestamp.now(),
+          });
         }
       }
-
-      success = true;
     });
-
-    if (success) {
-      // Return 1 to acknowledge successful postback (most offerwalls require '1' or 'OK')
-      return new NextResponse("1", { status: 200 });
-    }
-
-    return NextResponse.json({ error: "Failed to process" }, { status: 500 });
+    
+    // Lootably expects "1" on success
+    return new NextResponse('1', { status: 200 });
+    
   } catch (error: any) {
-    console.error("Postback Error:", error);
-    // If it's a duplicate, we return 200 so the offerwall stops retrying
-    if (error.message === "Transaction already processed") {
-      return new NextResponse("1", { status: 200 }); 
+    if (error.message === 'DUPLICATE') {
+      // Duplicate - still return success to avoid retries
+      return new NextResponse('1', { status: 200 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    
+    console.error('[Lootably] Error processing postback:', error);
+    return new NextResponse('Internal server error', { status: 500 });
   }
 }
