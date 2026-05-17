@@ -231,4 +231,135 @@ export default function AdminPage() {
                       <td className="p-4 text-emerald-400 font-medium">
                         ${(withdrawal.amount / 100).toFixed(2)}
                       </td>
-                      <td className="p-4 text-gray-300
+                      <td className="p-4 text-gray-300">{withdrawal.method}</td>
+                      <td className="p-4 text-gray-400 text-sm">
+                        {withdrawal.createdAt.toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleWithdrawal(withdrawal.id, "approve")}
+                            disabled={actionLoading === withdrawal.id}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs hover:bg-emerald-500/20 disabled:opacity-40 transition"
+                          >
+                            {actionLoading === withdrawal.id ? "…" : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => handleWithdrawal(withdrawal.id, "reject")}
+                            disabled={actionLoading === withdrawal.id}
+                            className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 disabled:opacity-40 transition"
+                          >
+                            {actionLoading === withdrawal.id ? "…" : "Reject"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Postbacks Table */}
+        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 mb-8">
+          <div className="p-6 border-b border-gray-800">
+            <h2 className="text-xl font-semibold text-white">Recent Postbacks</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">User ID</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Amount</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Offer ID</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">IP Address</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Status</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {postbacks.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-4 text-center text-gray-500">
+                      No postbacks yet
+                    </td>
+                  </tr>
+                ) : (
+                  postbacks.map((postback) => (
+                    <tr key={postback.id} className="border-b border-gray-800 hover:bg-gray-900/50">
+                      <td className="p-4 text-white font-mono text-xs">{postback.userId}</td>
+                      <td className="p-4 text-emerald-400 font-medium">
+                        ${((postback.amountCents || 0) / 100).toFixed(2)}
+                      </td>
+                      <td className="p-4 text-gray-300 text-xs">{postback.offerId}</td>
+                      <td className="p-4 text-gray-400 text-xs">{postback.ipAddress}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-xs border ${
+                          postback.status === "completed"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        }`}>
+                          {postback.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-gray-400 text-sm">
+                        {postback.createdAt.toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Flagged Transactions Table */}
+        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 mb-8">
+          <div className="p-6 border-b border-gray-800">
+            <h2 className="text-xl font-semibold text-white">
+              Flagged Transactions
+              {flagged.length > 0 && (
+                <span className="ml-2 text-sm text-red-400">({flagged.length})</span>
+              )}
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">User ID</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Amount</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Reason</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flagged.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-4 text-center text-gray-500">
+                      No suspicious activity detected
+                    </td>
+                  </tr>
+                ) : (
+                  flagged.map((tx) => (
+                    <tr key={tx.id} className="border-b border-gray-800 hover:bg-gray-900/50">
+                      <td className="p-4 text-white font-mono text-xs">{tx.userId}</td>
+                      <td className="p-4 text-red-400 font-medium">
+                        ${(tx.amount / 100).toFixed(2)}
+                      </td>
+                      <td className="p-4 text-gray-300 text-sm">{tx.reason}</td>
+                      <td className="p-4 text-gray-400 text-sm">
+                        {tx.createdAt.toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
