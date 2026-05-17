@@ -1,42 +1,4 @@
-"use client";
-
-import { useAuth } from "../../context/AuthContext";
-
-export default function ReferralsPage() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div className="p-8 text-white">Loading...</div>;
-  if (!user) return <div className="p-8 text-white">Please sign in</div>;
-
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-8">
-      <h1 className="text-3xl font-bold mb-8 text-emerald-400">Refer & Earn</h1>
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-6">
-          <h2 className="text-xl font-semibold mb-4">Your Referral Link</h2>
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              readOnly 
-              value={`https://tapcash.com/join?ref=${user.uid}`} 
-              className="flex-1 rounded bg-black/50 border border-white/10 px-3 py-2 text-zinc-300"
-            />
-            <button className="bg-emerald-500 text-black px-4 py-2 rounded font-semibold hover:bg-emerald-400 transition">
-              Copy
-            </button>
-          </div>
-          <p className="mt-4 text-sm text-zinc-400">Referral tracking ready / commission pending.</p>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-6">
-          <h2 className="text-xl font-semibold mb-4">Stats</h2>
-          <div className="space-y-2 text-zinc-300">
-            <p>Total Referrals: 0</p>
-            <p>Earned from Referrals: $0.00</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+on
+{
+  "summary": "Complete TypeScript file for TapCash referrals page with real Firestore data and dark emerald theme.",
+  "output": "use client';\n\nimport { useEffect, useState } from 'react';\nimport { auth, db } from '@/lib/firebase';\nimport { collection, query, where, getDocs } from 'firebase/firestore';\nimport { onAuthStateChanged, User } from 'firebase/auth';\nimport { FaCopy, FaShareAlt, FaUsers, FaDollarSign, FaClock } from 'react-icons/fa';\n\ntype Referral = {\n  uid: string;\n  joinedDate: string;\n  totalEarned: number;\n  commission: number;\n};\n\ntype Stats = {\n  totalReferrals: number;\n  totalEarned: number;\n  activeReferrals: number;\n};\n\nexport default function ReferralsPage() {\n  const [user, setUser] = useState<User | null>(null);\n  const [referrals, setReferrals] = useState<Referral[]>([]);\n  const [stats, setStats] = useState<Stats>({ totalReferrals: 0, totalEarned: 0, activeReferrals: 0 });\n  const [copied, setCopied] = useState(false);\n  const [loading, setLoading] = useState(true);\n\n  useEffect(() => {\n    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {\n      setUser(currentUser);\n      if (currentUser) {\n        fetchReferrals(currentUser.uid);\n      } else {\n        setLoading(false);\n      }\n    });\n    return () => unsubscribe();\n  }, []);\n\n  const fetchReferrals = async (uid: string) => {\n    try {\n      const q = query(collection(db, 'users'), where('referredBy', '==', uid));\n      const snapshot = await getDocs(q);\n      \n      const referralList: Referral[] = [];\n      let totalEarned = 0;\n      let activeCount = 0;\n      const thirtyDaysAgo = new Date();\n      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);\n\n      snapshot.forEach((doc) => {\n        const data = doc.data();\n        const joinedDate = data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString();\n        const userEarned = data.totalEarned || 0;\n        const commission = userEarned * 0.2;\n        \n        referralList.push({\n          uid: doc.id,\n          joinedDate,\n          totalEarned: userEarned,\n          commission,\n        });\n\n        totalEarned += commission;\n        \n        // Check if active (earned in last 30 days)\n        const lastEarned = data.lastEarnedAt?.toDate?.();\n        if (lastEarned && lastEarned > thirtyDaysAgo) {\n          activeCount++;\n        }\n      });\n\n      setReferrals(referralList);\n      setStats({\n        totalReferrals: snapshot.size,\n        totalEarned,\n        activeReferrals: activeCount,\n      });\n    } catch (error) {\n      console.error('Error fetching referrals:', error);\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const referralLink = user \n    ? `https://tapcash-production.up.railway.app/ref/${user.uid}`\n    : '';\n\n  const handleCopy = async () => {\n    try {\n      await navigator.clipboard.writeText(referralLink);\n      setCopied(true);\n      setTimeout(() => setCopied(false), 2000);\n    } catch (err) {\n      console.error('Copy failed:', err);\n    }\n  };\n\n  const handleShare = async () => {\n    if (navigator.share) {\n      try {\n        await navigator.share({\n          title: 'Join TapCash',\n          text: 'Earn 20% of what your friends earn — forever!',\n          url: referralLink,\n        });\n      } catch (err) {\n        console.error('Share failed:', err);\n      }\n    } else {\n      handleCopy();\n    }\n  };\n\n  const formatDate = (dateStr: string) => {\n    const date = new Date(dateStr);\n    return date.toLocaleDateString('en-US', { \n      year: 'numeric', \n      month: 'short', \n      day: 'numeric' \n    });\n  };\n\n  const formatCurrency = (amount: number) => {\n    return new Intl.NumberFormat('en-US', {\n      style: 'currency',\n      currency: 'USD',\n      minimumFractionDigits: 2,\n    }).format(amount);\n  };\n\n  if (loading) {\n    return (\n      <div className=\"min-h-screen bg-emerald-950 flex items-center justify-center\">\n        <div className=\"animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-400\"></div>\n      </div>\n    );\n  }\n\n  if (!user) {\n    return (\n      <div className=\"min-h-screen bg-emerald-950 flex items-center justify-center\">\n        <div className=\"text-emerald-200 text-xl\">Please sign in to view referrals</div>\n      </div>\n    );\n  }\n\n  return (\n    <div className=\"min-h-screen bg-emerald-950 text-emerald-100\">\n      <div className=\"max-w-4xl mx-auto px-4 py-8\">\n        {/* Hero Section */}\n        <div className=\"text-center mb-12\">\n          <h1 className=\"text-4xl md:text-5xl font-bold text-emerald-300 mb-4\">\n            Earn 20% of what your friends earn — forever\n          </h1>\n          <p className=\"text-emerald-400/80 text-lg\">\n            Share your referral link and earn passive income\n          </p>\n        </div>\n\n        {/* Referral Link Card */}\n        <div className=\"bg-emerald-900/50 border border-emerald-700/50 rounded-xl p-6 mb-8\">\n          <div className=\"flex flex-col md:flex-row items-center gap-4\">\n            <div className=\"flex-1 w-full\">\n              <label className=\"block text-sm text-emerald-400 mb-2\">Your Referral Link</label>\n              <div className=\"bg-emerald-950/50 border border-emerald-700/30 rounded-lg px-4 py-3 text-emerald-200 font-mono text-sm break-all\">\n                {referralLink}\n              </div>\n            </div>\n            <div className=\"flex gap-3\">\n              <button\n                onClick={handleCopy}\n                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${\n                  copied \n                    ? 'bg-emerald-500 text-white' \n                    : 'bg-emerald-700 hover:bg-emerald-600 text-emerald-100'\n                }`}\n              >\n                {copied ? (\n                  <span className=\"flex items-center gap-2\">\n                    <FaCopy /> Copied!\n                  </span>\n                ) : (\n                  <span className=\"flex items-center gap-2\">\n                    <FaCopy /> Copy\n                  </span>\n                )}\n              </button>\n              <button\n                onClick={handleShare}\n                className=\"px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition-all duration-200 flex items-center gap-2\"\n              >\n                <FaShareAlt /> Share\n              </button>\n            </div>\n          </div>\n        </div>\n\n        {/* Stats Row */}\n        <div className=\"grid grid-cols-1 md:grid-cols-3 gap-6 mb-8\">\n          <div className=\"bg-emerald-900/30 border border-emerald-700/30 rounded-xl p-6 text-center\">\n            <FaUsers className=\"text-em
