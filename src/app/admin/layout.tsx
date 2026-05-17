@@ -1,9 +1,9 @@
-use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 export default function AdminLayout({
@@ -13,30 +13,27 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Not authenticated -> redirect to home silently
-        router.replace('/');
+        router.push('/');
         return;
       }
 
       try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists() && userDocSnap.data().admin === true) {
-          // Admin user -> render children
-          setLoading(false);
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().admin === true) {
+          setIsAdmin(true);
         } else {
-          // Authenticated but not admin -> redirect silently
-          router.replace('/');
+          router.push('/');
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
-        // On error, redirect to home for safety
-        router.replace('/');
+        router.push('/');
+      } finally {
+        setLoading(false);
       }
     });
 
@@ -49,6 +46,10 @@ export default function AdminLayout({
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return null;
   }
 
   return <>{children}</>;

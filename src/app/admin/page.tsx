@@ -1,223 +1,234 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { getDocs, query, where, orderBy, limit, collection, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-
-interface Stats {
-  totalUsers: number;
-  pendingWithdrawals: number;
-  totalPaidOut: number;
-  recentPostbacks: number;
-}
+import { useState, useEffect } from "react";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 interface Withdrawal {
   id: string;
   userId: string;
   amount: number;
   method: string;
-  createdAt: Timestamp;
+  status: string;
+  createdAt: Date;
 }
 
 interface Postback {
   id: string;
   userId: string;
-  amount: number;
+  amountCents: number;
   offerId: string;
-  ip: string;
+  ipAddress: string;
   status: string;
-  createdAt: Timestamp;
+  createdAt: Date;
 }
 
 interface FlaggedTransaction {
   id: string;
   userId: string;
+  amount: number;
   reason: string;
-  createdAt: Timestamp;
+  createdAt: Date;
 }
 
 export default function AdminPage() {
-  const [stats, setStats] = useState<Stats>({
-    totalUsers: 0,
-    pendingWithdrawals: 0,
-    totalPaidOut: 0,
-    recentPostbacks: 0,
-  });
+  const { user } = useAuth();
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [postbacks, setPostbacks] = useState<Postback[]>([]);
-  const [flaggedTransactions, setFlaggedTransactions] = useState<FlaggedTransaction[]>([]);
+  const [flagged, setFlagged] = useState<FlaggedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
-    setLoading(true);
+  const loadData = async () => {
     try {
-      // Stats
-      const usersSnap = await getDocs(collection(db, 'users'));
-      const totalUsers = usersSnap.size;
-
-      const pendingWithdrawalsSnap = await getDocs(
-        query(collection(db, 'withdrawals'), where('status', '==', 'pending'))
+      setLoading(true);
+      
+      // Fetch pending withdrawals (limit 20)
+      const withdrawalsQuery = query(
+        collection(db, "withdrawals"),
+        where("status", "==", "pending"),
+        orderBy("createdAt", "desc"),
+        limit(20)
       );
-      const pendingWithdrawals = pendingWithdrawalsSnap.size;
-
-      const approvedWithdrawalsSnap = await getDocs(
-        query(collection(db, 'withdrawals'), where('status', '==', 'approved'))
-      );
-      let totalPaidOut = 0;
-      approvedWithdrawalsSnap.forEach((doc) => {
-        totalPaidOut += doc.data().amount || 0;
-      });
-
-      const twentyFourHoursAgo = new Date();
-      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-      const recentPostbacksSnap = await getDocs(
-        query(
-          collection(db, 'transactions'),
-          where('type', '==', 'offerwall_postback'),
-          where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo))
-        )
-      );
-      const recentPostbacks = recentPostbacksSnap.size;
-
-      setStats({ totalUsers, pendingWithdrawals, totalPaidOut, recentPostbacks });
-
-      // Pending Withdrawals
-      const withdrawalsSnap = await getDocs(
-        query(
-          collection(db, 'withdrawals'),
-          where('status', '==', 'pending'),
-          orderBy('createdAt', 'desc'),
-          limit(20)
-        )
-      );
+      const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
       const withdrawalsData: Withdrawal[] = [];
-      withdrawalsSnap.forEach((doc) => {
-        withdrawalsData.push({ id: doc.id, ...doc.data() } as Withdrawal);
+      withdrawalsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        withdrawalsData.push({
+          id: doc.id,
+          userId: data.userId,
+          amount: data.amount,
+          method: data.method,
+          status: data.status,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        });
       });
       setWithdrawals(withdrawalsData);
 
-      // Recent Postbacks
-      const postbacksSnap = await getDocs(
-        query(
-          collection(db, 'transactions'),
-          where('type', '==', 'offerwall_postback'),
-          orderBy('createdAt', 'desc'),
-          limit(20)
-        )
+      // Fetch recent postbacks (limit 20)
+      const postbacksQuery = query(
+        collection(db, "postbacks"),
+        orderBy("createdAt", "desc"),
+        limit(20)
       );
+      const postbacksSnapshot = await getDocs(postbacksQuery);
       const postbacksData: Postback[] = [];
-      postbacksSnap.forEach((doc) => {
-        postbacksData.push({ id: doc.id, ...doc.data() } as Postback);
+      postbacksSnapshot.forEach((doc) => {
+        const data = doc.data();
+        postbacksData.push({
+          id: doc.id,
+          userId: data.userId,
+          amountCents: data.amountCents,
+          offerId: data.offerId,
+          ipAddress: data.ipAddress,
+          status: data.status,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        });
       });
       setPostbacks(postbacksData);
 
-      // Flagged Transactions
-      const flaggedSnap = await getDocs(
-        query(
-          collection(db, 'transactions'),
-          where('status', '==', 'flagged'),
-          limit(10)
-        )
+      // Fetch flagged transactions (limit 10)
+      const flaggedQuery = query(
+        collection(db, "flaggedTransactions"),
+        orderBy("createdAt", "desc"),
+        limit(10)
       );
+      const flaggedSnapshot = await getDocs(flaggedQuery);
       const flaggedData: FlaggedTransaction[] = [];
-      flaggedSnap.forEach((doc) => {
-        flaggedData.push({ id: doc.id, ...doc.data() } as FlaggedTransaction);
+      flaggedSnapshot.forEach((doc) => {
+        const data = doc.data();
+        flaggedData.push({
+          id: doc.id,
+          userId: data.userId,
+          amount: data.amount,
+          reason: data.reason,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        });
       });
-      setFlaggedTransactions(flaggedData);
+      setFlagged(flaggedData);
     } catch (error) {
-      console.error('Error fetching admin data:', error);
+      console.error("Error loading admin data:", error);
+      setMessage("Failed to load admin data");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function handleWithdrawalAction(withdrawalId: string, action: 'approve' | 'reject') {
-    setActionLoading(withdrawalId);
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const handleWithdrawal = async (id: string, action: "approve" | "reject") => {
     try {
-      const response = await fetch('/api/admin/withdrawals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ withdrawalId, action }),
+      setActionLoading(id);
+      setMessage(null);
+
+      const token = await user?.getIdToken();
+      const response = await fetch("/api/admin/withdrawals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ withdrawalId: id, action }),
       });
-      if (!response.ok) throw new Error('Failed to process withdrawal');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process withdrawal");
+      }
+
+      setMessage(`Withdrawal ${action === "approve" ? "approved" : "rejected"} successfully`);
+      
       // Refresh data
-      await fetchData();
+      await loadData();
     } catch (error) {
-      console.error('Error processing withdrawal:', error);
-      alert('Failed to process withdrawal. Please try again.');
+      console.error("Error processing withdrawal:", error);
+      setMessage(error instanceof Error ? error.message : "Failed to process withdrawal");
     } finally {
       setActionLoading(null);
     }
-  }
+  };
 
-  function formatTime(timestamp: Timestamp): string {
-    if (!timestamp) return 'N/A';
-    const date = timestamp.toDate();
-    return date.toLocaleString();
-  }
-
-  function truncateId(id: string): string {
-    if (!id) return 'N/A';
-    return id.length > 8 ? id.substring(0, 8) + '...' : id;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <p className="text-gray-400">Please sign in to access admin panel</p>
+      </div>
+    );
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-emerald-400 text-xl">Loading admin panel...</div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6">
-      <h1 className="text-3xl font-bold mb-8 text-emerald-400">Admin Panel</h1>
+    <div className="min-h-screen bg-[#0a0a0a] p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
-          <div className="text-sm text-gray-400">Total Users</div>
-          <div className="text-2xl font-bold text-emerald-400">{stats.totalUsers}</div>
-        </div>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
-          <div className="text-sm text-gray-400">Pending Withdrawals</div>
-          <div className="text-2xl font-bold text-yellow-400">{stats.pendingWithdrawals}</div>
-        </div>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
-          <div className="text-sm text-gray-400">Total Paid Out</div>
-          <div className="text-2xl font-bold text-green-400">${stats.totalPaidOut.toFixed(2)}</div>
-        </div>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-4">
-          <div className="text-sm text-gray-400">Postbacks (24h)</div>
-          <div className="text-2xl font-bold text-blue-400">{stats.recentPostbacks}</div>
-        </div>
-      </div>
+        {message && (
+          <div className={`p-4 mb-6 rounded-lg ${
+            message.includes("successfully") 
+              ? "bg-emerald-900/50 text-emerald-300 border border-emerald-700" 
+              : "bg-red-900/50 text-red-300 border border-red-700"
+          }`}>
+            {message}
+          </div>
+        )}
 
-      {/* Pending Withdrawals Table */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-yellow-400">Pending Withdrawals</h2>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="p-3 text-left text-gray-400">User ID</th>
-                <th className="p-3 text-left text-gray-400">Amount</th>
-                <th className="p-3 text-left text-gray-400">Method</th>
-                <th className="p-3 text-left text-gray-400">Requested At</th>
-                <th className="p-3 text-left text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {withdrawals.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-3 text-center text-gray-500">No pending withdrawals</td>
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-gray-800">
+            <h3 className="text-gray-400 text-sm font-medium mb-2">Pending Withdrawals</h3>
+            <p className="text-3xl font-bold text-emerald-400">{withdrawals.length}</p>
+          </div>
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-gray-800">
+            <h3 className="text-gray-400 text-sm font-medium mb-2">Recent Postbacks</h3>
+            <p className="text-3xl font-bold text-emerald-400">{postbacks.length}</p>
+          </div>
+          <div className="bg-[#1a1a1a] rounded-xl p-6 border border-gray-800">
+            <h3 className="text-gray-400 text-sm font-medium mb-2">Flagged Transactions</h3>
+            <p className="text-3xl font-bold text-red-400">{flagged.length}</p>
+          </div>
+        </div>
+
+        {/* Pending Withdrawals Table */}
+        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 mb-8">
+          <div className="p-6 border-b border-gray-800">
+            <h2 className="text-xl font-semibold text-white">Pending Withdrawals</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">User ID</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Amount</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Method</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Date</th>
+                  <th className="text-left p-4 text-gray-400 font-medium text-sm">Actions</th>
                 </tr>
-              ) : (
-                withdrawals.map((withdrawal) => (
-                  <tr key={withdrawal.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="p-3 font-mono">{truncateId(withdrawal.userId)}</td>
+              </thead>
+              <tbody>
+                {withdrawals.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-gray-500">
+                      No pending withdrawals
+                    </td>
+                  </tr>
+                ) : (
+                  withdrawals.map((withdrawal) => (
+                    <tr key={withdrawal.id} className="border-b border-gray-800 hover:bg-gray-900/50">
+                      <td className="p-4 text-white">{withdrawal.userId}</td>
+                      <td className="p-4 text-emerald-400 font-medium">
+                        ${(withdrawal.amount / 100).toFixed(2)}
+                      </td>
+                      <td className="p-4 text-gray-300

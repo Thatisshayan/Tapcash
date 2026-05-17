@@ -1,36 +1,41 @@
 {
-  "name": "tapcash_mvp",
-  "version": "0.1.0",
+  "name": "tapcash",
+  "version": "1.0.0",
   "private": true,
-  "main": "main.js",
   "scripts": {
     "dev": "next dev",
-    "desktop": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
-    "browserslist": "^4.28.2",
-    "caniuse-lite": "^1.0.30001792",
+    "firebase": "^11.10.0",
     "firebase-admin": "^13.10.0",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "latest",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "concurrently": "^9.2.1",
-    "electron": "^42.1.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "wait-on": "^9.0.10"
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "caniuse-lite": {
+    "data": {}
   },
   "engines": {
     "node": ">=20.9.0"
