@@ -11,8 +11,8 @@ if (!admin.apps.length) {
     });
   } else {
     try {
-      // Local dev fallback
-      const serviceAccount = require("../../serviceAccountKey.json");
+      // Local dev fallback - use eval('require') to prevent Next.js/Turbopack from statically analyzing and failing the build when serviceAccountKey.json is missing in production
+      const serviceAccount = eval('require')("../../serviceAccountKey.json");
       admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     } catch (e) {
       console.error("Firebase Admin: no credentials found. Set FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, FIREBASE_PROJECT_ID.");
