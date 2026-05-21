@@ -53,8 +53,8 @@ export default function OffersPage() {
         if (!response.ok) {
           throw new Error('Failed to fetch offers');
         }
-        const data: Offer[] = await response.json();
-        setOffers(data);
+        const data = await response.json();
+        setOffers(Array.isArray(data) ? data : data.offers || []);
       } catch (err) {
         console.error('Error fetching offers:', err);
         setError('Failed to load offers. Showing cached offers.');

@@ -1,11 +1,41 @@
-﻿‣敓⁥瑨灴㩳⼯敨灬朮瑩畨⹢潣⽭牡楴汣獥椯湧牯湩ⵧ楦敬⽳映牯洠牯⁥扡畯⁴杩潮楲杮映汩獥ਮ⌊搠灥湥敤据敩ੳ港摯彥潭畤敬ੳⸯ湰ੰ瀮灮⨮⸊慹湲⨯ℊ礮牡⽮慰捴敨ੳ⸡慹湲瀯畬楧獮ℊ礮牡⽮敲敬獡獥ℊ礮牡⽮敶獲潩獮ਊ‣整瑳湩੧振癯牥条੥⌊渠硥⹴獪⼊渮硥⽴⼊畯⽴ਊ‣牰摯捵楴湯⼊畢汩੤⌊洠獩੣䐮当瑓牯੥⸪数੭⌊搠扥杵渊浰搭扥杵氮杯ਪ慹湲搭扥杵氮杯ਪ慹湲攭牲牯氮杯ਪ瀮灮⵭敤畢⹧潬⩧ਊ‣湥⁶楦敬⁳挨湡漠瑰椭⁮潦⁲潣浭瑩楴杮椠⁦敮摥摥਩攮癮ਪ⌊瘠牥散੬瘮牥散੬⌊琠灹獥牣灩ੴ⸪獴畢汩楤普੯敮瑸攭癮搮琮ੳserviceAccountKey.json
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+
+# Production / Builds
+build/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+
+# Vercel
+.vercel
+
+# TypeScript / Build Cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Secrets
 serviceAccountKey.json
- 
-# Secrets - NEVER commit 
-serviceAccountKey.json 
-.env 
-.env.local 
-.env.production 
-# Build 
-.next/ 
-node_modules/ 
