@@ -1,7 +1,7 @@
-use client';
+'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import OfferCard from '@/components/OfferCard';
 import { Offer } from '@/types/offer';
 
