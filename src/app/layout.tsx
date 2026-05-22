@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TapCash | Premium Rewards",
   description: "Earn cash by completing tasks. Fast, secure, premium.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "TapCash",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({
