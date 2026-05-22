@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, limit, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import OfferCard from "@/components/OfferCard";
 import Header from "@/components/Header";
 import { Offer } from "@/types/offer";
 import Link from "next/link";
-import { Sparkles, Trophy, Flame, UserCheck, ArrowRight, Wallet, Users, ArrowUpRight, Coins } from "lucide-react";
+import { 
+  Sparkles, Trophy, Flame, UserCheck, ArrowRight, Wallet, Users, 
+  ArrowUpRight, Coins, Loader2, Sparkle, AlertCircle, Play, CheckCircle, X
+} from "lucide-react";
 
 const MOCK_OFFERS: Offer[] = [
   {
@@ -40,12 +43,38 @@ const MOCK_OFFERS: Offer[] = [
   },
 ];
 
+interface WheelSector {
+  label: string;
+  coins: number;
+  color: string;
+  bg: string;
+}
+
+const WHEEL_SECTORS: WheelSector[] = [
+  { label: "10 COINS", coins: 10, color: "text-zinc-300", bg: "#18181b" },
+  { label: "25 COINS", coins: 25, color: "text-emerald-400", bg: "#064e3b" },
+  { label: "50 COINS", coins: 50, color: "text-blue-400", bg: "#1e3a8a" },
+  { label: "100 COINS", coins: 100, color: "text-indigo-400", bg: "#312e81" },
+  { label: "500 COINS", coins: 500, color: "text-amber-400", bg: "#78350f" }, // JACKPOT!
+];
+
 export default function OffersPage() {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Live Scrolling Ticker completions state
+  const [tickerTxs, setTickerTxs] = useState<any[]>([]);
+
+  // Daily Spin Wheel States
+  const [showSpinModal, setShowSpinModal] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+  const [spinRotation, setSpinRotation] = useState(0);
+  const [spinError, setSpinError] = useState<string | null>(null);
+  const [spinReward, setSpinReward] = useState<number | null>(null);
+  const [spinEligible, setSpinEligible] = useState(true);
 
   // Subscribe to real-time Firestore user profile and wallet changes
   useEffect(() => {
@@ -59,7 +88,19 @@ export default function OffersPage() {
       userRef,
       (docSnap) => {
         if (docSnap.exists()) {
-          setProfile(docSnap.data());
+          const data = docSnap.data();
+          setProfile(data);
+
+          // Check if eligible for daily spin
+          if (data.lastDailySpin) {
+            const lastSpinDate = data.lastDailySpin.toDate ? data.lastDailySpin.toDate() : new Date(data.lastDailySpin);
+            const now = new Date();
+            const diffMs = now.getTime() - lastSpinDate.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+            setSpinEligible(diffHours >= 24);
+          } else {
+            setSpinEligible(true);
+          }
         }
       },
       (err) => {
@@ -70,6 +111,27 @@ export default function OffersPage() {
     return () => unsubscribe();
   }, [user]);
 
+  // Subscribe to global real-time completed transaction alerts (Social Proof)
+  useEffect(() => {
+    const q = query(
+      collection(db, "transactions"),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      setTickerTxs(items);
+    }, (err) => {
+      console.log("Ticker feed error:", err);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Fetch real offers from our upgraded Lootably API v2 route
   useEffect(() => {
     const fetchOffers = async () => {
@@ -77,7 +139,6 @@ export default function OffersPage() {
         setLoading(true);
         setError(null);
         
-        // Pass userId if authenticated, otherwise use a temporary/preview id
         const uid = user ? user.uid : "preview-user-id";
         const response = await fetch(`/api/offers?userId=${uid}`);
         
@@ -128,14 +189,125 @@ export default function OffersPage() {
     }
   };
 
+  const handleSpinClick = async () => {
+    if (spinning || !user) return;
+
+    setSpinning(true);
+    setSpinError(null);
+    setSpinReward(null);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/tasks/daily-spin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to spin daily reward wheel.");
+      }
+
+      // Calculate Rotation Deceleration Landing
+      const sectorCount = WHEEL_SECTORS.length;
+      const targetIndex = data.sectorIndex;
+      
+      // Each sector has an angle of 360 / 5 = 72 degrees.
+      // Slices layout anticlockwise or clockwise. We align landing exactly on pointer (top, 0/360 degrees).
+      const sectorAngle = 360 / sectorCount;
+      const centerOfSectorOffset = sectorAngle / 2;
+      
+      // Calculate rotation. Spin around 6 full times (360 * 6 = 2160 deg) for high velocity,
+      // then subtract target sector slice offset to land under top pointer
+      const targetSectorRotation = 360 - (targetIndex * sectorAngle) - centerOfSectorOffset;
+      const finalRotationAngle = (360 * 6) + targetSectorRotation;
+
+      setSpinRotation(finalRotationAngle);
+
+      // Decelerate and land in 4 seconds
+      setTimeout(() => {
+        setSpinReward(data.rewardCoins);
+        setSpinning(false);
+      }, 4000);
+
+    } catch (err: any) {
+      setSpinError(err.message || "Failed to execute daily spin.");
+      setSpinning(false);
+      setSpinRotation(0);
+    }
+  };
+
+  const handleOpenSpinModal = () => {
+    setShowSpinModal(true);
+    setSpinRotation(0);
+    setSpinReward(null);
+    setSpinError(null);
+  };
+
   return (
-    <div className="min-h-screen bg-[#060606] text-white flex flex-col">
+    <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      {/* Real-time Global scrolling ticker (Social Proof) */}
+      {tickerTxs.length > 0 && (
+        <div className="w-full bg-emerald-950/20 border-b border-emerald-900/20 py-2.5 px-4 backdrop-blur-sm overflow-hidden relative">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 animate-marquee whitespace-nowrap text-xs font-semibold tracking-tight text-emerald-400">
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span className="uppercase text-[9px] font-black tracking-widest text-emerald-500">Live Completed Activity:</span>
+            </span>
+            {tickerTxs.map((tx) => (
+              <span key={tx.id} className="flex items-center gap-2">
+                <span className="text-zinc-400">User_***</span>
+                <span className="capitalize text-zinc-300 font-bold">{tx.type}</span>
+                <span className="bg-emerald-500/15 px-1.5 py-0.5 rounded border border-emerald-500/25 text-[10px] font-black leading-none text-emerald-400">
+                  {tx.amount > 0 ? "+" : ""}{tx.amount.toLocaleString()} Coins
+                </span>
+                <span className="text-zinc-700 font-bold">•</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {user ? (
           /* ================= AUTHENTICATED USER VIEW ================= */
           <div className="space-y-10">
+            
+            {/* Daily Spin Banner Card */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950/20 via-zinc-950/30 to-[#0a0a0a] border border-emerald-500/15 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
+              <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none" />
+              <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-48 h-48 bg-emerald-500/5 rounded-full blur-[80px]" />
+              
+              <div className="relative space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase rounded-full tracking-wider leading-none">
+                  <Sparkle className="w-3 h-3 animate-spin-slow" />
+                  <span>Free Daily Credit</span>
+                </span>
+                <h2 className="text-2xl font-black tracking-tight text-white">Daily Rewards Wheel</h2>
+                <p className="text-zinc-400 text-sm max-w-xl">Spin our luck-based reward wheel once every 24 hours to win free coins added instantly to your wallet.</p>
+              </div>
+
+              <div className="relative shrink-0">
+                <button
+                  onClick={handleOpenSpinModal}
+                  className={`px-8 py-4 text-sm font-extrabold rounded-2xl shadow-xl transition-all duration-300 flex items-center gap-2 uppercase tracking-wider ${
+                    spinEligible 
+                      ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/10 hover:shadow-emerald-500/25 hover:scale-[1.02]" 
+                      : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800"
+                  }`}
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>{spinEligible ? "Spin Free Wheel" : "Spinned (Locked)"}</span>
+                </button>
+              </div>
+            </div>
+
             {/* Welcoming Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* User Welcome Card */}
@@ -322,6 +494,146 @@ export default function OffersPage() {
           </div>
         )}
       </main>
+
+      {/* DAILY SPIN WHEEL SLIDE-UP DRAWER MODAL */}
+      {showSpinModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop Overlay */}
+          <div 
+            onClick={() => { if (!spinning) setShowSpinModal(false); }}
+            className="absolute inset-0 bg-black/85 backdrop-blur-sm transition-opacity duration-300"
+          />
+
+          {/* Drawer Body */}
+          <div className="relative w-full max-w-md bg-[#0a0a0a] border-t border-zinc-900 rounded-t-[2.5rem] p-6 shadow-[0_-12px_45px_rgba(0,0,0,0.6)] z-10 max-h-[95vh] overflow-y-auto">
+            {/* Mobile native drawer bar grabber */}
+            <div className="w-12 h-1 bg-zinc-800 rounded-full mx-auto mb-6" />
+
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black leading-none">TapCash Wheel</h3>
+                  <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">Win Free Daily Coins</p>
+                </div>
+              </div>
+              <button
+                disabled={spinning}
+                onClick={() => setShowSpinModal(false)}
+                className="w-8 h-8 rounded-full bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {spinError && (
+              <div className="p-4 mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{spinError}</span>
+              </div>
+            )}
+
+            {/* PHYSICS-BASED SPINNING WHEEL CANVAS */}
+            <div className="flex flex-col items-center justify-center space-y-8 py-4 relative">
+              
+              {/* Wheel Pointer arrow (At Top) */}
+              <div className="absolute top-0 z-20 w-8 h-8 text-emerald-400 filter drop-shadow-[0_4px_10px_rgba(16,185,129,0.3)] flex items-center justify-center">
+                <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-emerald-400" />
+              </div>
+
+              {/* Rotating Circle Container */}
+              <div className="w-64 h-64 rounded-full border-4 border-zinc-900 relative shadow-[0_0_40px_rgba(16,185,129,0.06)] overflow-hidden">
+                
+                {/* SVG Radial slices */}
+                <svg
+                  className="w-full h-full transform origin-center transition-transform duration-[4000ms] ease-out"
+                  style={{
+                    transform: `rotate(${spinRotation}deg)`,
+                    transition: spinning ? "transform 4000ms cubic-bezier(0.15, 0.85, 0.2, 1)" : "none"
+                  }}
+                  viewBox="0 0 100 100"
+                >
+                  <circle cx="50" cy="50" r="48" fill="#09090b" />
+                  
+                  {WHEEL_SECTORS.map((sector, idx) => {
+                    const sectorCount = WHEEL_SECTORS.length;
+                    const angle = 360 / sectorCount;
+                    const startAngle = idx * angle - 90; // Adjust starting point to top
+                    const endAngle = (idx + 1) * angle - 90;
+
+                    // Convert polar to cartesian coordinates for SVG path
+                    const rad1 = (startAngle * Math.PI) / 180;
+                    const rad2 = (endAngle * Math.PI) / 180;
+                    const x1 = 50 + 48 * Math.cos(rad1);
+                    const y1 = 50 + 48 * Math.sin(rad1);
+                    const x2 = 50 + 48 * Math.cos(rad2);
+                    const y2 = 50 + 48 * Math.sin(rad2);
+
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+                    const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+
+                    // Middle text coordinates
+                    const textAngle = startAngle + angle / 2;
+                    const textRad = (textAngle * Math.PI) / 180;
+                    const textX = 50 + 26 * Math.cos(textRad);
+                    const textY = 50 + 26 * Math.sin(textRad);
+
+                    return (
+                      <g key={idx}>
+                        <path d={pathData} fill={sector.bg} stroke="#09090b" strokeWidth="0.8" />
+                        <text
+                          x={textX}
+                          y={textY}
+                          fill={sector.coins === 500 ? "#fbbf24" : "#a1a1aa"}
+                          fontSize="4"
+                          fontWeight="900"
+                          textAnchor="middle"
+                          alignmentBaseline="middle"
+                          transform={`rotate(${textAngle + 90}, ${textX}, ${textY})`}
+                        >
+                          {sector.coins === 500 ? "⭐ JACKPOT" : `+${sector.coins}`}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Center pin circle */}
+                  <circle cx="50" cy="50" r="8" fill="#09090b" stroke="#18181b" strokeWidth="1.5" />
+                  <circle cx="50" cy="50" r="3" fill="#10b981" />
+                </svg>
+              </div>
+
+              {/* Reward Reveal */}
+              <div className="text-center h-12 flex flex-col items-center justify-center">
+                {spinning ? (
+                  <p className="text-sm font-bold text-zinc-500 animate-pulse uppercase tracking-wider">Wheel is Rolling...</p>
+                ) : spinReward !== null ? (
+                  <div className="flex flex-col items-center animate-bounce-slow">
+                    <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-none">CONGRATULATIONS!</span>
+                    <span className="text-2xl font-black text-emerald-400 mt-1 flex items-center gap-1.5">
+                      <CheckCircle className="w-5.5 h-5.5 text-emerald-400 shrink-0" />
+                      <span>+{spinReward.toLocaleString()} Coins</span>
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-zinc-500 text-xs leading-relaxed max-w-[200px] font-semibold uppercase tracking-wider">TAP SPIN TO ROLL THE WHEEL</p>
+                )}
+              </div>
+
+              {/* Claim Trigger Action */}
+              <button
+                onClick={handleSpinClick}
+                disabled={spinning || spinReward !== null}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed text-black font-black text-sm uppercase tracking-wider rounded-2xl transition shadow-lg shadow-emerald-500/10"
+              >
+                {spinning ? "SPINNING..." : spinReward !== null ? "CLAIMED!" : "SPIN FREE WHEEL"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Premium Footer */}
       <footer className="border-t border-zinc-900 bg-[#080808]">
