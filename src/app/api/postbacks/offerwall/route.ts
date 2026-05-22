@@ -1,8 +1,9 @@
 // src/app/api/postbacks/offerwall/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import crypto from 'crypto';
+import { getClientIp, logFraudAttempt } from '@/lib/antiFraud';
 
 interface OfferwallPayload {
   userId: string;
@@ -36,6 +37,9 @@ function verifySignature(payload: OfferwallPayload): boolean {
 }
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const userAgent = request.headers.get("user-agent") || "unknown";
+
   try {
     const searchParams = request.nextUrl.searchParams;
     
@@ -69,7 +73,60 @@ export async function GET(request: NextRequest) {
     // Verify signature
     if (!verifySignature(payload)) {
       console.warn(`Invalid signature for offer ${offerId} user ${userId}`);
+      await logFraudAttempt({
+        ip,
+        userId,
+        action: "GENERIC_POSTBACK_SIG_MISMATCH",
+        reason: `Generic offerwall signature mismatch for offer ${offerId}`,
+        userAgent,
+        createdAt: new Date(),
+      });
       return new NextResponse('Invalid signature', { status: 403 });
+    }
+
+    // 1. Click Verification: Cross-reference with /clicks
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const clickSnap = await adminDb
+      .collection('clicks')
+      .where('userId', '==', userId)
+      .where('offerId', '==', offerId)
+      .where('timestamp', '>=', Timestamp.fromDate(oneWeekAgo))
+      .limit(1)
+      .get();
+
+    let postbackStatus = 'completed';
+    let flagReason = '';
+
+    if (clickSnap.empty) {
+      postbackStatus = 'held_review';
+      flagReason = `Generic postback received but NO matching user click was found in clicks collection in the last 7 days for offer ${offerId}`;
+      console.warn(`[Offerwall] Click verification failed for ${userId} completing offer ${offerId}. Held for review.`);
+    }
+
+    // 2. Daily Earning Cap check ($50 / 50,000 coins safety valve)
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    const recentEarnedSnap = await adminDb
+      .collection('transactions')
+      .where('userId', '==', userId)
+      .where('status', '==', 'completed')
+      .where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo))
+      .get();
+
+    let recentEarnedSum = 0;
+    recentEarnedSnap.forEach((doc) => {
+      const tx = doc.data();
+      if (tx.amount > 0) {
+        recentEarnedSum += tx.amount;
+      }
+    });
+
+    if (recentEarnedSum + amount > 50000) {
+      postbackStatus = 'held_review';
+      flagReason = `Daily Earning Cap Exceeded: User completed offer ${offerId} worth ${amount} coins, but rolling 24h earnings exceed 50,000 coin ($50.00) limit.`;
     }
 
     // Dedup check and credit user wallet via Firestore transaction
@@ -88,34 +145,83 @@ export async function GET(request: NextRequest) {
         throw new Error('USER_NOT_FOUND');
       }
 
+      const userData = userDoc.data()!;
+
+      // Handle lockouts
+      if (userData.status === 'banned' || userData.isFlagged === true) {
+        postbackStatus = 'held_review';
+        flagReason = `Postback credit attempted while account was locked or flagged. Profile status: ${userData.status}`;
+      }
+
       // Create offer postback record
       transaction.set(offerRef, {
         userId,
         offerId,
         amount,
         creditedAt: FieldValue.serverTimestamp(),
-        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
+        ip,
+        userAgent,
+        status: postbackStatus,
       });
 
-      // Credit user wallet
-      transaction.update(userRef, {
-        'wallet.balance': FieldValue.increment(amount),
-        'wallet.lastUpdated': FieldValue.serverTimestamp(),
+      // Log transaction entry
+      const transactionRef = adminDb.collection('transactions').doc();
+      transaction.set(transactionRef, {
+        id: transactionRef.id,
+        userId,
+        type: 'offer',
+        amount,
+        payoutCents: Math.floor(amount / 10),
+        method: 'Generic Offerwall',
+        status: postbackStatus,
+        createdAt: FieldValue.serverTimestamp(),
       });
+
+      if (postbackStatus === 'completed') {
+        // Credit user wallet
+        transaction.update(userRef, {
+          'wallet.balance': FieldValue.increment(amount),
+          'wallet.lastUpdated': FieldValue.serverTimestamp(),
+          walletBalanceCents: FieldValue.increment(Math.floor(amount / 10)),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Flag user and write log
+        transaction.update(userRef, {
+          status: 'flagged',
+          isFlagged: true,
+          flaggedReason: flagReason,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        transaction.set(adminDb.collection('fraud_logs').doc(), {
+          ip,
+          userId,
+          email: userData.email,
+          action: "POSTBACK_HELD_REVIEW",
+          reason: flagReason,
+          userAgent,
+          createdAt: FieldValue.serverTimestamp(),
+          details: {
+            amount,
+            offerId,
+            provider: 'generic_offerwall',
+          }
+        });
+      }
     });
 
-    console.log(`Successfully credited ${amount} to user ${userId} for offer ${offerId}`);
+    console.log(`Successfully processed generic postback for ${userId} with status ${postbackStatus}`);
     return new NextResponse('1', { status: 200 });
 
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'DUPLICATE_OFFER') {
-        console.warn(`Duplicate offerwall postback: ${error.message}`);
+        console.warn(`Duplicate offerwall postback detected`);
         return new NextResponse('1', { status: 200 }); // Return success for idempotency
       }
       if (error.message === 'USER_NOT_FOUND') {
-        console.error(`User not found: ${error.message}`);
+        console.error(`User not found for generic postback`);
         return new NextResponse('User not found', { status: 404 });
       }
     }

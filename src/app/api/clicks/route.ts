@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from '@/lib/antiFraud';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user exists in Firestore
+    const ip = getClientIp(request);
+    const userAgent = request.headers.get("user-agent") || "unknown";
+
+    // 1. Sniff out Headless Automation Tools/Scrapers
+    const botCheck = isBotAgent(userAgent);
+    if (botCheck.isBot) {
+      await logFraudAttempt({
+        ip,
+        userId,
+        action: "CLICK_BLOCKED_BOT",
+        reason: botCheck.reason || "Bot User-Agent detected on click",
+        userAgent,
+        createdAt: new Date(),
+      });
+      return NextResponse.json({ error: "Clicks blocked due to automated scrapers usage." }, { status: 403 });
+    }
+
+    // 2. Verify user exists and is active in Firestore
     const userDoc = await adminDb.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       return NextResponse.json(
@@ -24,7 +42,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting: check clicks in last hour
+    const userData = userDoc.data()!;
+    if (userData.status === 'banned' || userData.isFlagged === true) {
+      await logFraudAttempt({
+        ip,
+        userId,
+        email: userData.email,
+        action: "CLICK_BLOCKED_LOCK",
+        reason: `Banned/Flagged user attempted offer click. Status: ${userData.status}`,
+        userAgent,
+        createdAt: new Date(),
+      });
+      return NextResponse.json(
+        { error: 'Your account is currently locked or flagged for review. Offer clicking disabled.' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Perform VPN/Proxy checking via ProxyCheck.io
+    const ipCheck = await isIpSuspicious(ip, "CLICK_BLOCKED_VPN", userId, userData.email, userAgent);
+    if (ipCheck.suspicious) {
+      return NextResponse.json({ 
+        error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on clicking offers." 
+      }, { status: 403 });
+    }
+
+    // 4. Rate limiting: check clicks in last hour
     const oneHourAgo = new Date();
     oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
@@ -43,13 +86,6 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
-
-    // Get IP from headers
-    const forwardedFor = request.headers.get('x-forwarded-for');
-    const ip = forwardedFor?.split(',')[0]?.trim() || 'unknown';
-
-    // Get user agent
-    const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // Create click record
     const clickRecord = {

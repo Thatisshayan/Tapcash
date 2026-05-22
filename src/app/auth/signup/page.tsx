@@ -22,20 +22,21 @@ export default function SignUpPage() {
     setError(null);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Initialize user document in Firestore with unified wallet balance structure
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: name,
-        createdAt: serverTimestamp(),
-        wallet: {
-          balance: 0,
-          lastUpdated: serverTimestamp(),
-        },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration rejected.");
+      }
+
+      // Seamlessly log the user in on the client side using the client SDK immediately after successful registration
+      const { signInWithEmailAndPassword } = await import("firebase/auth");
+      await signInWithEmailAndPassword(auth, email, password);
 
       router.push("/");
     } catch (err: any) {
