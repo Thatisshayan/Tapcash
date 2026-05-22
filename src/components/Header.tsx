@@ -12,12 +12,16 @@ import { Coins, LogOut, Menu, X, Landmark, Users, ArrowRightLeft, ShieldAlert } 
 export default function Header() {
   const { user } = useAuth();
   const [balance, setBalance] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
 
     // Real-time subscription to user wallet document in Firestore
     const userRef = doc(db, "users", user.uid);
@@ -27,6 +31,7 @@ export default function Header() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setBalance(data.wallet?.balance || 0);
+          setIsAdmin(data.admin === true);
         }
       },
       (error) => {
@@ -50,7 +55,7 @@ export default function Header() {
     { name: "Earn Coins", href: "/", icon: Coins },
     { name: "Referrals", href: "/referrals", icon: Users },
     { name: "Transactions", href: "/transactions", icon: ArrowRightLeft },
-    { name: "Admin", href: "/admin", icon: ShieldAlert },
+    ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: ShieldAlert }] : []),
   ];
 
   return (
