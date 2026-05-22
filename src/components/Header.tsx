@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,15 +8,49 @@ import { db, auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Coins, LogOut, Menu, X, Landmark, Users, ArrowRightLeft, ShieldAlert } from "lucide-react";
+import { Coins, LogOut, Menu, X, Landmark, Users, ArrowRightLeft, ShieldAlert, Globe, DollarSign } from "lucide-react";
 
 export default function Header() {
   const { user } = useAuth();
   const [balance, setBalance] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Custom bilingual & currency toggles
+  const [lang, setLang] = useState<"en" | "fr">("en");
+  const [displayCurrency, setDisplayCurrency] = useState<"COIN" | "CAD">("COIN");
+
   const router = useRouter();
   const pathname = usePathname();
+
+  // Hydrate local preferences
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("tapcash_preferred_lang") as "en" | "fr";
+      if (savedLang) setLang(savedLang);
+
+      const savedCurr = localStorage.getItem("tapcash_display_currency") as "COIN" | "CAD";
+      if (savedCurr) setDisplayCurrency(savedCurr);
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const nextLang = lang === "en" ? "fr" : "en";
+    setLang(nextLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tapcash_preferred_lang", nextLang);
+      // Dispatch custom event to let other components listen to language updates
+      window.dispatchEvent(new Event("languageChange"));
+    }
+  };
+
+  const toggleCurrency = () => {
+    const nextCurr = displayCurrency === "COIN" ? "CAD" : "COIN";
+    setDisplayCurrency(nextCurr);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tapcash_display_currency", nextCurr);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -23,7 +58,6 @@ export default function Header() {
       return;
     }
 
-    // Real-time subscription to user wallet document in Firestore
     const userRef = doc(db, "users", user.uid);
     const unsubscribe = onSnapshot(
       userRef,
@@ -45,17 +79,43 @@ export default function Header() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      router.push("/landing");
+      router.push("/");
     } catch (err) {
       console.error("Sign out error:", err);
     }
   };
 
+  // Translations Map
+  const labels = {
+    en: {
+      earn: "Earn Coins",
+      referrals: "Referrals",
+      transactions: "Transactions",
+      admin: "Admin",
+      signOut: "Sign Out",
+      signIn: "Sign In",
+      signUp: "Sign Up Free",
+      balance: "Wallet Balance",
+      tapToToggle: "Click to toggle CAD views",
+    },
+    fr: {
+      earn: "Gagner des Coins",
+      referrals: "Parrainage",
+      transactions: "Retraits & Vault",
+      admin: "Admin",
+      signOut: "Se Déconnecter",
+      signIn: "Se Connecter",
+      signUp: "S'inscrire",
+      balance: "Solde",
+      tapToToggle: "Cliquez pour voir en CAD",
+    }
+  }[lang];
+
   const navItems = [
-    { name: "Earn Coins", href: "/", icon: Coins },
-    { name: "Referrals", href: "/referrals", icon: Users },
-    { name: "Transactions", href: "/transactions", icon: ArrowRightLeft },
-    ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: ShieldAlert }] : []),
+    { name: labels.earn, href: "/dashboard", icon: Coins },
+    { name: labels.referrals, href: "/referrals", icon: Users },
+    { name: labels.transactions, href: "/transactions", icon: ArrowRightLeft },
+    ...(isAdmin ? [{ name: labels.admin, href: "/admin", icon: ShieldAlert }] : []),
   ];
 
   return (
@@ -95,27 +155,50 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Right Side: Wallet & Profile Actions */}
+        {/* Right Side: Wallet, Local Language, & Profile Actions */}
         <div className="flex items-center gap-4">
+          
+          {/* Bilingual Language Toggle Button */}
+          <button
+            onClick={toggleLanguage}
+            title={lang === "en" ? "Passer en Français" : "Switch to English"}
+            className="px-3 py-2 bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-900 hover:border-zinc-850 rounded-xl text-xs font-black text-zinc-400 hover:text-emerald-400 flex items-center gap-1.5 transition-all"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span className="uppercase">{lang}</span>
+          </button>
+
           {user ? (
             <>
-              {/* Wallet Pill */}
-              <div className="relative group bg-zinc-950/60 border border-zinc-900 rounded-full py-2 pl-4 pr-5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-emerald-500/30 transition-all duration-300">
+              {/* Interactive Wallet Balance Pill (Coins <-> CAD Dynamic Toggle) */}
+              <button
+                onClick={toggleCurrency}
+                title={labels.tapToToggle}
+                className="relative group bg-zinc-950/60 hover:bg-zinc-950 border border-zinc-900 hover:border-emerald-500/25 rounded-full py-1.5 pl-4 pr-5 flex items-center gap-3 shadow-[0_4px_25px_rgba(0,0,0,0.3)] transition-all duration-300 text-left cursor-pointer select-none"
+              >
                 <div className="absolute inset-0 bg-emerald-500/[0.01] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                <div className="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 relative">
-                  <Coins className="w-4 h-4 animate-pulse" />
+                <div className="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 relative shrink-0">
+                  {displayCurrency === "COIN" ? (
+                    <Coins className="w-4 h-4 animate-pulse" />
+                  ) : (
+                    <span className="font-black text-xs leading-none text-emerald-400">$</span>
+                  )}
                   {/* Glowing dynamic ring */}
                   <span className="absolute inset-0 rounded-full border border-emerald-400/30 animate-ping opacity-25" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider leading-none">
-                    Balance
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">
+                    {labels.balance}
                   </span>
-                  <span className="text-base font-black text-emerald-400 leading-tight tracking-tight mt-0.5">
-                    {balance.toLocaleString()} Coins
+                  <span className="text-sm font-black text-emerald-400 leading-tight tracking-tight mt-0.5 whitespace-nowrap">
+                    {displayCurrency === "COIN" ? (
+                      `${balance.toLocaleString()} Coins`
+                    ) : (
+                      `$${(balance / 1000).toLocaleString("en-CA", { minimumFractionDigits: 2 })} CAD`
+                    )}
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* Logout Button */}
               <button
@@ -123,7 +206,7 @@ export default function Header() {
                 className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-zinc-950 border border-zinc-900 hover:border-red-500/30 hover:text-red-400 text-zinc-400 text-sm font-bold rounded-xl transition-all duration-200"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
+                <span>{labels.signOut}</span>
               </button>
             </>
           ) : (
@@ -132,13 +215,13 @@ export default function Header() {
                 href="/auth/signin"
                 className="px-4 py-2.5 text-sm font-bold text-zinc-400 hover:text-white transition duration-200"
               >
-                Sign In
+                {labels.signIn}
               </Link>
               <Link
                 href="/auth/signup"
                 className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 transition-all duration-200"
               >
-                Sign Up Free
+                {labels.signUp}
               </Link>
             </div>
           )}
@@ -184,7 +267,7 @@ export default function Header() {
               className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl text-base font-bold text-zinc-400 hover:text-red-400 hover:bg-red-500/5 transition duration-200"
             >
               <LogOut className="w-5 h-5" />
-              <span>Sign Out</span>
+              <span>{labels.signOut}</span>
             </button>
           )}
         </div>

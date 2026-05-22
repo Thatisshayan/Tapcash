@@ -95,9 +95,11 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="px-6 py-8 text-center text-sm text-gray-500">
-        <div className="flex justify-center gap-6 mb-4">
+        <div className="flex justify-center flex-wrap gap-x-6 gap-y-2 mb-4">
           <Link href="/terms" className="hover:text-emerald-500 transition">Terms</Link>
           <Link href="/privacy" className="hover:text-emerald-500 transition">Privacy</Link>
+          <Link href="/cookies" className="hover:text-emerald-500 transition">Cookies</Link>
+          <Link href="/affiliate" className="hover:text-emerald-500 transition">Affiliate</Link>
           <Link href="/contact" className="hover:text-emerald-500 transition">Contact</Link>
         </div>
         <p>&copy; {new Date().getFullYear()} TapCash. All rights reserved.</p>

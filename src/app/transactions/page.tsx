@@ -10,6 +10,7 @@ import {
   Loader2, CheckCircle, Clock, AlertTriangle, ArrowLeft, ExternalLink, HelpCircle
 } from "lucide-react";
 import Link from "next/link";
+import { getDeviceFingerprint } from "@/lib/fingerprint";
 
 interface RewardMethod {
   id: string;
@@ -27,6 +28,76 @@ interface RewardMethod {
 }
 
 const REWARD_METHODS: RewardMethod[] = [
+  {
+    id: "interac",
+    name: "Interac e-Transfer",
+    minCoins: 5000,
+    minUSD: 5.00,
+    badge: "Direct Canadian Cash",
+    color: "from-zinc-900 to-zinc-950 hover:border-yellow-500/30",
+    textColor: "text-yellow-500",
+    borderColor: "border-zinc-900",
+    iconBg: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    destinationLabel: "Interac e-Transfer Email Address",
+    destinationPlaceholder: "your-interac-email@domain.ca",
+    destinationType: "email",
+  },
+  {
+    id: "tim_hortons",
+    name: "Tim Hortons Gift Card",
+    minCoins: 5000,
+    minUSD: 5.00,
+    badge: "Local Favorite",
+    color: "from-zinc-900 to-zinc-950 hover:border-red-500/20",
+    textColor: "text-red-400",
+    borderColor: "border-zinc-900",
+    iconBg: "bg-red-500/10 text-red-400 border-red-500/20",
+    destinationLabel: "Delivery Email Address",
+    destinationPlaceholder: "you@example.com",
+    destinationType: "email",
+  },
+  {
+    id: "canadian_tire",
+    name: "Canadian Tire Gift Card",
+    minCoins: 5000,
+    minUSD: 5.00,
+    badge: "Outdoors & Home",
+    color: "from-zinc-900 to-zinc-950 hover:border-red-600/20",
+    textColor: "text-red-500",
+    borderColor: "border-zinc-900",
+    iconBg: "bg-red-600/10 text-red-500 border-red-600/20",
+    destinationLabel: "Delivery Email Address",
+    destinationPlaceholder: "you@example.com",
+    destinationType: "email",
+  },
+  {
+    id: "cineplex",
+    name: "Cineplex Gift Card",
+    minCoins: 5000,
+    minUSD: 5.00,
+    badge: "Entertainment",
+    color: "from-zinc-900 to-zinc-950 hover:border-blue-500/20",
+    textColor: "text-blue-400",
+    borderColor: "border-zinc-900",
+    iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    destinationLabel: "Delivery Email Address",
+    destinationPlaceholder: "you@example.com",
+    destinationType: "email",
+  },
+  {
+    id: "shoppers",
+    name: "Shoppers Drug Mart Card",
+    minCoins: 5000,
+    minUSD: 5.00,
+    badge: "Wellness & Pharmacy",
+    color: "from-zinc-900 to-zinc-950 hover:border-red-900/20",
+    textColor: "text-red-300",
+    borderColor: "border-zinc-900",
+    iconBg: "bg-red-950/20 text-red-400 border-red-900/20",
+    destinationLabel: "Delivery Email Address",
+    destinationPlaceholder: "you@example.com",
+    destinationType: "email",
+  },
   {
     id: "litecoin",
     name: "Litecoin LTC",
@@ -204,6 +275,7 @@ export default function RedemptionsVaultPage() {
     setMessage(null);
 
     try {
+      const fingerprint = await getDeviceFingerprint();
       const token = await user.getIdToken();
       const response = await fetch("/api/payouts/request", {
         method: "POST",
@@ -215,6 +287,7 @@ export default function RedemptionsVaultPage() {
           amountCoins: selectedCoins,
           method: activeMethod.id,
           destination: destination.trim(),
+          deviceFingerprint: fingerprint,
         }),
       });
 

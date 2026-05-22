@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Coins, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
@@ -13,6 +14,46 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user document exists in Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // Initialize user document
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "Google User",
+          status: "active",
+          isFlagged: false,
+          registrationIp: "google-oauth",
+          userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown",
+          createdAt: serverTimestamp(),
+          wallet: {
+            balance: 0,
+            lastUpdated: serverTimestamp(),
+          },
+          walletBalanceCents: 0,
+        });
+      }
+
+      router.push("/");
+    } catch (err: any) {
+      console.error("Google sign in/up error:", err);
+      setError(err.message || "Failed to authenticate with Google.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +145,39 @@ export default function SignInPage() {
             )}
           </button>
         </form>
+
+        <div className="relative flex py-4 items-center">
+          <div className="flex-grow border-t border-zinc-900/60"></div>
+          <span className="flex-shrink mx-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Or continue with</span>
+          <div className="flex-grow border-t border-zinc-900/60"></div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full py-3.5 bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-850 hover:border-zinc-700/80 text-white font-bold rounded-2xl transition duration-200 flex items-center justify-center gap-3 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.18 1-.78 1.85-1.63 2.42v2.77h2.63c1.54-1.42 2.42-3.51 2.42-5.97z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-2.63-2.77c-.73.49-1.66.78-2.65.78-2.04 0-3.77-1.39-4.39-3.26H1.31v2.85C3.13 20.19 7.23 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M7.61 15.09c-.16-.49-.25-1.01-.25-1.54s.09-1.05.25-1.54V9.15H1.31C.48 10.8.0 12.65.0 14.5s.48 3.7 1.31 5.35l3.65-2.85c-.62-1.87-.62-3.69 0-5.41z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.23 1 3.13 3.81 1.31 7.15l3.65 2.85c.62-1.87 2.35-3.26 4.39-3.26z"
+            />
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
 
         <p className="text-zinc-500 text-sm text-center mt-8">
           Don&apos;t have an account?{" "}

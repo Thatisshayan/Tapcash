@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
             </li>
           </ul>
           <p className="mt-3">
-            To invoke any of these statutory rights, please send an explicit inquiry from your registered email address to <a href="mailto:support@tapcash.online" className="text-emerald-400 hover:underline">support@tapcash.online</a>. We will process and confirm your request within 30 days.
+            To invoke any of these statutory rights, please send an explicit inquiry from your registered email address to <a href="mailto:HELLO@TAPCASH.ONLINE" className="text-emerald-400 hover:underline">HELLO@TAPCASH.ONLINE</a>. We will process and confirm your request within 30 days.
           </p>
         </>
       ),
@@ -199,8 +199,8 @@ export default function PrivacyPolicyPage() {
           <p>Have questions about your data, cookies, or GDPR requests?</p>
           <p>
             Contact our designated Data Protection Officer at{" "}
-            <a href="mailto:support@tapcash.online" className="text-emerald-400 hover:underline">
-              support@tapcash.online
+            <a href="mailto:HELLO@TAPCASH.ONLINE" className="text-emerald-400 hover:underline">
+              HELLO@TAPCASH.ONLINE
             </a>
           </p>
         </div>

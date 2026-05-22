@@ -45,7 +45,47 @@ export async function POST(request: NextRequest) {
 
     // 3. Parse and validate request body
     const body = await request.json();
-    const { amountCoins, method, destination } = body;
+    const { amountCoins, method, destination, deviceFingerprint } = body;
+
+    // Anti-Sybil: Verify deviceFingerprint consistency on payout
+    if (deviceFingerprint && typeof deviceFingerprint === "string" && deviceFingerprint.trim().length > 0) {
+      const dupeQuery = await adminDb.collection("users")
+        .where("deviceFingerprint", "==", deviceFingerprint)
+        .limit(2)
+        .get();
+
+      for (const docSnap of dupeQuery.docs) {
+        if (docSnap.id !== uid) {
+          // Found duplicate accounts using the same hardware fingerprint! Flag both!
+          await adminDb.collection("users").doc(uid).update({
+            status: "flagged",
+            isFlagged: true,
+            flaggedReason: `Device fingerprint collision on payout request: ${deviceFingerprint}. Shared with user: ${docSnap.id}`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          await adminDb.collection("users").doc(docSnap.id).update({
+            status: "flagged",
+            isFlagged: true,
+            flaggedReason: `Device fingerprint collision on payout request from user: ${uid}. Shared: ${deviceFingerprint}`,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          await logFraudAttempt({
+            ip,
+            userId: uid,
+            action: "PAYOUT_BLOCKED_FINGERPRINT_COLLISION",
+            reason: `Multi-accounting fingerprint collision on payout request. Shared: ${deviceFingerprint}`,
+            userAgent,
+            createdAt: new Date(),
+          });
+
+          return NextResponse.json({ 
+            error: "Security Alert: This device signature is linked to multiple accounts. Withdrawals held for administrator review." 
+          }, { status: 403 });
+        }
+      }
+    }
 
     if (!amountCoins || !method || !destination) {
       return NextResponse.json(
@@ -62,7 +102,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox"];
+    const allowedMethods = [
+      "paypal", "litecoin", "bitcoin", "visa", "steam", "roblox",
+      "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"
+    ];
     if (!allowedMethods.includes(method)) {
       return NextResponse.json(
         { error: `Invalid payout method: ${method}` },
