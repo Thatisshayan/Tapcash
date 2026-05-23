@@ -23,13 +23,12 @@
 
 | Item | Status | Details |
 |------|--------|---------|
-| **Current Day** | ⏳ [Day X/4] | [Day focus] |
-| **Postback Handler** | ⏳ [Building/Testing/Done] | Revenue engine |
-| **Real Offerwall** | ⏳ [Status] | Lootably/AdGate integration |
-| **Admin Panel** | ⏳ [Status] | Payout management |
-| **Fraud Controls** | ⏳ [Status] | IP logging, rate limiting |
-| **Multi-Page Routing** | ⏳ [Status] | Dashboard, offers, cashout pages |
-| **Last Update** | [Timestamp] | [Summary] |
+| **Current Phase** | 🚀 Recovery | Security rotation + Payment integration |
+| **Postback Handler** | ✅ Done | v2 with signature verification & fraud logs |
+| **Real Offerwall** | ✅ Done | Lootably v2 wired |
+| **Admin Panel** | ✅ Done | User manager, search, and payout routing |
+| **Payouts** | ✅ Done | PayPal Auto + Interac Manual with metadata |
+| **Last Update** | 2026-05-23T17:37 | User Management UI + Interac e-Transfer Flow |
 
 ---
 
@@ -103,9 +102,9 @@ Vault (Secrets):
 
 ### Antigravity's Blockers:
 ```
-[Antigravity updates this section]
-- [Blocker 1]
-- [Blocker 2]
+- [CRITICAL] User must rotate Firebase Service Account keys (Exposed in Git).
+- [MAJOR] Need PayPal Client ID / Secret for 'live' mode to move real money.
+- [MAJOR] Need Lootably Live API Key (currently in sandbox/fallback mode).
 ```
 
 ---

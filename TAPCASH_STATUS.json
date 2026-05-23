@@ -1,19 +1,21 @@
 {
   "project": "TapCash",
-  "version": "0.1.0",
-  "environment": "MVP",
-  "status": "In Progress",
+  "version": "0.3.0-dev",
+  "environment": "MVP / Development",
+  "status": "In Progress - Security Remediation Required",
   "components": {
-    "auth": "Functional",
-    "dashboard": "Functional (Dark Emerald UI)",
-    "postback_handler": "v1 Implemented",
-    "fraud_controls": "v1 Implemented (IP Logging)",
-    "admin_panel": "Pending",
-    "referrals": "Backend logic implemented in postback, UI pending",
+    "auth": "Functional (Firebase Auth)",
+    "dashboard": "Functional (Real-time balance & transactions)",
+    "landing_page": "Live Feed Connected (Firestore)",
+    "postback_handler": "v2 Implemented (MD5 Signatures + Anti-Fraud)",
+    "fraud_controls": "v2 Implemented (Bot detection, ProxyCheck, Device Fingerprinting)",
+    "payouts": "PayPal REST & Interac Manual Integrated",
+    "admin_panel": "Functional (User Manager + Tabbed Dashboard)",
+    "referrals": "Backend logic active; UI basic",
     "security": {
-      "serviceAccountKey": "Secured",
+      "serviceAccountKey": "EXPOSED IN HISTORY - ROTATION REQUIRED",
       "firestoreRules": "Basic isolation implemented"
     }
   },
-  "lastUpdated": "2026-05-15T00:00:00Z"
+  "lastUpdated": "2026-05-23T17:16:00Z"
 }

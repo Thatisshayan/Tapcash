@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
 import { 
   Coins, Sparkles, CheckCircle, ArrowRight, ShieldCheck, Zap, 
   HelpCircle, Globe, Heart, DollarSign, Award, Users, Star, Layers, Activity
@@ -47,19 +47,58 @@ const CANADIAN_PARTNERS = [
   { name: "Shoppers Drug Mart", renderLogo: SDMLogo, desc: "Wellness & Pharmacy" },
 ];
 
-// Authentic completed payout transactions
-const REAL_PAYOUTS = [
-  { user: "shaya.t***", amount: "$15.50 CAD", method: "Interac e-Transfer", ref: "Ref: #ET-73a1", time: "2m ago", badgeBg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  { user: "chloe.m***", amount: "$5.00 CAD", method: "Tim Hortons Gift Card", ref: "Ref: #TH-902x", time: "8m ago", badgeBg: "bg-red-500/10 text-red-400 border-red-500/20" },
-  { user: "liam.p***", amount: "$25.00 CAD", method: "PayPal Withdrawal", ref: "Ref: #PP-1092", time: "14m ago", badgeBg: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  { user: "marcus.k***", amount: "$10.00 CAD", method: "Cineplex Gift Card", ref: "Ref: #CX-482a", time: "22m ago", badgeBg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  { user: "emily.s***", amount: "$8.40 CAD", method: "Litecoin Blockchain", ref: "TxID: ltc1q8h...", time: "38m ago", badgeBg: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
-  { user: "nicolas.b***", amount: "$50.00 CAD", method: "Interac e-Transfer", ref: "Ref: #ET-0294", time: "52m ago", badgeBg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-];
-
 export default function LandingPage() {
   const { user } = useAuth();
   const [lang, setLanguage] = useState<"en" | "fr">("en");
+  const [liveActivity, setLiveActivity] = useState<any[]>([]);
+
+  // Real-time live activity fetch
+  useEffect(() => {
+    const q = query(
+      collection(db, "transactions"),
+      where("status", "in", ["completed", "pending"]),
+      orderBy("createdAt", "desc"),
+      limit(6)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        const absAmount = Math.abs(data.amount || 0);
+        const cadValue = (absAmount / 1000).toFixed(2);
+        
+        // Format relative time
+        let timeLabel = "Just now";
+        if (data.createdAt) {
+          const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+          const diffMin = Math.floor((new Date().getTime() - date.getTime()) / 60000);
+          if (diffMin > 0) timeLabel = `${diffMin}m ago`;
+          if (diffMin > 60) timeLabel = `${Math.floor(diffMin/60)}h ago`;
+        }
+
+        // UI styling based on type
+        let method = data.method || (data.type === "offer" ? "Offer Completion" : "Payment");
+        let badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        if (data.type === "withdrawal") {
+          badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+        }
+
+        return {
+          id: docSnap.id,
+          user: `${(data.userId || "user").slice(0, 5)}***`,
+          amount: `$${cadValue} CAD`,
+          method: method,
+          ref: `ID: #${docSnap.id.slice(0, 6)}`,
+          time: timeLabel,
+          badgeBg: badgeBg,
+          status: data.status
+        };
+      });
+      setLiveActivity(items);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const t = {
     en: {
@@ -76,7 +115,7 @@ export default function LandingPage() {
       how2Desc: "Answer community polls, test local apps, and share consumer opinions with top brand partners.",
       how3Title: "3. Cash Out Instantly",
       how3Desc: "Redeem points directly to Interac, PayPal, or Bitcoin. Min cashout starts at just $2.00 CAD!",
-      canadaSectionTitle: "The Native Choice for Canadians 🇨🇦",
+      canadaSectionTitle: "The Native Choice for Canadians \uD83C\uDDE6\uD83C\uDDE6",
       canadaDesc: "We are proud to be the only premium GPT rewards platform engineered strictly for Canadians. Founded and headquartered in Toronto, Ontario, we offer direct local payouts and bilingual service.",
       interacTitle: "Direct Interac e-Transfer",
       interacDesc: "No more waiting days for foreign bank drafts. Get cash deposited securely into your Canadian bank account in under 15 minutes.",
@@ -92,33 +131,33 @@ export default function LandingPage() {
       trustpilotDesc: "Excellent 4.8 out of 5 based on 1,482 real Canadian reviews.",
     },
     fr: {
-      heroTag: "La première plateforme de récompenses GPT au Canada",
-      heroTitle: "Gagnez de l'argent réel en faisant ce que vous aimez",
-      heroDesc: "Répondez à des sondages payants, testez de nouvelles applications mobiles et jouez à des jeux. Recevez vos gains instantanément en dollars canadiens via Virement Interac, PayPal ou Crypto.",
+      heroTag: "La premi\u00E8re plateforme de r\u00E9compenses GPT au Canada",
+      heroTitle: "Gagnez de l'argent r\u00E9el en faisant ce que vous aimez",
+      heroDesc: "R\u00E9pondez \u00E0 des sondages payants, testez de nouvelles applications mobiles et jouez \u00E0 des jeux. Recevez vos gains instantan\u00E9ment en dollars canadiens via Virement Interac, PayPal ou Crypto.",
       ctaStart: "Commencer Gratuitement",
-      ctaDashboard: "Accéder au Tableau de Bord",
+      ctaDashboard: "Acc\u00E9der au Tableau de Bord",
       activeEarners: "Rejoignez plus de 12 000 utilisateurs canadiens actifs",
       howTitle: "Le chemin le plus simple vers les paiements",
-      how1Title: "1. Inscrivez-vous instantanément",
-      how1Desc: "Créez votre compte avec Google ou votre courriel en moins de 30 secondes. Rapide, sécurisé et 100 % gratuit.",
-      how2Title: "2. Complétez des offres",
-      how2Desc: "Répondez à des sondages, testez des applications locales et partagez votre avis avec nos partenaires.",
+      how1Title: "1. Inscrivez-vous instantan\u00E9ment",
+      how1Desc: "Cr\u00E9ez votre compte avec Google ou votre courriel en moins de 30 secondes. Rapide, s\u00E9curis\u00E9 et 100 % gratuit.",
+      how2Title: "2. Compl\u00E9tez des offres",
+      how2Desc: "R\u00E9pondez \u00E0 des sondages, testez des applications locales et partagez votre avis avec nos partenaires.",
       how3Title: "3. Retirez vos gains",
       how3Desc: "Retirez vos points directement par Virement Interac, PayPal ou Bitcoin. Seuil de retrait de seulement 2,00$ CAD!",
-      canadaSectionTitle: "Le Choix Authentique des Canadiens 🇨🇦",
-      canadaDesc: "Nous sommes fiers d'être la seule plateforme de récompenses GPT haut de gamme conçue exclusivement pour les Canadiens. Fondée à Toronto, Ontario, nous offrons des paiements locaux directs.",
+      canadaSectionTitle: "Le Choix Authentique des Canadiens \uD83C\uDDE6\uD83C\uDDE6",
+      canadaDesc: "Nous sommes fiers d'\u00EAtre la seule plateforme de r\u00E9compenses GPT haut de gamme con\u00E7ue exclusivement pour les Canadiens. Fond\u00E9e \u00E0 Toronto, Ontario, nous offrons des paiements locaux directs.",
       interacTitle: "Virement Interac direct",
-      interacDesc: "Plus besoin d'attendre des jours pour obtenir des virements bancaires étrangers. Recevez vos fonds en moins de 15 minutes.",
-      cadDisplay: "Évaluations locales en CAD",
-      cadDesc: "Sachez exactement ce que vous gagnez. 10 Coins = 0,01$ CAD. Des taux de change transparents et équitables.",
-      bilingualTitle: "Plateforme entièrement bilingue",
-      bilingualDesc: "TapCash parle votre langue. Passez instantanément de l'anglais au français sur tous vos tableaux de bord.",
-      trustTitle: "Pourquoi plus de 10 000 Canadiens font confiance à TapCash",
-      liveProofTitle: "Registre d'activité global vérifié",
-      founderTitle: "Fondé à Toronto en toute transparence",
-      founderDesc: "Contrairement aux sites anonymes, nous assumons notre plateforme. TapCash a été cofondé par l'Équipe Obsidian à Toronto pour offrir une plateforme de récompenses légitime.",
-      trustpilotCard: "Évaluation Trustpilot",
-      trustpilotDesc: "Excellent 4,8 sur 5 basé sur 1 482 avis de vrais Canadiens.",
+      interacDesc: "Plus besoin d'attendre des jours pour obtenir des virements bancaires \u00E9trangers. Recevez vos fonds en moins de 15 minutes.",
+      cadDisplay: "\u00C9valuations locales en CAD",
+      cadDesc: "Sachez exactement ce que vous gagnez. 10 Coins = 0,01$ CAD. Des taux de change transparents et \u00E9quitables.",
+      bilingualTitle: "Plateforme enti\u00E8rement bilingue",
+      bilingualDesc: "TapCash parle votre langue. Passez instantan\u00E9ment de l'anglais au fran\u00E7ais sur tous vos tableaux de bord.",
+      trustTitle: "Pourquoi plus de 10 000 Canadiens font confiance \u00E0 TapCash",
+      liveProofTitle: "Registre d'activit\u00E9 global v\u00E9rifi\u00E9",
+      founderTitle: "Fond\u00E9 \u00E0 Toronto en toute transparence",
+      founderDesc: "Contrairement aux sites anonymes, nous assumons notre plateforme. TapCash a \u00E9t\u00E9 cofond\u00E9 par l'\u00C9quipe Obsidian \u00E0 Toronto pour offrir une plateforme de r\u00E9compenses l\u00E9gitime.",
+      trustpilotCard: "\u00C9valuation Trustpilot",
+      trustpilotDesc: "Excellent 4,8 sur 5 bas\u00E9 sur 1 482 avis de vrais Canadiens.",
     }
   };
 
@@ -207,8 +246,6 @@ export default function LandingPage() {
           {curr.activeEarners}
         </p>
       </section>
-
-
 
       {/* Trustpilot & Canada Sections (Ultra-Minimalist & Transparent) */}
       <section className="px-6 py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-10 relative">
@@ -346,7 +383,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Live Activity Ticker - OVERHAULED TO LOOK 100% REAL AND AUTHENTIC */}
+      {/* Live Activity Ticker - CONNECTED TO REAL FIRESTORE DATA */}
       <section className="px-6 py-14 bg-[#020202]/40 border-t border-zinc-900/30 z-10 relative">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="flex flex-col items-center text-center space-y-1">
@@ -358,27 +395,33 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {REAL_PAYOUTS.map((tx, index) => (
-              <div 
-                key={index} 
-                className="p-4 bg-transparent border border-zinc-900/60 rounded-xl flex flex-col justify-between space-y-3.5 hover:border-zinc-800 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-zinc-300 font-display">{tx.user}</span>
-                  <span className="text-[9px] font-bold text-zinc-500">{tx.time}</span>
+            {liveActivity.length > 0 ? (
+              liveActivity.map((tx, index) => (
+                <div 
+                  key={tx.id || index} 
+                  className="p-4 bg-transparent border border-zinc-900/60 rounded-xl flex flex-col justify-between space-y-3.5 hover:border-zinc-800 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-zinc-300 font-display">{tx.user}</span>
+                    <span className="text-[9px] font-bold text-zinc-500">{tx.time}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-emerald-400 font-black text-lg font-display">{tx.amount}</span>
+                    <span className="text-[10px] font-bold text-zinc-400">{tx.method}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2.5">
+                    <span className="text-[8px] font-mono text-zinc-600 font-bold uppercase tracking-wider">{tx.ref}</span>
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${tx.badgeBg}`}>
+                      {tx.status === "completed" ? "Verified" : "Processing"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-emerald-400 font-black text-lg font-display">{tx.amount}</span>
-                  <span className="text-[10px] font-bold text-zinc-400">{tx.method}</span>
-                </div>
-                <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2.5">
-                  <span className="text-[8px] font-mono text-zinc-600 font-bold uppercase tracking-wider">{tx.ref}</span>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${tx.badgeBg}`}>
-                    Verified
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-10 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
+                Waiting for incoming network activity...
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -396,11 +439,11 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-y border-zinc-900/40 py-5 text-[9px] text-zinc-600 font-bold tracking-wider">
           <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> SECURE SSL (AES-256)</span>
           <span className="text-zinc-800">•</span>
-          <span>🔞 AGE REQUIRED: 18+ ONLY</span>
+          <span>\uD83D\uDD1E AGE REQUIRED: 18+ ONLY</span>
           <span className="text-zinc-800">•</span>
-          <span>🍁 PIPEDA & CASL COMPLIANT</span>
+          <span>\uD83C\uDDE6\uD83C\uDDE6 PIPEDA & CASL COMPLIANT</span>
           <span className="text-zinc-800">•</span>
-          <span>🏢 HQ: 100 KING ST WEST, SUITE 5600, TORONTO, ON, CANADA</span>
+          <span>\uD83C\uDFE2 HQ: 100 KING ST WEST, SUITE 5600, TORONTO, ON, CANADA</span>
         </div>
 
         <div className="space-y-2 max-w-3xl mx-auto leading-relaxed text-zinc-600 font-semibold text-[10px] lowercase normal-case">
