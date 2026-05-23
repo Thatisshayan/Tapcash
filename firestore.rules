@@ -20,9 +20,9 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Root-level transactions
+    // Root-level transactions (Public Ledger for Live Ticker)
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if true;
       allow write: if false; // Only written by Admin SDK
     }
 
