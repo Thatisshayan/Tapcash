@@ -46,6 +46,14 @@ export default function SignInPage() {
         });
       }
 
+      // Fetch ID token and set secure session cookie
+      const idToken = await user.getIdToken();
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+
       router.push("/");
     } catch (err: any) {
       console.error("Google sign in/up error:", err);
@@ -61,7 +69,16 @@ export default function SignInPage() {
     setError(null);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Fetch ID token and set secure session cookie
+      const idToken = await userCredential.user.getIdToken();
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken })
+      });
+
       router.push("/");
     } catch (err: any) {
       console.error("Sign in error:", err);

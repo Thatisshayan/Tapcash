@@ -17,48 +17,6 @@ interface LootablyOffer {
   revenue?: number | 'variable';
 }
 
-const MOCK_OFFERS: Offer[] = [
-  {
-    id: 'mock-survey-1',
-    title: 'Complete a Survey',
-    description: 'Share your opinion and earn rewards',
-    payout: 150,
-    image: '/images/mock/survey.jpg',
-    category: 'Surveys',
-    clickUrl: '#',
-    provider: 'mock',
-  },
-  {
-    id: 'mock-game-1',
-    title: 'Download Raid: Shadow Legends',
-    description: 'Epic fantasy RPG with stunning graphics',
-    payout: 800,
-    image: '/images/mock/raid.jpg',
-    category: 'Games',
-    clickUrl: '#',
-    provider: 'mock',
-  },
-  {
-    id: 'mock-video-1',
-    title: 'Watch 3 Videos',
-    description: 'Watch short videos and get paid',
-    payout: 25,
-    image: '/images/mock/video.jpg',
-    category: 'Videos',
-    clickUrl: '#',
-    provider: 'mock',
-  },
-  {
-    id: 'mock-app-1',
-    title: 'Install Cash App',
-    description: 'Send and receive money instantly',
-    payout: 200,
-    image: '/images/mock/cashapp.jpg',
-    category: 'Apps',
-    clickUrl: '#',
-    provider: 'mock',
-  },
-];
 
 function transformOffer(offer: LootablyOffer): Offer {
   let payout = 0;
@@ -100,17 +58,10 @@ export async function GET(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
 
   if (!apiKey || apiKey === '') {
-    // Return mock offers when no API key is configured
+    // Return 503 Service Unavailable when no API key is configured
     return NextResponse.json(
-      {
-        offers: MOCK_OFFERS,
-        source: 'mock',
-      },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
-      }
+      { error: 'Lootably integration not configured.' },
+      { status: 503 }
     );
   }
 
@@ -161,18 +112,10 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('Lootably API error:', error);
-    // Fallback to mock offers on API failure
+    // Return 503 Service Unavailable on API failure
     return NextResponse.json(
-      {
-        offers: MOCK_OFFERS,
-        source: 'mock',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-        },
-      }
+      { error: error instanceof Error ? error.message : 'Unknown Lootably error' },
+      { status: 503 }
     );
   }
 }

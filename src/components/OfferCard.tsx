@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import { Offer } from '@/types/offer';
 import { Sparkles, ArrowUpRight, Star, Clock } from 'lucide-react';
 import InstructionModal from './InstructionModal';
@@ -26,9 +27,20 @@ export default function OfferCard({ offer, onEarn }: OfferCardProps) {
 
         <div className="relative">
           <div className="flex items-start justify-between gap-4 mb-4">
-            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-full uppercase tracking-wider">
-              {offer.provider}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
+                {offer.provider.toLowerCase() === 'lootably' ? (
+                  <Image src="https://lootably.com/img/favicon.png" alt="Lootably" width={20} height={20} className="object-contain" />
+                ) : offer.provider.toLowerCase() === 'rapidoreach' ? (
+                  <Image src="https://rapidoreach.com/wp-content/uploads/2021/08/favicon.png" alt="RapidoReach" width={20} height={20} className="object-contain" />
+                ) : (
+                  <span className="text-zinc-500 font-black text-xs uppercase">{offer.provider.charAt(0)}</span>
+                )}
+              </div>
+              <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                {offer.provider}
+              </span>
+            </div>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 text-xs text-zinc-500 font-semibold">
                 <Star className="w-3 h-3 fill-emerald-500/20 text-emerald-500" />
@@ -87,3 +99,4 @@ export default function OfferCard({ offer, onEarn }: OfferCardProps) {
     </>
   );
 }
+

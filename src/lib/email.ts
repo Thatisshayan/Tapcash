@@ -53,3 +53,33 @@ export async function sendPayoutRejectedEmail(to: string, amountCad: number, not
     console.error('[EMAIL ERROR] Failed to send payout rejected email:', error);
   }
 }
+
+export async function sendWelcomeEmail(to: string, name: string) {
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: 'Welcome to TapCash! Start Earning Today 🚀',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0a0a0a; color: #ffffff; border-radius: 12px; border: 1px solid #333;">
+          <h1 style="color: #34d399; text-align: center;">Welcome, ${name}!</h1>
+          <p style="font-size: 16px; color: #d1d5db;">Thank you for joining TapCash, the premium rewards network.</p>
+          <div style="background-color: #121212; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #1f2937;">
+            <p style="margin: 5px 0; color: #9ca3af;">You're now ready to start completing offers, taking surveys, and earning free cash.</p>
+            <ul style="color: #9ca3af; padding-left: 20px;">
+              <li>💰 Complete High-Paying Offers</li>
+              <li>🎮 Play Games for Coins</li>
+              <li>👥 Refer Friends for 20% Lifetime Earnings</li>
+            </ul>
+          </div>
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://tapcash.online/dashboard" style="background-color: #10b981; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Go to Dashboard</a>
+          </div>
+        </div>
+      `
+    });
+    console.log(`[EMAIL] Welcome email sent to ${to}`);
+  } catch (error) {
+    console.error('[EMAIL ERROR] Failed to send welcome email:', error);
+  }
+}

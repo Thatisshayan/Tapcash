@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
+import { sendWelcomeEmail } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 import { promises as dnsPromises } from "dns";
 
@@ -172,6 +173,9 @@ export async function POST(request: NextRequest) {
       },
       walletBalanceCents: 0, // Backward compatibility schema support
     });
+
+    // 5. Send Welcome Email
+    await sendWelcomeEmail(email, name);
 
     return NextResponse.json({
       success: true,
