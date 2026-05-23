@@ -345,14 +345,31 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-900 bg-[#080808] py-8 px-6 text-center text-xs font-semibold text-zinc-600 uppercase tracking-widest">
-        <div className="flex justify-center flex-wrap gap-x-6 gap-y-2 mb-4">
-          <Link href="/terms" className="hover:text-emerald-500 transition">Terms</Link>
-          <Link href="/privacy" className="hover:text-emerald-500 transition">Privacy</Link>
-          <Link href="/cookies" className="hover:text-emerald-500 transition">Cookies</Link>
-          <Link href="/affiliate" className="hover:text-emerald-500 transition">Affiliate</Link>
+      <footer className="border-t border-zinc-900 bg-[#070708] py-12 px-6 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest space-y-6">
+        <div className="flex justify-center flex-wrap gap-x-6 gap-y-2 text-xs">
+          <Link href="/terms" className="hover:text-emerald-500 transition">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-emerald-500 transition">Privacy Policy</Link>
+          <Link href="/cookies" className="hover:text-emerald-500 transition">Cookie Inventory</Link>
+          <Link href="/affiliate" className="hover:text-emerald-500 transition">Affiliate Disclosure</Link>
         </div>
-        <p>&copy; {new Date().getFullYear()} TapCash. All rights reserved. Toronto, Ontario, Canada.</p>
+        
+        {/* Compliance and HQ Badges */}
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-y border-zinc-900/60 py-4 text-[9px] text-zinc-600 font-semibold">
+          <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> SECURE SSL (AES-256)</span>
+          <span className="text-zinc-800">•</span>
+          <span>🔞 AGE REQUIRED: 18+ ONLY</span>
+          <span className="text-zinc-800">•</span>
+          <span>🍁 PIPEDA & CASL COMPLIANT</span>
+          <span className="text-zinc-800">•</span>
+          <span>🏢 HQ: 100 KING ST WEST, SUITE 5600, TORONTO, ON, CANADA</span>
+        </div>
+
+        <div className="space-y-2 max-w-3xl mx-auto leading-relaxed text-zinc-600 font-semibold text-[10px] lowercase normal-case">
+          <p className="uppercase text-[9px] tracking-wider text-zinc-600 font-bold">CASL Anti-Spam Compliance Declaration:</p>
+          <p>TapCash is committed to strict anti-spam compliance in accordance with CASL and federal regulations. By subscribing to communications, you consent to receive periodic rewards updates and notifications. You can safely revoke consent or opt out at any time through your member dashboard or by contacting support at <strong className="text-zinc-500">HELLO@TAPCASH.ONLINE</strong>.</p>
+        </div>
+
+        <p className="text-[9px] font-semibold text-zinc-600 mt-4">&copy; {new Date().getFullYear()} TapCash. All rights reserved. Toronto, Ontario, Canada.</p>
       </footer>
     </div>
   );
