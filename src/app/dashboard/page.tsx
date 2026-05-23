@@ -284,7 +284,21 @@ export default function OffersPage() {
     };
 
     if (!authLoading) {
-      fetchOffers();
+      fetchOffers().then(() => {
+        // Prepend the RapidoReach Offerwall
+        setOffers(prev => [
+          {
+            id: "rapidoreach-offerwall-1",
+            title: "RapidoReach Surveys",
+            description: "High paying premium surveys tailored to your profile. Complete unlimited surveys.",
+            payout: 500, // Visual representation
+            clickUrl: "/rapidoreach",
+            provider: "RapidoReach",
+            category: "Offerwall",
+          },
+          ...prev.filter(o => o.id !== "rapidoreach-offerwall-1")
+        ]);
+      });
     }
   }, [user, authLoading]);
 
