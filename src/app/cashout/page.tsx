@@ -22,6 +22,7 @@ interface RewardMethod {
   destinationLabel: string;
   destinationPlaceholder: string;
   destinationType: string;
+  logoDomain: string;
 }
 
 const REWARD_METHODS: RewardMethod[] = [
@@ -34,10 +35,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-yellow-500/30",
     textColor: "text-yellow-500",
     borderColor: "border-zinc-900",
-    iconBg: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    iconBg: "bg-yellow-500/10 border-yellow-500/20",
     destinationLabel: "Interac e-Transfer Email Address",
     destinationPlaceholder: "your-interac-email@domain.ca",
     destinationType: "email",
+    logoDomain: "interac.ca",
   },
   {
     id: "tim_hortons",
@@ -48,10 +50,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-500/20",
     textColor: "text-red-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-red-500/10 text-red-400 border-red-500/20",
+    iconBg: "bg-white border-red-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "timhortons.ca",
   },
   {
     id: "canadian_tire",
@@ -62,10 +65,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-600/20",
     textColor: "text-red-500",
     borderColor: "border-zinc-900",
-    iconBg: "bg-red-600/10 text-red-500 border-red-600/20",
+    iconBg: "bg-white border-red-600/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "canadiantire.ca",
   },
   {
     id: "cineplex",
@@ -76,10 +80,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-blue-500/20",
     textColor: "text-blue-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    iconBg: "bg-[#0b1c54] border-blue-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "cineplex.com",
   },
   {
     id: "shoppers",
@@ -90,10 +95,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-900/20",
     textColor: "text-red-300",
     borderColor: "border-zinc-900",
-    iconBg: "bg-red-950/20 text-red-400 border-red-900/20",
+    iconBg: "bg-white border-red-900/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "shoppersdrugmart.ca",
   },
   {
     id: "litecoin",
@@ -104,10 +110,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-blue-500/20",
     textColor: "text-blue-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    iconBg: "bg-blue-500/10 border-blue-500/20",
     destinationLabel: "Litecoin (LTC) Address",
     destinationPlaceholder: "L...",
     destinationType: "text",
+    logoDomain: "litecoin.org",
   },
   {
     id: "paypal",
@@ -118,10 +125,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-sky-500/20",
     textColor: "text-sky-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+    iconBg: "bg-white border-sky-500/20",
     destinationLabel: "PayPal Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "paypal.com",
   },
   {
     id: "bitcoin",
@@ -132,10 +140,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-amber-500/20",
     textColor: "text-amber-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    iconBg: "bg-amber-500/10 border-amber-500/20",
     destinationLabel: "Bitcoin (BTC) Address",
     destinationPlaceholder: "bc1...",
     destinationType: "text",
+    logoDomain: "bitcoin.org",
   },
   {
     id: "visa",
@@ -146,10 +155,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-emerald-500/20",
     textColor: "text-emerald-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    iconBg: "bg-white border-emerald-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "visa.ca",
   },
   {
     id: "steam",
@@ -160,10 +170,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-indigo-500/20",
     textColor: "text-indigo-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+    iconBg: "bg-[#171a21] border-indigo-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "steampowered.com",
   },
   {
     id: "roblox",
@@ -174,10 +185,11 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-rose-500/20",
     textColor: "text-rose-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    iconBg: "bg-white border-rose-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
+    logoDomain: "roblox.com",
   },
 ];
 
@@ -339,8 +351,21 @@ export default function CashoutStorePage() {
                   <div className="absolute inset-0 bg-white/[0.01] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   
                   <div className="flex items-start justify-between">
-                    <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-bold ${method.iconBg}`}>
-                      {method.id === "paypal" ? <Landmark className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
+                    <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-bold overflow-hidden relative ${method.iconBg}`}>
+                      <img 
+                        src={`https://logo.clearbit.com/${method.logoDomain}`} 
+                        alt={method.name} 
+                        className="w-7 h-7 object-contain relative z-10"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          if (e.currentTarget.nextElementSibling) {
+                            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center hidden">
+                        {method.id === "paypal" ? <Landmark className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
+                      </div>
                     </div>
                     <span className="px-2.5 py-1 bg-white/5 border border-white/10 text-zinc-400 text-[10px] font-black uppercase rounded-full tracking-wider leading-none">
                       {method.badge}
@@ -379,8 +404,21 @@ export default function CashoutStorePage() {
 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${activeMethod.iconBg}`}>
-                  <Coins className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-xl border flex items-center justify-center relative overflow-hidden ${activeMethod.iconBg}`}>
+                  <img 
+                    src={`https://logo.clearbit.com/${activeMethod.logoDomain}`} 
+                    alt={activeMethod.name} 
+                    className="w-6 h-6 object-contain relative z-10"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextElementSibling) {
+                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center hidden">
+                    <Coins className="w-5 h-5" />
+                  </div>
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-white leading-none">{activeMethod.name} Cashout</h3>

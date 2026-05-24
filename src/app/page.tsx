@@ -11,32 +11,21 @@ import {
   HelpCircle, Globe, Heart, DollarSign, Award, Users, Star, Layers, Activity
 } from "lucide-react";
 
-// Official-Fidelity SVG Brand Logo Components
+// Official Brand Logo Components
 const TimsLogo = () => (
-  <svg className="w-28 h-8 text-[#da291c] drop-shadow-[0_0_10px_rgba(218,41,28,0.2)]" viewBox="0 0 120 30" fill="none">
-    <text x="50%" y="22" textAnchor="middle" className="text-[18px] font-serif font-black italic tracking-wide" fill="#da291c">Tim Hortons</text>
-  </svg>
+  <img src="https://logo.clearbit.com/timhortons.ca" alt="Tim Hortons Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(218,41,28,0.2)]" />
 );
 
 const CTLogo = () => (
-  <svg className="w-12 h-12 drop-shadow-[0_0_12px_rgba(204,32,41,0.25)]" viewBox="0 0 100 100" fill="none">
-    <polygon points="50,85 10,15 90,15" fill="#cc2029" />
-    <path d="M50,25 L53,37 L59,34 L56,46 L64,44 L59,54 L67,58 L56,62 L54,74 L46,74 L44,62 L33,58 L41,54 L36,44 L44,46 L41,34 L47,37 Z" fill="#008643" />
-  </svg>
+  <img src="https://logo.clearbit.com/canadiantire.ca" alt="Canadian Tire Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_12px_rgba(204,32,41,0.25)]" />
 );
 
 const CineplexLogo = () => (
-  <svg className="w-28 h-8 drop-shadow-[0_0_10px_rgba(251,191,36,0.2)]" viewBox="0 0 120 30" fill="none">
-    <text x="60%" y="20" textAnchor="middle" className="text-[13px] font-black tracking-[0.16em] font-sans" fill="#ffffff">CINEPLEX</text>
-    <path d="M12,8 L14.5,13 L19.5,14 L15.5,17.5 L16.5,22.5 L12,20 L7.5,22.5 L8.5,17.5 L4.5,14 L9.5,13 Z" fill="#fbbf24" />
-  </svg>
+  <img src="https://logo.clearbit.com/cineplex.com" alt="Cineplex Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(251,191,36,0.2)]" />
 );
 
 const SDMLogo = () => (
-  <svg className="w-32 h-8 drop-shadow-[0_0_10px_rgba(239,68,68,0.2)]" viewBox="0 0 130 30" fill="none">
-    <text x="50%" y="15" textAnchor="middle" className="text-[12px] font-black tracking-widest font-sans" fill="#ff0000">SHOPPERS</text>
-    <text x="50%" y="24" textAnchor="middle" className="text-[6px] font-extrabold tracking-[0.25em]" fill="#ffffff">DRUG MART</text>
-  </svg>
+  <img src="https://logo.clearbit.com/shoppersdrugmart.ca" alt="Shoppers Drug Mart Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(239,68,68,0.2)]" />
 );
 
 // High-fidelity Canadian brand integrations
