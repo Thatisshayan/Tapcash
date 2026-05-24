@@ -15,13 +15,33 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "TapCash | Premium Rewards",
-  description: "Earn cash by completing tasks. Fast, secure, premium.",
+  metadataBase: new URL("https://tapcash.online"),
+  title: "TapCash | Earn Rewards in Canada",
+  description: "Earn real cash by completing surveys, playing games, and downloading apps. Fast payouts and secure rewards.",
+  alternates: {
+    canonical: "/",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: "TapCash",
     statusBarStyle: "black-translucent",
+  },
+  openGraph: {
+    title: "TapCash | Earn Rewards in Canada",
+    description: "Earn real cash by completing surveys, playing games, and downloading apps. Fast payouts and secure rewards.",
+    url: "https://tapcash.online",
+    siteName: "TapCash",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "TapCash | Earn Rewards in Canada",
+      },
+    ],
+    locale: "en_CA",
+    type: "website",
   },
 };
 
