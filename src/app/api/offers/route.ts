@@ -2,41 +2,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Offer } from '@/types/offer';
 
-interface LootablyOffer {
-  type: 'singlestep' | 'multistep';
-  name: string;
-  description: string;
-  image: string;
-  countries: string[];
-  offerID: string;
-  categories: string[];
-  devices: string[];
-  link: string;
-  conversionRate: number;
-  currencyReward?: number | 'variable';
-  revenue?: number | 'variable';
+interface RapidoReachSurvey {
+  SurveyId: string;
+  Name?: string;
+  Description?: string;
+  RewardValue: number;
+  LOI?: number; // Length of Interview in minutes
+  URL: string;
+  ConversionRate?: number;
 }
 
-
-function transformOffer(offer: LootablyOffer): Offer {
-  let payout = 0;
-  if (typeof offer.currencyReward === 'number') {
-    payout = offer.currencyReward;
-  } else if (typeof offer.currencyReward === 'string' && offer.currencyReward !== 'variable') {
-    payout = parseFloat(offer.currencyReward) || 0;
-  }
-
+function transformRapidoReachOffer(survey: RapidoReachSurvey): Offer {
   return {
-    id: offer.offerID,
-    title: offer.name,
-    description: offer.description,
-    payout: payout,
-    clickUrl: offer.link,
-    provider: 'lootably',
-    image: offer.image || undefined,
-    category: offer.categories?.[0]
-      ? offer.categories[0].charAt(0).toUpperCase() + offer.categories[0].slice(1)
-      : 'Offer',
+    id: survey.SurveyId.toString(),
+    title: survey.Name || 'Paid Survey',
+    description: survey.Description || `Complete this ${survey.LOI ? `${survey.LOI} minute ` : ''}survey to earn rewards!`,
+    payout: survey.RewardValue || 0,
+    clickUrl: survey.URL,
+    provider: 'rapidoreach',
+    image: 'https://rapidoreach.com/wp-content/uploads/2021/08/favicon.png', // Generic RapidoReach logo
+    category: 'Survey',
   };
 }
 
@@ -51,70 +36,63 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.LOOTABLY_API_KEY;
-  const placementId = process.env.LOOTABLY_PLACEMENT_ID || process.env.PLACEMENT_ID || 'dummy-placement-id';
+  // Use the specific RapidoReach Monetization/Supplier API key
+  const apiKey = process.env.RAPIDOREACH_PUBLISHER_KEY;
   
-  const userIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
-  const userAgent = request.headers.get('user-agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
-
   if (!apiKey || apiKey === '') {
-    // Return 503 Service Unavailable when no API key is configured
+    // Gracefully handle missing configuration
     return NextResponse.json(
-      { error: 'Lootably integration not configured.' },
+      { error: 'RapidoReach integration not fully configured. Missing Publisher Key.' },
       { status: 503 }
     );
   }
 
   try {
-    const requestBody = {
-      placementID: placementId,
-      apiKey: apiKey,
-      userData: {
-        userID: userId,
-        userAgentHeader: userAgent,
-        ipAddress: userIp,
-      }
-    };
+    // Constructing standard RapidoReach Supplier API request.
+    // Note: The exact endpoint and parameters may vary slightly based on your specific RapidoReach account configuration.
+    const apiUrl = new URL('https://api.rapidoreach.com/api/v1/surveys');
+    apiUrl.searchParams.append('api_key', apiKey);
+    apiUrl.searchParams.append('user_id', userId);
 
-    const response = await fetch('https://api.lootably.com/api/v2/offers/get', {
-      method: 'POST',
+    const response = await fetch(apiUrl.toString(), {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(requestBody),
       next: {
-        revalidate: 300, // 5 minutes cache
+        revalidate: 180, // Cache for 3 minutes to avoid API rate limits
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Lootably API returned ${response.status}`);
+      throw new Error(`RapidoReach API returned ${response.status}`);
     }
 
     const json = await response.json();
     
-    if (json.success && json.data && Array.isArray(json.data.offers)) {
-      const offers = json.data.offers.map(transformOffer);
+    // RapidoReach usually returns an array of surveys directly or wrapped in a data object
+    const surveyList: RapidoReachSurvey[] = Array.isArray(json) ? json : (json.surveys || json.data || []);
+
+    if (Array.isArray(surveyList)) {
+      const offers = surveyList.map(transformRapidoReachOffer);
       return NextResponse.json(
         {
           offers,
-          source: 'lootably',
+          source: 'rapidoreach',
         },
         {
           headers: {
-            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+            'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=300',
           },
         }
       );
     } else {
-      throw new Error(json.message || 'Lootably API returned unsuccessful response');
+      throw new Error('RapidoReach API returned unexpected format');
     }
   } catch (error) {
-    console.error('Lootably API error:', error);
-    // Return 503 Service Unavailable on API failure
+    console.error('RapidoReach API error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown Lootably error' },
+      { error: error instanceof Error ? error.message : 'Unknown RapidoReach error' },
       { status: 503 }
     );
   }

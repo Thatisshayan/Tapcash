@@ -178,6 +178,62 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Handle Automated Tremendous Payouts (Visa, Amazon, Steam, Retail Gift Cards)
+      const tremendousMethods = ['visa', 'tim_hortons', 'canadian_tire', 'cineplex', 'shoppers', 'amazon', 'roblox', 'steam'];
+      if (tremendousMethods.includes(withdrawalData.method?.toLowerCase() || '') && withdrawalData.destination) {
+        try {
+          const { createTremendousOrder } = await import('@/lib/tremendous');
+          
+          await withdrawalRef.update({ 
+            status: 'processing',
+            reviewedBy: adminEmail,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          const amountValue = (withdrawalData.amountCents || withdrawalData.payoutCents || 0) / 100;
+          
+          const order = await createTremendousOrder({
+            recipientEmail: withdrawalData.destination, // Withdrawals use 'destination' for the payout email/address
+            amount: amountValue,
+            currency: 'USD', // Adjust to CAD if your Tremendous account is Canadian
+            method: withdrawalData.method || 'gift_card'
+          });
+
+          await withdrawalRef.update({
+            status: 'completed',
+            tremendousOrderId: order.id,
+            reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          await adminLogRef.set({
+            type: 'withdrawal_approved_tremendous',
+            withdrawalId: body.withdrawalId,
+            tremendousOrderId: order.id,
+            adminEmail,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          await sendPayoutApprovedEmail(withdrawalData.destination, amountValue, withdrawalData.method || 'Gift Card', body.adminNote);
+
+          return NextResponse.json({ success: true, action: 'approve', automated: true, tremendousOrderId: order.id });
+
+        } catch (tremendousError: any) {
+          console.error('Tremendous Payout Failed:', tremendousError);
+          await withdrawalRef.update({
+            status: 'failed',
+            error: tremendousError.message || 'Tremendous Payout Failed',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          return NextResponse.json({ 
+            success: false, 
+            error: `Tremendous API Error: ${tremendousError.message}`,
+            action: 'approve'
+          }, { status: 500 });
+        }
+      }
+
       // Manual Approval for other methods (Interac, etc.)
       await adminDb.runTransaction(async (transaction) => {
         transaction.update(withdrawalRef, {
