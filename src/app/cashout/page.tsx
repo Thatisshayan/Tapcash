@@ -8,6 +8,24 @@ import Header from "@/components/Header";
 import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
+import { 
+  InteracLogo, TimsLogo, CTLogo, CineplexLogo, SDMLogo, 
+  LitecoinLogo, PayPalLogo, BitcoinLogo, VisaLogo, SteamLogo, RobloxLogo 
+} from "@/components/BrandLogos";
+
+const LOGO_MAP: Record<string, React.ElementType> = {
+  interac: InteracLogo,
+  tim_hortons: TimsLogo,
+  canadian_tire: CTLogo,
+  cineplex: CineplexLogo,
+  shoppers: SDMLogo,
+  litecoin: LitecoinLogo,
+  paypal: PayPalLogo,
+  bitcoin: BitcoinLogo,
+  visa: VisaLogo,
+  steam: SteamLogo,
+  roblox: RobloxLogo,
+};
 
 interface RewardMethod {
   id: string;
@@ -352,20 +370,10 @@ export default function CashoutStorePage() {
                   
                   <div className="flex items-start justify-between">
                     <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-bold overflow-hidden relative ${method.iconBg}`}>
-                      <img 
-                        src={`https://logo.clearbit.com/${method.logoDomain}`} 
-                        alt={method.name} 
-                        className="w-7 h-7 object-contain relative z-10"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          if (e.currentTarget.nextElementSibling) {
-                            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
-                          }
-                        }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center hidden">
-                        {method.id === "paypal" ? <Landmark className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
-                      </div>
+                      {(() => {
+                        const Logo = LOGO_MAP[method.id];
+                        return Logo ? <Logo className="w-8 h-8 object-contain" /> : <Wallet className="w-6 h-6" />;
+                      })()}
                     </div>
                     <span className="px-2.5 py-1 bg-white/5 border border-white/10 text-zinc-400 text-[10px] font-black uppercase rounded-full tracking-wider leading-none">
                       {method.badge}
@@ -405,20 +413,10 @@ export default function CashoutStorePage() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl border flex items-center justify-center relative overflow-hidden ${activeMethod.iconBg}`}>
-                  <img 
-                    src={`https://logo.clearbit.com/${activeMethod.logoDomain}`} 
-                    alt={activeMethod.name} 
-                    className="w-6 h-6 object-contain relative z-10"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      if (e.currentTarget.nextElementSibling) {
-                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
-                      }
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center hidden">
-                    <Coins className="w-5 h-5" />
-                  </div>
+                  {(() => {
+                    const Logo = LOGO_MAP[activeMethod.id];
+                    return Logo ? <Logo className="w-6 h-6 object-contain" /> : <Coins className="w-5 h-5" />;
+                  })()}
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-white leading-none">{activeMethod.name} Cashout</h3>

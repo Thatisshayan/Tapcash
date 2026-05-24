@@ -11,22 +11,7 @@ import {
   HelpCircle, Globe, Heart, DollarSign, Award, Users, Star, Layers, Activity
 } from "lucide-react";
 
-// Official Brand Logo Components
-const TimsLogo = () => (
-  <img src="https://logo.clearbit.com/timhortons.ca" alt="Tim Hortons Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(218,41,28,0.2)]" />
-);
-
-const CTLogo = () => (
-  <img src="https://logo.clearbit.com/canadiantire.ca" alt="Canadian Tire Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_12px_rgba(204,32,41,0.25)]" />
-);
-
-const CineplexLogo = () => (
-  <img src="https://logo.clearbit.com/cineplex.com" alt="Cineplex Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(251,191,36,0.2)]" />
-);
-
-const SDMLogo = () => (
-  <img src="https://logo.clearbit.com/shoppersdrugmart.ca" alt="Shoppers Drug Mart Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(239,68,68,0.2)]" />
-);
+import { TimsLogo, CTLogo, CineplexLogo, SDMLogo } from "@/components/BrandLogos";
 
 // High-fidelity Canadian brand integrations
 const CANADIAN_PARTNERS = [
