@@ -35,6 +35,12 @@ if (!admin.apps.length) {
   } else {
     console.warn("Firebase Admin: No credentials provided via env variables. Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.");
   }
+
+  // Fallback to prevent Next.js build crash from `admin.firestore()` when credentials fail or are missing
+  if (!admin.apps.length) {
+    console.warn("Initializing dummy Firebase app for build process.");
+    admin.initializeApp({ projectId: projectId || "demo-project" });
+  }
 }
 
 export const adminDb = admin.firestore();
