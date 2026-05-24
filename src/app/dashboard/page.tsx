@@ -681,16 +681,37 @@ export default function OffersPage() {
                         </p>
                       )}
                     </div>
-                    {/* Tiny stats */}
-                    <div className="flex items-center gap-4 bg-zinc-900/20 border border-zinc-900 rounded-2xl px-4 py-2.5 self-start">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                        <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
-                        <span>Streak: <strong className="text-white">{streakCount}/7 Days</strong></span>
+                    {/* Tiny stats & Level */}
+                    <div className="flex flex-col gap-3 self-start w-full sm:w-auto">
+                      <div className="flex items-center gap-4 bg-zinc-900/20 border border-zinc-900 rounded-2xl px-4 py-2.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+                          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+                          <span>Streak: <strong className="text-white">{streakCount}/7 Days</strong></span>
+                        </div>
+                        <div className="w-1 h-3 bg-zinc-800" />
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+                          <Award className="w-4 h-4 text-emerald-400" />
+                          <span>VIP: <strong className="text-emerald-400">{vipTier}</strong></span>
+                        </div>
+                        <div className="w-1 h-3 bg-zinc-800" />
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+                          <Star className="w-4 h-4 text-blue-400" />
+                          <span>Level: <strong className="text-blue-400">{Math.floor((profile?.xp || 0) / 1000) + 1}</strong></span>
+                        </div>
                       </div>
-                      <div className="w-1 h-3 bg-zinc-800" />
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                        <Award className="w-4 h-4 text-emerald-400" />
-                        <span>VIP: <strong className="text-emerald-400">{vipTier}</strong></span>
+                      
+                      {/* XP Progress Bar */}
+                      <div className="bg-zinc-900/20 border border-zinc-900 rounded-xl px-4 py-2.5">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">XP Progress</span>
+                          <span className="text-[10px] font-black text-blue-400">{((profile?.xp || 0) % 1000).toLocaleString()} / 1,000 XP</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-zinc-950 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full" 
+                            style={{ width: `${(((profile?.xp || 0) % 1000) / 1000) * 100}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

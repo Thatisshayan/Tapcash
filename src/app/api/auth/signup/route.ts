@@ -155,6 +155,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: friendlyMessage }, { status: 400 });
     }
 
+    // Read the referral cookie
+    const refCookie = request.cookies.get("tapcash_ref");
+    const referredBy = refCookie?.value || null;
+
     // 4. Initialize Profile entry in Firestore
     const userRef = adminDb.collection("users").doc(userRecord.uid);
     await userRef.set({
@@ -166,6 +170,7 @@ export async function POST(request: NextRequest) {
       registrationIp: ip,
       userAgent,
       deviceFingerprint: deviceFingerprint || "",
+      referredBy: referredBy,
       createdAt: FieldValue.serverTimestamp(),
       wallet: {
         balance: 0,

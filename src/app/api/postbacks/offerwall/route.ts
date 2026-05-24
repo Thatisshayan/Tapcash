@@ -178,13 +178,44 @@ export async function GET(request: NextRequest) {
       });
 
       if (postbackStatus === 'completed') {
-        // Credit user wallet
+        // Credit user wallet and award XP (1 XP per 1 Coin)
         transaction.update(userRef, {
           'wallet.balance': FieldValue.increment(amount),
           'wallet.lastUpdated': FieldValue.serverTimestamp(),
           walletBalanceCents: FieldValue.increment(Math.floor(amount / 10)),
+          xp: FieldValue.increment(amount),
           updatedAt: FieldValue.serverTimestamp(),
         });
+
+        // Award 5% commission to referrer if they exist
+        if (userData.referredBy) {
+          const referrerRef = adminDb.collection("users").doc(userData.referredBy);
+          const referrerDoc = await transaction.get(referrerRef);
+          if (referrerDoc.exists) {
+            const referralCommission = Math.floor(amount * 0.05);
+            if (referralCommission > 0) {
+              transaction.update(referrerRef, {
+                'wallet.balance': FieldValue.increment(referralCommission),
+                'wallet.lastUpdated': FieldValue.serverTimestamp(),
+                walletBalanceCents: FieldValue.increment(Math.floor(referralCommission / 10)),
+                updatedAt: FieldValue.serverTimestamp(),
+              });
+              
+              const refTransactionRef = adminDb.collection('transactions').doc();
+              transaction.set(refTransactionRef, {
+                id: refTransactionRef.id,
+                userId: userData.referredBy,
+                type: 'referral_commission',
+                amount: referralCommission,
+                payoutCents: Math.floor(referralCommission / 10),
+                method: 'Referral Program',
+                status: 'completed',
+                fromUserId: userId,
+                createdAt: FieldValue.serverTimestamp(),
+              });
+            }
+          }
+        }
       } else {
         // Flag user and write log
         transaction.update(userRef, {

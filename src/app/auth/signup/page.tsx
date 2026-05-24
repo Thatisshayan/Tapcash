@@ -38,6 +38,14 @@ export default function SignUpPage() {
       if (!userDoc.exists()) {
         const fingerprint = await getDeviceFingerprint();
 
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+          return null;
+        }
+        const referredBy = getCookie("tapcash_ref");
+
         // Initialize user document
         await setDoc(userDocRef, {
           uid: user.uid,
@@ -48,6 +56,7 @@ export default function SignUpPage() {
           registrationIp: "google-oauth",
           userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown",
           deviceFingerprint: fingerprint,
+          referredBy: referredBy,
           createdAt: serverTimestamp(),
           wallet: {
             balance: 0,

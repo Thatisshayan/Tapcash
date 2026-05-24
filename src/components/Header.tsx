@@ -85,12 +85,12 @@ export default function Header() {
     }
   };
 
-  // Translations Map
   const labels = {
     en: {
       earn: "Earn Coins",
+      cashout: "Store",
       referrals: "Referrals",
-      transactions: "Transactions",
+      transactions: "Ledger",
       admin: "Admin",
       signOut: "Sign Out",
       signIn: "Sign In",
@@ -100,8 +100,9 @@ export default function Header() {
     },
     fr: {
       earn: "Gagner des Coins",
+      cashout: "Boutique",
       referrals: "Parrainage",
-      transactions: "Retraits & Vault",
+      transactions: "Historique",
       admin: "Admin",
       signOut: "Se Déconnecter",
       signIn: "Se Connecter",
@@ -113,6 +114,7 @@ export default function Header() {
 
   const navItems = [
     { name: labels.earn, href: "/dashboard", icon: Coins },
+    { name: labels.cashout, href: "/cashout", icon: DollarSign },
     { name: labels.referrals, href: "/referrals", icon: Users },
     { name: labels.transactions, href: "/transactions", icon: ArrowRightLeft },
     ...(isAdmin ? [{ name: labels.admin, href: "/admin", icon: ShieldAlert }] : []),
