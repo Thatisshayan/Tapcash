@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: { refId: string } }) {
-  const refId = params.refId;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ refId: string }> }) {
+  const resolvedParams = await params;
+  const refId = resolvedParams.refId;
 
   // Create a response that redirects to the signup page
   const response = NextResponse.redirect(new URL("/auth/signup", request.url));
