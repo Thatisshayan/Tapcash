@@ -1,8 +1,17 @@
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
-  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
-  const privateKey = rawKey ? rawKey.replace(/\\n/g, "\n").replace(/^"|"$/g, "") : undefined;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (privateKey) {
+    try {
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = JSON.parse(privateKey);
+      }
+    } catch (e) {}
+    if (typeof privateKey === 'string') {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+  }
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
