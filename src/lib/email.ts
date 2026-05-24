@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Use a dummy key during the build step if the env variable isn't present
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 const FROM_EMAIL = 'TapCash <hello@tapcash.online>';
 
 export async function sendPayoutApprovedEmail(to: string, amountCad: number, method: string, notes?: string) {
