@@ -1,32 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
+import { redis } from "./redis";
 
-// Simple in-memory rate limiter.
-// NOTE: In a serverless environment (Vercel/Railway), memory is not shared across instances.
-// This provides basic protection against rapid spam on a single instance.
-// For true distributed rate limiting, an external store like Redis (Upstash) is recommended.
-
+// Fallback in-memory rate limiter if Redis is not configured
 interface RateLimitStore {
   count: number;
   resetTime: number;
 }
-
-const rateLimiter = new Map<string, RateLimitStore>();
+const fallbackRateLimiter = new Map<string, RateLimitStore>();
 
 export interface RateLimitOptions {
   limit: number; // max requests
   windowMs: number; // time window in milliseconds
 }
 
-export function checkRateLimit(ip: string, options: RateLimitOptions): { success: boolean; limit: number; remaining: number; reset: number } {
+export async function checkRateLimit(ip: string, options: RateLimitOptions): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
   const now = Date.now();
-  let store = rateLimiter.get(ip);
+  
+  if (redis) {
+    const key = `ratelimit:${ip}`;
+    try {
+      const multi = redis.multi();
+      multi.incr(key);
+      multi.pttl(key);
+      const results = await multi.exec();
+      
+      if (!results) throw new Error("Redis transaction failed");
 
+      const count = results[0][1] as number;
+      let ttl = results[1][1] as number;
+
+      if (count === 1 || ttl === -1) {
+        await redis.pexpire(key, options.windowMs);
+        ttl = options.windowMs;
+      }
+
+      const remaining = Math.max(0, options.limit - count);
+      
+      return {
+        success: count <= options.limit,
+        limit: options.limit,
+        remaining,
+        reset: now + ttl,
+      };
+    } catch (err) {
+      console.error("Redis rate limit error, falling back to memory:", err);
+      // Fall through to memory logic if Redis fails
+    }
+  }
+
+  // In-memory fallback logic
+  let store = fallbackRateLimiter.get(ip);
   if (!store || now > store.resetTime) {
     store = { count: 0, resetTime: now + options.windowMs };
   }
 
   store.count += 1;
-  rateLimiter.set(ip, store);
+  fallbackRateLimiter.set(ip, store);
 
   const remaining = Math.max(0, options.limit - store.count);
 
@@ -38,13 +67,13 @@ export function checkRateLimit(ip: string, options: RateLimitOptions): { success
   };
 }
 
-export function withRateLimit(request: NextRequest, options: RateLimitOptions) {
+export async function withRateLimit(request: NextRequest, options: RateLimitOptions) {
   // Try to get IP from headers (works for most reverse proxies/CDNs)
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || 
              request.headers.get("x-real-ip") || 
              "anonymous";
 
-  const { success, limit, remaining, reset } = checkRateLimit(ip, options);
+  const { success, limit, remaining, reset } = await checkRateLimit(ip, options);
 
   if (!success) {
     return NextResponse.json(

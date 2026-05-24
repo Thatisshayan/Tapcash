@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDb, adminAuth } from "../../../../lib/firebaseAdmin";
 import * as admin from "firebase-admin";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const rateLimitResponse = await withRateLimit(request, { limit: 10, windowMs: 60000 });
+    if (rateLimitResponse) return rateLimitResponse;
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

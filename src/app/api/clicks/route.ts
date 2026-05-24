@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from '@/lib/antiFraud';
+import { withRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResponse = await withRateLimit(request, { limit: 10, windowMs: 60000 });
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const { userId, offerId, provider } = body;
 

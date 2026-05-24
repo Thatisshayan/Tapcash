@@ -1,21 +1,23 @@
 {
   "project": "TapCash",
-  "version": "0.3.0-dev",
+  "version": "0.4.0-alpha",
   "environment": "MVP / Development",
-  "status": "In Progress - Security Remediation Required",
+  "status": "Security Hardened - Feature Expansion In Progress",
   "components": {
     "auth": "Functional (Firebase Auth)",
-    "dashboard": "Functional (Real-time balance & transactions)",
+    "dashboard": "Functional (Battle Pass & Real-time balance)",
     "landing_page": "Live Feed Connected (Firestore)",
-    "postback_handler": "v2 Implemented (MD5 Signatures + Anti-Fraud)",
-    "fraud_controls": "v2 Implemented (Bot detection, ProxyCheck, Device Fingerprinting)",
+    "postback_handler": "v2 Implemented (Purged History + MD5 Signatures)",
+    "fraud_controls": "v2 Implemented (Bot detection, ProxyCheck)",
     "payouts": "PayPal REST & Interac Manual Integrated",
     "admin_panel": "Functional (User Manager + Tabbed Dashboard)",
-    "referrals": "Backend logic active; UI basic",
+    "referrals": "Backend logic active; UI v2 Implemented",
+    "gamification": "Store, Confetti, Leveling System implemented",
     "security": {
-      "serviceAccountKey": "EXPOSED IN HISTORY - ROTATION REQUIRED",
+      "gitHistory": "PURGED AND CLEANED",
+      "serviceAccountKey": "ROTATION PENDING USER ACTION",
       "firestoreRules": "Basic isolation implemented"
     }
   },
-  "lastUpdated": "2026-05-23T17:16:00Z"
+  "lastUpdated": "2026-05-24T05:05:00Z"
 }

@@ -17,6 +17,7 @@
     "@tailwindcss/postcss": "^4",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.10.0",
+    "ioredis": "^5.10.1",
     "jose": "^6.2.3",
     "lucide-react": "latest",
     "next": "16.2.6",

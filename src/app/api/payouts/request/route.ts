@@ -7,7 +7,7 @@ import { withRateLimit } from "@/lib/rate-limit";
 export async function POST(request: NextRequest) {
   try {
     // 0. Rate Limiting (1 request per minute per IP to prevent spam)
-    const rateLimitResponse = withRateLimit(request, { limit: 1, windowMs: 60000 });
+    const rateLimitResponse = await withRateLimit(request, { limit: 1, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
     // 1. Verify user authentication

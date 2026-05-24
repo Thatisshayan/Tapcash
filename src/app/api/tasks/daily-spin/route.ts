@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
+import { withRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResponse = await withRateLimit(request, { limit: 3, windowMs: 60000 });
+    if (rateLimitResponse) return rateLimitResponse;
+
     // 1. Verify user authentication
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
