@@ -41,3 +41,5 @@ tsconfig.tsbuildinfo
 serviceAccountKey.json
 
 .env.local.backup
+
+apikey-TAP-CASH.txt
