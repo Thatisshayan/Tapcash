@@ -273,10 +273,17 @@ export default function OffersPage() {
         }
         
         const data = await response.json();
-        setOffers(Array.isArray(data) ? data : data.offers || []);
+        const apiOffers = Array.isArray(data) ? data : data.offers || [];
+        
+        if (apiOffers.length === 0) {
+          // If API returns empty (e.g. not configured yet), fallback gracefully without an error banner
+          setOffers(MOCK_OFFERS);
+        } else {
+          setOffers(apiOffers);
+        }
       } catch (err) {
         console.error("Error fetching offers:", err);
-        setError("Failed to fetch live offers. Showing featured tasks.");
+        // Silently fallback to mock tasks so the UI remains pristine
         setOffers(MOCK_OFFERS);
       } finally {
         setLoading(false);
