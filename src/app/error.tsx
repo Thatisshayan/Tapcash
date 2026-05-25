@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'next';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Space_Grotesk } from 'next/font/google';
 
