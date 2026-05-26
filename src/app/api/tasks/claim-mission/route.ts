@@ -3,33 +3,16 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
+import { requireVerifiedUser } from "@/lib/verified-user";
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await withRateLimit(request, { limit: 5, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
-    // 1. Verify authentication
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized: Missing authorization header" },
-        { status: 401 }
-      );
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (err) {
-      return NextResponse.json(
-        { error: "Unauthorized: Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
-    const uid = decodedToken.uid;
+    const verifiedUser = await requireVerifiedUser(request);
+    if ("response" in verifiedUser) return verifiedUser.response;
+    const { uid, email: verifiedEmail, userData } = verifiedUser;
     const body = await request.json();
     const { missionId } = body;
 
@@ -54,12 +37,6 @@ export async function POST(request: NextRequest) {
 
     // 3. Verify user profile status
     const userRef = adminDb.collection("users").doc(uid);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      return NextResponse.json({ error: "User profile not found in database." }, { status: 404 });
-    }
-
-    const userData = userSnap.data()!;
     if (userData.status === "banned" || userData.isFlagged === true) {
       return NextResponse.json(
         { error: "Your account is currently locked or flagged. Rewards disabled." },
@@ -68,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Perform IP Suspicion checks
-    const ipCheck = await isIpSuspicious(ip, "MISSION_BLOCKED_VPN", uid, userData.email, userAgent);
+    const ipCheck = await isIpSuspicious(ip, "MISSION_BLOCKED_VPN", uid, verifiedEmail || userData.email, userAgent);
     if (ipCheck.suspicious) {
       return NextResponse.json({ 
         error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on Daily Reward claims." 

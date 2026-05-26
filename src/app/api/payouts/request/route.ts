@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
+import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
 import { computeLedgerBalance } from "@/lib/ledger";
 import { logAdminAction } from "@/lib/audit";
+import { requireVerifiedUser } from "@/lib/verified-user";
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await withRateLimit(request, { limit: 3, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized: Missing authorization header" }, { status: 401 });
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const uid = decodedToken.uid;
+    const verifiedUser = await requireVerifiedUser(request);
+    if ("response" in verifiedUser) return verifiedUser.response;
+    const { uid, email: verifiedEmail, userData } = verifiedUser;
 
     const ip = getClientIp(request);
     const userAgent = request.headers.get("user-agent") || "unknown";
@@ -59,17 +55,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userRef = adminDb.collection("users").doc(uid);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      return NextResponse.json({ error: "User profile not found." }, { status: 404 });
-    }
-
-    const userData = userSnap.data()!;
     if (userData.status === "banned" || userData.isFlagged === true) {
       await logFraudAttempt({
         ip,
         userId: uid,
-        email: userData.email,
+        email: verifiedEmail || userData.email,
         action: "PAYOUT_BLOCKED_LOCK",
         reason: `Banned/Flagged user attempted withdrawal. Status: ${userData.status}`,
         userAgent,
@@ -78,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Your account is currently locked or flagged for review. Withdrawals disabled." }, { status: 403 });
     }
 
-    const ipCheck = await isIpSuspicious(ip, "PAYOUT_BLOCKED_VPN", uid, userData.email, userAgent);
+    const ipCheck = await isIpSuspicious(ip, "PAYOUT_BLOCKED_VPN", uid, verifiedEmail || userData.email, userAgent);
     if (ipCheck.suspicious) {
       return NextResponse.json({ error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on requesting payouts." }, { status: 403 });
     }

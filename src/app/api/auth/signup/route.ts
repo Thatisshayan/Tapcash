@@ -167,6 +167,8 @@ export async function POST(request: NextRequest) {
       displayName: name,
       status: "active", // Possible: active, flagged, banned
       isFlagged: false,
+      authProvider: "email",
+      emailVerified: false,
       registrationIp: ip,
       userAgent,
       deviceFingerprint: deviceFingerprint || "",

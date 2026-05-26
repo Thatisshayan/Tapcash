@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminAuth } from "../../../../lib/firebaseAdmin";
+import { adminDb } from "../../../../lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { withRateLimit } from "@/lib/rate-limit";
+import { requireVerifiedUser } from "@/lib/verified-user";
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await withRateLimit(request, { limit: 10, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const uid = decodedToken.uid;
+    const verifiedUser = await requireVerifiedUser(request);
+    if ("response" in verifiedUser) return verifiedUser.response;
+    const { uid } = verifiedUser;
 
     const body = await request.json();
     const { taskId, offerId, rewardCents } = body;

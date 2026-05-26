@@ -2,30 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
+import { requireVerifiedUser } from "@/lib/verified-user";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify user authentication
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized: Missing authorization header" },
-        { status: 401 }
-      );
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (err) {
-      return NextResponse.json(
-        { error: "Unauthorized: Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
-    const uid = decodedToken.uid;
+    const verifiedUser = await requireVerifiedUser(request);
+    if ("response" in verifiedUser) return verifiedUser.response;
+    const { uid, email: verifiedEmail, userData } = verifiedUser;
     const ip = getClientIp(request);
     const userAgent = request.headers.get("user-agent") || "unknown";
 
@@ -43,19 +26,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied. Automation is strictly prohibited." }, { status: 403 });
     }
 
-    // 3. Verify user status
     const userRef = adminDb.collection("users").doc(uid);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      return NextResponse.json({ error: "User profile not found in database." }, { status: 404 });
-    }
-
-    const userData = userSnap.data()!;
     if (userData.status === "banned" || userData.isFlagged === true) {
       await logFraudAttempt({
         ip,
         userId: uid,
-        email: userData.email,
+        email: verifiedEmail || userData.email,
         action: "PROMO_BLOCKED_LOCK",
         reason: "Banned or flagged user attempted promo code claim",
         userAgent,
@@ -67,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ipCheck = await isIpSuspicious(ip, "PROMO_BLOCKED_VPN", uid, userData.email, userAgent);
+    const ipCheck = await isIpSuspicious(ip, "PROMO_BLOCKED_VPN", uid, verifiedEmail || userData.email, userAgent);
     if (ipCheck.suspicious) {
       return NextResponse.json({ 
         error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on promo redemptions." 

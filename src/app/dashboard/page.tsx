@@ -599,6 +599,7 @@ const leaderboardEarners = [
     return effect > 0 && String(tx?.status || tx?.type || "").toLowerCase().includes("approved") ? sum + effect : sum;
   }, 0);
   const activeOfferCount = offers.length;
+  const isEmailVerified = !!user?.emailVerified;
 
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
@@ -697,10 +698,10 @@ const leaderboardEarners = [
 
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
-                      href="/rapidoreach"
+                      href={isEmailVerified ? "/rapidoreach" : "/auth/verify-email?next=/rapidoreach"}
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
                     >
-                      Open offerwall
+                      {isEmailVerified ? "Open offerwall" : "Verify email to unlock offers"}
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                     <Link
@@ -722,6 +723,15 @@ const leaderboardEarners = [
                       {spinEligible ? "Claim daily reward" : "Daily reward locked"}
                     </button>
                   </div>
+
+                  {!isEmailVerified && (
+                    <div className="rounded-[1.5rem] border border-[#00e6c3]/15 bg-[#00e6c3]/10 p-4 text-sm text-zinc-200">
+                      <p className="font-black text-white">Email verification required for offers.</p>
+                      <p className="mt-1 text-zinc-400">
+                        You can browse the dashboard, but offer clicks stay locked until you verify your inbox.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -1218,7 +1228,7 @@ const leaderboardEarners = [
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {offers.map((offer) => (
-                            <OfferCard key={offer.id} offer={offer} onEarn={() => handleEarn(offer)} />
+                            <OfferCard key={offer.id} offer={offer} onEarn={() => handleEarn(offer)} locked={!isEmailVerified} />
                           ))}
                         </div>
                       )}
@@ -1467,7 +1477,7 @@ const leaderboardEarners = [
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60 grayscale-[40%] pointer-events-none select-none">
                 {MOCK_OFFERS.map((offer) => (
-                  <OfferCard key={offer.id} offer={offer} onEarn={() => {}} />
+                  <OfferCard key={offer.id} offer={offer} onEarn={() => {}} locked={!isEmailVerified} />
                 ))}
               </div>
             </div>

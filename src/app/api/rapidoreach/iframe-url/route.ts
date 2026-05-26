@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import { requireVerifiedUser } from "@/lib/verified-user";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -7,6 +8,13 @@ export async function GET(request: NextRequest) {
 
   if (!userId) {
     return NextResponse.json({ error: 'userId required' }, { status: 400 });
+  }
+
+  const verifiedUser = await requireVerifiedUser(request);
+  if ("response" in verifiedUser) return verifiedUser.response;
+
+  if (verifiedUser.uid !== userId) {
+    return NextResponse.json({ error: "User mismatch" }, { status: 403 });
   }
 
   const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "parPnrD9RiU";

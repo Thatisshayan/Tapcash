@@ -9,7 +9,6 @@ import {
   Activity,
   ArrowUpRight,
   BadgeCheck,
-  ExternalLink,
   Loader2,
   ShieldCheck,
   Sparkles,
@@ -19,12 +18,13 @@ import {
 
 export default function RapidoReachPage() {
   const { user, loading } = useAuth();
+  const isVerified = !!user?.emailVerified;
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !isVerified) {
       setIframeUrl(null);
       return;
     }
@@ -36,7 +36,12 @@ export default function RapidoReachPage() {
         setFetching(true);
         setLoadError(null);
 
-        const res = await fetch(`/api/rapidoreach/iframe-url?userId=${user.uid}`);
+        const idToken = await user.getIdToken();
+        const res = await fetch(`/api/rapidoreach/iframe-url?userId=${user.uid}`, {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
         if (!res.ok) {
           throw new Error(`Failed to load RapidoReach iframe URL (${res.status})`);
         }
@@ -67,7 +72,7 @@ export default function RapidoReachPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, isVerified]);
 
   const trustPoints = useMemo(
     () => [
@@ -144,13 +149,6 @@ export default function RapidoReachPage() {
                 Back to dashboard
                 <ArrowUpRight className="w-4 h-4" />
               </Link>
-              <a
-                href="#wall"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
-              >
-                Jump to wall
-                <ExternalLink className="w-4 h-4" />
-              </a>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -232,6 +230,23 @@ export default function RapidoReachPage() {
                     </Link>
                   </div>
                 </div>
+              ) : !isVerified ? (
+                <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
+                  <div className="max-w-md space-y-4">
+                    <div className="mx-auto w-14 h-14 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center">
+                      <ShieldCheck className="w-6 h-6 text-[#00e6c3]" />
+                    </div>
+                    <h3 className="text-xl font-black text-white">Email verification required</h3>
+                    <p className="text-zinc-500 text-sm">The offerwall stays locked until your inbox is verified.</p>
+                    <Link
+                      href="/auth/verify-email?next=/rapidoreach"
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-5 py-3 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                    >
+                      Verify email
+                      <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
               ) : loadError ? (
                 <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
                   <div className="max-w-md space-y-4">
@@ -269,17 +284,8 @@ export default function RapidoReachPage() {
         {!loading && user && iframeUrl && (
           <div className="mt-5 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <a
-                href={iframeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-4 py-2 text-sm font-bold text-zinc-200 hover:text-white hover:border-white/15 transition-colors"
-              >
-                Open in new tab
-                <ExternalLink className="w-4 h-4" />
-              </a>
               <p className="text-xs text-zinc-500">
-                Completed offers are credited only after the backend verifies the callback and writes the ledger.
+                Stay inside TapCash while the embedded wall loads. Completed offers are credited only after the backend verifies the callback and writes the ledger.
               </p>
             </div>
 

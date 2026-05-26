@@ -7,9 +7,10 @@ import InstructionModal from './InstructionModal';
 interface OfferCardProps {
   offer: Offer;
   onEarn: () => void;
+  locked?: boolean;
 }
 
-export default function OfferCard({ offer, onEarn }: OfferCardProps) {
+export default function OfferCard({ offer, onEarn, locked = false }: OfferCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   // Generate deterministic rating & duration for high-fidelity look
@@ -66,6 +67,20 @@ export default function OfferCard({ offer, onEarn }: OfferCardProps) {
           </p>
         </div>
 
+        {locked && (
+          <div className="absolute inset-0 z-10 rounded-[1.5rem] bg-[#050816]/70 backdrop-blur-[2px] border border-white/8 flex items-center justify-center p-6 text-center">
+            <div className="space-y-3">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#00e6c3]">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-lg font-black text-white">Verify email to unlock</p>
+                <p className="text-sm text-zinc-400 max-w-xs mx-auto">This offer stays locked until your inbox is verified.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="relative flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
           <div>
             <p className="text-2xl font-black text-white tracking-tight">
@@ -78,9 +93,10 @@ export default function OfferCard({ offer, onEarn }: OfferCardProps) {
           
           <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-1 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] font-black shadow-[0_12px_30px_rgba(58,123,255,0.16)] hover:opacity-95 hover:scale-[1.02] transition-all duration-200"
+            disabled={locked}
+            className="flex items-center gap-1 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] font-black shadow-[0_12px_30px_rgba(58,123,255,0.16)] hover:opacity-95 hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
           >
-            <span>Earn Now</span>
+            <span>{locked ? "Locked" : "Earn Now"}</span>
             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
           </button>
         </div>
