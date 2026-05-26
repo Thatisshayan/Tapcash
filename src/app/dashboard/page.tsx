@@ -1422,6 +1422,14 @@ const leaderboardEarners = [
               {/* Glowing decorative backgrounds */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
 
+              <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.28em] text-emerald-300">
+                <Sparkles className="w-3.5 h-3.5" />
+                New release
+                <span className="hidden sm:inline text-zinc-300 normal-case tracking-normal font-semibold">
+                  dashboard stays open while offers stay locked until email verification
+                </span>
+              </div>
+
               <span className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase rounded-full tracking-widest leading-none">
                 <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
                 <span>Next-Gen Reward Portal</span>

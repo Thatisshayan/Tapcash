@@ -180,6 +180,21 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#050816]/78 backdrop-blur-2xl">
+      <div className="border-b border-white/5 bg-gradient-to-r from-[#00e6c3]/15 via-[#3a7bff]/10 to-[#9f7aea]/15">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-200">
+          <span className="inline-flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#00e6c3]" />
+            New release
+          </span>
+          <span className="hidden md:inline text-zinc-400 tracking-normal normal-case font-semibold">
+            One-time email verification is live. Offers stay locked until inbox verification, but the dashboard stays visible.
+          </span>
+          <span className="text-[#00e6c3] tracking-normal normal-case font-semibold">
+            TapCash v2
+          </span>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 lg:gap-8">
           <Link href="/" className="flex items-center gap-3 group">

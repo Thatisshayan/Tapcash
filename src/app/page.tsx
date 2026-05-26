@@ -121,6 +121,15 @@ export default function LandingPage() {
         <section className="px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 pb-16">
           <div className="max-w-7xl mx-auto grid gap-8 lg:grid-cols-[1.05fr_0.95fr] items-start">
             <div className="space-y-8">
+              <div className="inline-flex flex-wrap items-center gap-3 rounded-full border border-black/10 bg-white px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#111827] px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white">
+                  New release
+                </span>
+                <span className="text-sm font-bold text-slate-700">
+                  Quest mode is live, offers are locked until email verification, and the dashboard stays open.
+                </span>
+              </div>
+
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/10 bg-white text-[10px] font-black uppercase tracking-[0.28em] text-slate-600">
                 <BadgeCheck className="w-3.5 h-3.5 text-[#1cd3b0]" />
                 Rewards users actually understand
