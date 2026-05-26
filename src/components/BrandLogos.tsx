@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 export const InteracLogo = ({ className = "" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -7,30 +8,27 @@ export const InteracLogo = ({ className = "" }: { className?: string }) => (
 );
 
 export const TimsLogo = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 120 40" fill="none">
-    <text x="50%" y="26" textAnchor="middle" className="font-serif font-black italic tracking-wide text-[20px]" fill="#da291c">Tim Hortons</text>
-  </svg>
+  <div className={`relative w-full h-full ${className}`}>
+    <Image src="/images/logos/timhortons.svg" alt="Tim Hortons" fill className="object-contain" />
+  </div>
 );
 
 export const CTLogo = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 100 100" fill="none">
-    <polygon points="50,85 10,15 90,15" fill="#cc2029" />
-    <path d="M50,25 L53,37 L59,34 L56,46 L64,44 L59,54 L67,58 L56,62 L54,74 L46,74 L44,62 L33,58 L41,54 L36,44 L44,46 L41,34 L47,37 Z" fill="#008643" />
-  </svg>
+  <div className={`relative w-full h-full ${className}`}>
+    <Image src="/images/logos/canadiantire.svg" alt="Canadian Tire" fill className="object-contain" />
+  </div>
 );
 
 export const CineplexLogo = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 120 40" fill="none">
-    <text x="60%" y="24" textAnchor="middle" className="font-sans font-black tracking-[0.16em] text-[14px]" fill="#ffffff">CINEPLEX</text>
-    <path d="M12,12 L14.5,17 L19.5,18 L15.5,21.5 L16.5,26.5 L12,24 L7.5,26.5 L8.5,21.5 L4.5,18 L9.5,17 Z" fill="#fbbf24" />
-  </svg>
+  <div className={`relative w-full h-full ${className}`}>
+    <Image src="/images/logos/cineplex.svg" alt="Cineplex" fill className="object-contain" />
+  </div>
 );
 
 export const SDMLogo = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 130 40" fill="none">
-    <text x="50%" y="20" textAnchor="middle" className="font-sans font-black tracking-widest text-[14px]" fill="#ff0000">SHOPPERS</text>
-    <text x="50%" y="30" textAnchor="middle" className="font-sans font-extrabold tracking-[0.25em] text-[8px]" fill="#ffffff">DRUG MART</text>
-  </svg>
+  <div className={`relative w-full h-full ${className}`}>
+    <Image src="/images/logos/shoppers.svg" alt="Shoppers Drug Mart" fill className="object-contain" />
+  </div>
 );
 
 export const LitecoinLogo = ({ className = "" }: { className?: string }) => (
