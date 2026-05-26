@@ -3,7 +3,7 @@
 
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers } from "lucide-react";
+import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function CookiePolicyPage() {
@@ -158,6 +158,58 @@ export default function CookiePolicyPage() {
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[120px] pointer-events-none" />
 
       <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
+        <section className="mb-12 rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Cookie controls
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
+                  Offer attribution
+                </span>
+              </div>
+              <div className="max-w-2xl space-y-3">
+                <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                  Cookie policy that keeps the funnel measurable and secure.
+                </h1>
+                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+                  We use storage, session tokens, and tracking keys to keep sign-in, offer attribution, and fraud controls working together.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a href="/auth/signup" className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]">
+                  Join TapCash
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <a href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors">
+                  Open dashboard
+                </a>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Tracking scope</p>
+                <p className="mt-2 text-2xl font-black text-white">Visible and controlled</p>
+                <p className="mt-2 text-sm text-zinc-400">Cookies support login, offer matching, and fraud prevention.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Auth</p>
+                  <p className="mt-2 text-2xl font-black text-white">Secure</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Match</p>
+                  <p className="mt-2 text-2xl font-black text-white">Reliable</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="space-y-4 text-center mb-16">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase rounded-full tracking-widest leading-none">
             <FileText className="w-3.5 h-3.5 animate-pulse" />
