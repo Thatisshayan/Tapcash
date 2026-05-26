@@ -11,10 +11,18 @@ export default function RapidoReachPage() {
 
   useEffect(() => {
     if (user) {
-      // Build the Iframe URL with the RapidoReach App ID and the user's UID
-      const baseUrl = "https://rewardcenter.rapidoreach.com";
-      const appId = process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "parPnrD9RiU"; 
-      setIframeUrl(`${baseUrl}?api_key=${appId}&user_id=${user.uid}`);
+      const fetchIframeUrl = async () => {
+        try {
+          const res = await fetch(`/api/rapidoreach/iframe-url?userId=${user.uid}`);
+          const data = await res.json();
+          if (data.iframeUrl) {
+            setIframeUrl(data.iframeUrl);
+          }
+        } catch (error) {
+          console.error("Error fetching RapidoReach Iframe URL", error);
+        }
+      };
+      fetchIframeUrl();
     }
   }, [user]);
 
