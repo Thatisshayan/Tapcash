@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
 
   // RapidoReach expects a three-part UID:
   // internalUserId-appId-checksum
-  // where checksum = first 10 chars of md5("internalUserId-appId-appKey")
-  const rawString = `${userId}-${appId}-${appKey}`;
+  // where checksum = first 10 chars of md5(internalUserId + appId + appKey)
+  const rawString = `${userId}${appId}${appKey}`;
   const checksum = crypto.createHash('md5').update(rawString).digest('hex').slice(0, 10);
   const rapidoreachUid = `${userId}-${appId}-${checksum}`;
 
-  const iframeUrl = `https://www.rapidoreach.com/ofw/?userId=${encodeURIComponent(rapidoreachUid)}`;
+  const iframeUrl = `https://www.rapidoreach.com/offerwall/?userId=${encodeURIComponent(rapidoreachUid)}`;
 
   return NextResponse.json({ iframeUrl });
 }

@@ -59,7 +59,7 @@ function verifyTxnHash(transactionId: string | null, txnHash: string | null): bo
 }
 
 function buildRapidoreachUserId(endUserId: string, appId: string, appKey: string): string {
-  const checksum = crypto.createHash("md5").update(`${endUserId}-${appId}-${appKey}`).digest("hex").slice(0, 10);
+  const checksum = crypto.createHash("md5").update(`${endUserId}${appId}${appKey}`).digest("hex").slice(0, 10);
   return `${endUserId}-${appId}-${checksum}`;
 }
 
