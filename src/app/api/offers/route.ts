@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const appId = process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "parPnrD9RiU";
+  const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "parPnrD9RiU";
   const appKey = process.env.RAPIDOREACH_APP_KEY || "3912bbe80f741af48d3624ce4a4d1b37";
   
   const userIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';

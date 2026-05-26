@@ -48,14 +48,24 @@ function verifyOidHash(offerInvitationId: string | null, oidHash: string | null)
 
 function verifyTxnHash(transactionId: string | null, txnHash: string | null): boolean {
   if (!transactionId || !txnHash) return false;
-  const transactionKey = process.env.RAPIDOREACH_TRANSACTION_KEY || process.env.RAPIDOREACH_APP_KEY || "";
+  const transactionKey =
+    process.env.RAPIDOREACH_APP_SECRET ||
+    process.env.RAPIDOREACH_TRANSACTION_KEY ||
+    process.env.RAPIDOREACH_APP_KEY ||
+    "";
   if (!transactionKey) return false;
   const expected = crypto.createHash("md5").update(`${transactionId}${transactionKey}`).digest("hex");
   return expected.toLowerCase() === txnHash.toLowerCase();
 }
 
+function buildRapidoreachUserId(endUserId: string, appId: string, appKey: string): string {
+  const checksum = crypto.createHash("md5").update(`${endUserId}${appId}${appKey}`).digest("hex").slice(0, 10);
+  return `${endUserId}-${appId}-${checksum}`;
+}
+
 async function handlePostback(
-  uid: string,
+  endUserId: string,
+  providerUserId: string,
   txId: string,
   offerId: string,
   amountCoins: number,
@@ -66,9 +76,14 @@ async function handlePostback(
   const postbackRef = adminDb.collection("offer_postbacks").doc(txId);
   const pendingLedgerRef = adminDb.collection("ledger_transactions").doc(`pending_${txId}`);
   const approvedLedgerRef = adminDb.collection("ledger_transactions").doc(`approved_${txId}`);
+  const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "";
+  const appKey = process.env.RAPIDOREACH_APP_KEY || "";
+  const expectedProviderUserId = appId && appKey ? buildRapidoreachUserId(endUserId, appId, appKey) : "";
+  let providerUidMatches = false;
+
   const clickSnap = await adminDb
     .collection("offer_clicks")
-    .where("userId", "==", uid)
+    .where("userId", "==", endUserId)
     .where("offerId", "==", offerId)
     .where("timestamp", ">=", Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)))
     .limit(1)
@@ -80,43 +95,52 @@ async function handlePostback(
       throw new Error("DUPLICATE");
     }
 
-    const userRef = adminDb.collection("users").doc(uid);
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists) {
-        throw new Error("USER_NOT_FOUND");
-      }
+    const userRef = adminDb.collection("users").doc(endUserId);
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+      throw new Error("USER_NOT_FOUND");
+    }
 
-      const userData = userDoc.data()!;
-      const approved = isCompletedStatus(callbackStatus) && !clickSnap.empty && userData.status !== "banned" && userData.isFlagged !== true;
-      const status = approved ? "approved" : "pending_review";
+    const userData = userDoc.data()!;
+    providerUidMatches = !expectedProviderUserId || expectedProviderUserId === providerUserId;
+    const approved =
+      isCompletedStatus(callbackStatus) &&
+      providerUidMatches &&
+      !clickSnap.empty &&
+      userData.status !== "banned" &&
+      userData.isFlagged !== true;
+    const status = approved ? "approved" : "pending_review";
 
-      transaction.set(postbackRef, {
-        id: txId,
-        userId: uid,
-        offerId,
-        provider: "rapidoreach",
-        amountCoins,
-        ip,
-        userAgent,
-        clickVerified: !clickSnap.empty,
-        callbackStatus,
-        status,
-        source: "rapidoreach",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        metadata: { txId },
+    transaction.set(postbackRef, {
+      id: txId,
+      userId: endUserId,
+      providerUserId,
+      endUserId,
+      offerId,
+      provider: "rapidoreach",
+      amountCoins,
+      ip,
+      userAgent,
+      clickVerified: !clickSnap.empty,
+      providerUidMatches,
+      callbackStatus,
+      status,
+      source: "rapidoreach",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      metadata: { txId, expectedProviderUserId: expectedProviderUserId || null },
     });
 
     transaction.set(pendingLedgerRef, {
       id: pendingLedgerRef.id,
-      userId: uid,
+      userId: endUserId,
       type: "pending_credit",
       amountCoins,
       balanceEffectCoins: 0,
       status: "pending",
       source: "rapidoreach_postback",
       referenceId: txId,
-      metadata: { offerId, provider: "rapidoreach" },
+      metadata: { offerId, provider: "rapidoreach", providerUserId },
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -124,26 +148,26 @@ async function handlePostback(
     if (approved) {
       transaction.set(approvedLedgerRef, {
         id: approvedLedgerRef.id,
-        userId: uid,
+        userId: endUserId,
         type: "approved_credit",
         amountCoins,
         balanceEffectCoins: amountCoins,
         status: "approved",
         source: "rapidoreach_postback",
         referenceId: txId,
-        metadata: { offerId, provider: "rapidoreach" },
+        metadata: { offerId, provider: "rapidoreach", providerUserId },
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
-    });
+  });
 
     await logAdminAction({
       action: "rapidoreach_postback",
-      actorUserId: uid,
+      actorUserId: endUserId,
       targetType: "offer",
       targetId: offerId,
-      metadata: { txId, amountCoins, ip, approved: isCompletedStatus(callbackStatus) },
+      metadata: { txId, amountCoins, ip, approved: isCompletedStatus(callbackStatus), providerUidMatches },
     });
 }
 
@@ -157,7 +181,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const searchParams = request.nextUrl.searchParams;
-    const uid = searchParams.get("uid") || searchParams.get("userId") || searchParams.get("user_id");
+    const providerUserId = searchParams.get("userId") || searchParams.get("uid") || searchParams.get("user_id");
+    const endUserId = searchParams.get("endUserId") || searchParams.get("end_user_id") || providerUserId;
     const rewardStr = searchParams.get("currencyAmt") || searchParams.get("reward") || searchParams.get("amt") || searchParams.get("amount");
     const txId = searchParams.get("transactionId") || searchParams.get("txnId") || searchParams.get("tx_id") || searchParams.get("transaction_id") || searchParams.get("id");
     const offerId = searchParams.get("offerInvitationId") || searchParams.get("offer_id") || searchParams.get("offerId") || "rapidoreach";
@@ -165,7 +190,7 @@ export async function GET(request: NextRequest) {
     const oidHash = searchParams.get("oidHash");
     const txnHash = searchParams.get("txnHash");
 
-    if (!uid || !rewardStr || !txId) {
+    if (!endUserId || !rewardStr || !txId) {
       return new NextResponse("Missing parameters", { status: 400 });
     }
 
@@ -178,7 +203,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse("Invalid reward", { status: 400 });
     }
 
-    await handlePostback(uid, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
+    await handlePostback(endUserId, providerUserId || endUserId, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
     return new NextResponse("1", { status: 200 });
   } catch (error: any) {
     if (error.message === "DUPLICATE") return new NextResponse("1", { status: 200 });
@@ -198,7 +223,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const uid = body.uid || body.userId || body.user_id;
+    const providerUserId = body.userId || body.uid || body.user_id;
+    const endUserId = body.endUserId || body.end_user_id || providerUserId;
     const txId = body.txId || body.tx_id || body.transactionId || body.transaction_id || body.id;
     const amountCoins = parseAmountCoins(String(body.currencyAmt || body.reward || body.amount || body.coins || body.amt || ""));
     const offerId = body.offerId || body.offer_id || body.offerInvitationId || "rapidoreach";
@@ -206,7 +232,7 @@ export async function POST(request: NextRequest) {
     const oidHash = body.oidHash || body.oid_hash || null;
     const txnHash = body.txnHash || body.txn_hash || null;
 
-    if (!uid || !txId || Number.isNaN(amountCoins) || amountCoins <= 0) {
+    if (!endUserId || !txId || Number.isNaN(amountCoins) || amountCoins <= 0) {
       return new NextResponse("Missing parameters", { status: 400 });
     }
 
@@ -214,7 +240,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse("Invalid callback signature", { status: 403 });
     }
 
-    await handlePostback(uid, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
+    await handlePostback(endUserId, providerUserId || endUserId, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
 
     await adminDb.collection("webhook_logs").add({
       provider: "rapidoreach",
