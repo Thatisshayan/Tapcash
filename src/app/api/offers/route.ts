@@ -31,6 +31,49 @@ function transformOffer(survey: RapidoReachSurvey): Offer {
   };
 }
 
+function extractSurveyList(payload: unknown): RapidoReachSurvey[] {
+  if (Array.isArray(payload)) {
+    return payload as RapidoReachSurvey[];
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return [];
+  }
+
+  const record = payload as Record<string, unknown>;
+  const candidateKeys = [
+    'offers',
+    'surveys',
+    'surveyList',
+    'items',
+    'results',
+    'data',
+    'Data',
+    'result',
+    'Result',
+    'Surveys',
+    'Offers',
+  ];
+
+  for (const key of candidateKeys) {
+    const value = record[key];
+    if (Array.isArray(value)) {
+      return value as RapidoReachSurvey[];
+    }
+    if (value && typeof value === 'object') {
+      const nested = value as Record<string, unknown>;
+      for (const nestedKey of ['offers', 'surveys', 'items', 'results', 'data', 'Surveys', 'Offers']) {
+        const nestedValue = nested[nestedKey];
+        if (Array.isArray(nestedValue)) {
+          return nestedValue as RapidoReachSurvey[];
+        }
+      }
+    }
+  }
+
+  return [];
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
@@ -72,10 +115,10 @@ export async function GET(request: NextRequest) {
     }
 
     const json = await response.json();
-    
-    // RapidoReach success response is typically a direct JSON array of surveys
-    if (Array.isArray(json)) {
-      const offers = json.map(transformOffer);
+    const surveys = extractSurveyList(json);
+
+    if (surveys.length > 0) {
+      const offers = surveys.map(transformOffer);
       return NextResponse.json(
         {
           offers,
@@ -87,12 +130,15 @@ export async function GET(request: NextRequest) {
           },
         }
       );
-    } else if (json.Errors) {
+    } else if ((json as { Errors?: unknown }).Errors) {
        // Handle explicit RapidoReach API errors gracefully
-       console.error("RapidoReach API Error Object:", json.Errors);
+       console.error("RapidoReach API Error Object:", (json as { Errors?: unknown }).Errors);
        return NextResponse.json({ offers: [], source: 'rapidoreach' }, { status: 200 });
     } else {
-      throw new Error('RapidoReach API returned unsuccessful response');
+      console.warn('RapidoReach API returned no survey list. Falling back to empty offer array.', {
+        responseKeys: typeof json === 'object' && json ? Object.keys(json as Record<string, unknown>) : [],
+      });
+      return NextResponse.json({ offers: [], source: 'rapidoreach' }, { status: 200 });
     }
   } catch (error) {
     console.error('RapidoReach API fetch error:', error);

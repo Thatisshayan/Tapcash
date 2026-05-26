@@ -342,13 +342,14 @@ export default function OffersPage() {
     }
 
     try {
+      const provider = offer.provider.toLowerCase();
       await fetch("/api/clicks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.uid,
           offerId: offer.id,
-          provider: "lootably",
+          provider,
         }),
       });
     } catch (err) {
