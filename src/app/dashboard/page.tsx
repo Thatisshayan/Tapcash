@@ -12,7 +12,7 @@ import Link from "next/link";
 import { 
   Sparkles, Trophy, Flame, UserCheck, ArrowRight, Wallet, Users, 
   ArrowUpRight, Coins, Loader2, Sparkle, AlertCircle, Play, CheckCircle, X,
-  Check, Ticket, Award, BarChart3, Star, Gift, Crown, HelpCircle
+  Check, Ticket, Award, BarChart3, Star, Gift, Crown, HelpCircle, CheckCircle2
 } from "lucide-react";
 
 const MOCK_OFFERS: Offer[] = [
@@ -581,13 +581,24 @@ export default function OffersPage() {
     : Math.min(100, Math.max(0, ((userBalance - prevTierThreshold) / (nextTierThreshold - prevTierThreshold)) * 100));
 
   // Simulated Daily Earners Leaderboard (Freecash-style)
-  const leaderboardEarners = [
+const leaderboardEarners = [
     { rank: 1, name: "Alpha_Earner", coins: 42800, isGold: true },
     { rank: 2, name: "CryptoCoiner", coins: 28900, isSilver: true },
     { rank: 3, name: "TapTastic", coins: 19450, isBronze: true },
     { rank: 4, name: "SurveyQueen", coins: 14200 },
     { rank: 5, name: "LootLord", coins: 11050 }
   ];
+
+  const balanceDisplay = userBalance.toLocaleString();
+  const pendingFromToday = todayTransactions.reduce((sum, tx) => {
+    const effect = Number(tx?.balanceEffectCoins || 0);
+    return effect > 0 && String(tx?.status || tx?.type || "").toLowerCase().includes("pending") ? sum + effect : sum;
+  }, 0);
+  const approvedFromToday = todayTransactions.reduce((sum, tx) => {
+    const effect = Number(tx?.balanceEffectCoins || 0);
+    return effect > 0 && String(tx?.status || tx?.type || "").toLowerCase().includes("approved") ? sum + effect : sum;
+  }, 0);
+  const activeOfferCount = offers.length;
 
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
@@ -633,35 +644,139 @@ export default function OffersPage() {
         {user ? (
           /* ================= AUTHENTICATED USER VIEW ================= */
           <div className="space-y-10">
-            
-            {/* Daily Spin Banner Card */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950/20 via-zinc-950/30 to-[#0a0a0a] border border-emerald-500/15 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
-              <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none" />
-              <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-48 h-48 bg-emerald-500/5 rounded-full blur-[80px]" />
-              
-              <div className="relative space-y-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase rounded-full tracking-wider leading-none">
-                  <Sparkle className="w-3 h-3 animate-spin-slow" />
-                  <span>Free Daily Credit</span>
-                </span>
-                <h2 className="text-2xl font-black tracking-tight text-white">Daily Rewards Wheel</h2>
-                <p className="text-zinc-400 text-sm max-w-xl">Spin our luck-based reward wheel once every 24 hours to win free coins added instantly to your wallet.</p>
+            <section className="relative overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.14),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.16),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/10 blur-3xl" />
+                <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/10 blur-3xl" />
               </div>
 
-              <div className="relative shrink-0">
-                <button
-                  onClick={handleOpenSpinModal}
-                  className={`px-8 py-4 text-sm font-extrabold rounded-2xl shadow-xl transition-all duration-300 flex items-center gap-2 uppercase tracking-wider ${
-                    spinEligible 
-                      ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/10 hover:shadow-emerald-500/25 hover:scale-[1.02]" 
-                      : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800"
-                  }`}
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>{spinEligible ? "Spin Free Wheel" : "Spinned (Locked)"}</span>
-                </button>
+              <div className="relative grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+                <div className="space-y-6">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+                      <Sparkle className="w-3.5 h-3.5" />
+                      Mission control
+                    </span>
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                      <BarChart3 className="w-3.5 h-3.5 text-[#7aa7ff]" />
+                      Ledger-backed balance
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 max-w-3xl">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[0.92] font-display">
+                      Your earnings hub is live.
+                    </h1>
+                    <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-2xl">
+                      Open offers, verify completions, and keep your ledger moving. TapCash now centers the entire dashboard around the next action instead of a busy rewards wall.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-[1.5rem] border border-white/6 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Current balance</p>
+                      <p className="mt-2 text-2xl font-black text-white">{balanceDisplay} coins</p>
+                      <p className="mt-1 text-xs text-zinc-400">Computed from ledger transactions.</p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/6 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Active offers</p>
+                      <p className="mt-2 text-2xl font-black text-white">{activeOfferCount}</p>
+                      <p className="mt-1 text-xs text-zinc-400">Fresh opportunities from the wall.</p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/6 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Today pending</p>
+                      <p className="mt-2 text-2xl font-black text-white">{pendingFromToday.toLocaleString()}</p>
+                      <p className="mt-1 text-xs text-zinc-400">Credits waiting on approval.</p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/6 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">VIP tier</p>
+                      <p className="mt-2 text-2xl font-black text-white">{vipTier}</p>
+                      <p className="mt-1 text-xs text-zinc-400">Higher tiers unlock faster momentum.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                      href="/rapidoreach"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                    >
+                      Open offerwall
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <Link
+                      href="/cashout"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
+                    >
+                      Review cashout
+                      <Wallet className="w-4 h-4" />
+                    </Link>
+                    <button
+                      onClick={handleOpenSpinModal}
+                      className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-colors ${
+                        spinEligible
+                          ? "bg-[#0f1f1d] border border-emerald-500/20 text-emerald-300 hover:bg-[#112723]"
+                          : "bg-white/[0.04] border border-white/10 text-zinc-500"
+                      }`}
+                    >
+                      <Play className="w-4 h-4" />
+                      {spinEligible ? "Claim daily reward" : "Daily reward locked"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Current state</p>
+                        <h2 className="mt-1 text-xl font-black text-white">Ready to earn</h2>
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816]">
+                        <Coins className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      <div className="rounded-[1.25rem] bg-white/[0.04] border border-white/6 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-bold text-white">Next best action</span>
+                          <span className="text-[10px] uppercase tracking-[0.24em] text-[#8cf8e9] font-black">Highest ROI</span>
+                        </div>
+                        <p className="mt-2 text-sm text-zinc-400">Open the offerwall and start a verified completion flow.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-[1.25rem] bg-white/[0.04] border border-white/6 p-4">
+                          <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Approved today</p>
+                          <p className="mt-2 text-xl font-black text-white">{approvedFromToday.toLocaleString()}</p>
+                        </div>
+                        <div className="rounded-[1.25rem] bg-white/[0.04] border border-white/6 p-4">
+                          <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Streak</p>
+                          <p className="mt-2 text-xl font-black text-white">{streakCount}/7</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[1.75rem] border border-[#00e6c3]/15 bg-gradient-to-br from-[#00e6c3]/10 to-[#3a7bff]/10 p-5">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-400 font-black">Why this feels different</p>
+                    <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#00e6c3]" />
+                        Hero, proof, and CTA are now the first thing users see.
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#00e6c3]" />
+                        Wallet math stays ledger-first instead of client-side.
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#00e6c3]" />
+                        Cashout and offer actions are promoted before the old gamified clutter.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-            </div>
+            </section>
 
             {/* Welcoming Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
