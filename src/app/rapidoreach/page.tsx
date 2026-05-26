@@ -2,24 +2,33 @@
 
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function RapidoReachPage() {
   const { user, loading } = useAuth();
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       const fetchIframeUrl = async () => {
         try {
+          setLoadError(null);
           const res = await fetch(`/api/rapidoreach/iframe-url?userId=${user.uid}`);
+          if (!res.ok) {
+            throw new Error(`Failed to load RapidoReach iframe URL (${res.status})`);
+          }
           const data = await res.json();
           if (data.iframeUrl) {
             setIframeUrl(data.iframeUrl);
+          } else {
+            throw new Error("Missing iframe URL from provider response");
           }
         } catch (error) {
           console.error("Error fetching RapidoReach Iframe URL", error);
+          setIframeUrl(null);
+          setLoadError("The RapidoReach offerwall could not be loaded right now.");
         }
       };
       fetchIframeUrl();
@@ -52,6 +61,19 @@ export default function RapidoReachPage() {
                 <p className="text-zinc-500 text-sm">You must be signed in to access the survey offerwall and earn coins.</p>
               </div>
             </div>
+          ) : loadError ? (
+            <div className="flex-grow flex items-center justify-center p-8 text-center">
+              <div className="max-w-md space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-amber-400" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-100">Offerwall unavailable</h3>
+                <p className="text-zinc-500 text-sm">{loadError}</p>
+                <p className="text-zinc-600 text-xs">
+                  We fixed the UID and URL generation, so if this still appears the provider side is likely rate limiting or returning no active surveys.
+                </p>
+              </div>
+            </div>
           ) : iframeUrl ? (
             <iframe 
               src={iframeUrl} 
@@ -61,8 +83,26 @@ export default function RapidoReachPage() {
               name="RewardsCenter"
               title="RapidoReach Rewards Center"
             />
-          ) : null}
+          ) : (
+            <div className="flex-grow flex items-center justify-center p-8 text-center">
+              <div className="space-y-3">
+                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
+                <p className="text-zinc-400 text-sm">Loading RapidoReach offerwall...</p>
+              </div>
+            </div>
+          )}
         </div>
+        {!loading && user && iframeUrl && (
+          <a
+            href={iframeUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300"
+          >
+            Open offerwall in a new tab
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
       </main>
     </div>
   );
