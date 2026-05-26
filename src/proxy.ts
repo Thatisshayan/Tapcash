@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose';
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const adminCookie = request.cookies.get('admin_session');
     
