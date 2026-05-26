@@ -79,11 +79,19 @@ export async function POST(request: NextRequest) {
     const recentClicksSnapshot = await adminDb
       .collection('clicks')
       .where('userId', '==', userId)
-      .where('timestamp', '>=', Timestamp.fromDate(oneHourAgo))
-      .count()
+      .limit(50)
       .get();
 
-    const recentClickCount = recentClicksSnapshot.data().count;
+    const recentClickCount = recentClicksSnapshot.docs.filter((doc) => {
+      const data = doc.data() as { timestamp?: Timestamp | Date | string };
+      const clickedAt = data.timestamp instanceof Timestamp
+        ? data.timestamp.toDate()
+        : data.timestamp instanceof Date
+          ? data.timestamp
+          : data.timestamp ? new Date(data.timestamp) : null;
+
+      return clickedAt ? clickedAt >= oneHourAgo : true;
+    }).length;
 
     if (recentClickCount >= 50) {
       return NextResponse.json(

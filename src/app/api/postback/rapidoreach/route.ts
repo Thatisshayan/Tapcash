@@ -81,13 +81,24 @@ async function handlePostback(
   const expectedProviderUserId = appId && appKey ? buildRapidoreachUserId(endUserId, appId, appKey) : "";
   let providerUidMatches = false;
 
+  const clickCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const clickSnap = await adminDb
     .collection("offer_clicks")
     .where("userId", "==", endUserId)
-    .where("offerId", "==", offerId)
-    .where("timestamp", ">=", Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)))
-    .limit(1)
+    .limit(50)
     .get();
+  const matchingClicks = clickSnap.docs.filter((doc) => {
+    const data = doc.data() as { offerId?: string; timestamp?: Timestamp | Date | string };
+    const clickedAt = data.timestamp instanceof Timestamp
+      ? data.timestamp.toDate()
+      : data.timestamp instanceof Date
+        ? data.timestamp
+        : data.timestamp ? new Date(data.timestamp) : null;
+    if (data.offerId !== offerId || !clickedAt) {
+      return false;
+    }
+    return clickedAt.getTime() >= clickCutoff;
+  });
 
   await adminDb.runTransaction(async (transaction) => {
     const existing = await transaction.get(postbackRef);
@@ -106,7 +117,7 @@ async function handlePostback(
     const approved =
       isCompletedStatus(callbackStatus) &&
       providerUidMatches &&
-      !clickSnap.empty &&
+      matchingClicks.length > 0 &&
       userData.status !== "banned" &&
       userData.isFlagged !== true;
     const status = approved ? "approved" : "pending_review";
@@ -121,7 +132,7 @@ async function handlePostback(
       amountCoins,
       ip,
       userAgent,
-      clickVerified: !clickSnap.empty,
+      clickVerified: matchingClicks.length > 0,
       providerUidMatches,
       callbackStatus,
       status,
