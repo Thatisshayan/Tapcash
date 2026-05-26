@@ -1,6 +1,6 @@
 // src/lib/antiFraud.ts
-import { adminDb } from "@/lib/firebaseAdmin";
 import { NextRequest } from "next/server";
+import { logFraudFlag } from "@/lib/audit";
 
 export interface FraudLog {
   ip: string;
@@ -113,14 +113,11 @@ export async function isIpSuspicious(ip: string, action: string, userId?: string
  */
 export async function logFraudAttempt(log: FraudLog): Promise<void> {
   try {
-    await adminDb.collection("fraud_logs").add({
+    await logFraudFlag({
       ...log,
-      createdAt: admin.firestore?.FieldValue?.serverTimestamp() || new Date(),
+      category: "fraud_attempt",
     });
   } catch (err) {
-    console.error("Failed to write to fraud_logs collection:", err);
+    console.error("Failed to write to fraud_flags collection:", err);
   }
 }
-
-// Fallback dynamic admin import helper to prevent scope evaluation bugs
-import * as admin from "firebase-admin";

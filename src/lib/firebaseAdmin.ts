@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
   if (privateKey) {
     try {
@@ -30,15 +31,21 @@ if (!admin.apps.length) {
         credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
       });
     } catch (error: any) {
-      console.error("Firebase Admin Initialization Error:", error.message);
+      if (!isBuildPhase) {
+        console.error("Firebase Admin Initialization Error:", error.message);
+      }
     }
   } else {
-    console.warn("Firebase Admin: No credentials provided via env variables. Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.");
+    if (!isBuildPhase) {
+      console.warn("Firebase Admin: No credentials provided via env variables. Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.");
+    }
   }
 
   // Fallback to prevent Next.js build crash from `admin.firestore()` when credentials fail or are missing
   if (!admin.apps.length) {
-    console.warn("Initializing dummy Firebase app for build process.");
+    if (!isBuildPhase) {
+      console.warn("Initializing dummy Firebase app for build process.");
+    }
     admin.initializeApp({ projectId: projectId || "demo-project" });
   }
 }

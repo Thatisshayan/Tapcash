@@ -110,17 +110,17 @@ export async function GET(request: NextRequest) {
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const recentEarnedSnap = await adminDb
-      .collection('transactions')
+      .collection('ledger_transactions')
       .where('userId', '==', userId)
-      .where('status', '==', 'completed')
+      .where('status', '==', 'approved')
       .where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo))
       .get();
 
     let recentEarnedSum = 0;
     recentEarnedSnap.forEach((doc) => {
       const tx = doc.data();
-      if (tx.amount > 0) {
-        recentEarnedSum += tx.amount;
+      if (tx.balanceEffectCoins > 0) {
+        recentEarnedSum += tx.balanceEffectCoins;
       }
     });
 
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 
     // Dedup check and credit user wallet via Firestore transaction
     const userRef = adminDb.collection('users').doc(userId);
-    const offerRef = adminDb.collection('offerwall_postbacks').doc(`${userId}_${offerId}`);
+    const offerRef = adminDb.collection('offer_postbacks').doc(`${userId}_${offerId}`);
 
     await adminDb.runTransaction(async (transaction) => {
       const offerDoc = await transaction.get(offerRef);
@@ -165,24 +165,41 @@ export async function GET(request: NextRequest) {
       });
 
       // Log transaction entry
-      const transactionRef = adminDb.collection('transactions').doc();
-      transaction.set(transactionRef, {
-        id: transactionRef.id,
+      const pendingLedgerRef = adminDb.collection('ledger_transactions').doc(`pending_${userId}_${offerId}`);
+      const approvedLedgerRef = adminDb.collection('ledger_transactions').doc(`approved_${userId}_${offerId}`);
+      transaction.set(pendingLedgerRef, {
+        id: pendingLedgerRef.id,
         userId,
-        type: 'offer',
-        amount,
-        payoutCents: Math.floor(amount / 10),
+        type: 'pending_credit',
+        amountCoins: amount,
+        balanceEffectCoins: 0,
         method: 'Generic Offerwall',
-        status: postbackStatus,
+        status: postbackStatus === 'completed' ? 'pending' : 'pending',
+        source: 'generic_offerwall',
+        referenceId: `${userId}_${offerId}`,
+        metadata: { offerId, provider: 'generic_offerwall' },
         createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       if (postbackStatus === 'completed') {
-        // Credit user wallet and award XP (1 XP per 1 Coin)
+        transaction.set(approvedLedgerRef, {
+          id: approvedLedgerRef.id,
+          userId,
+          type: 'approved_credit',
+          amountCoins: amount,
+          balanceEffectCoins: amount,
+          method: 'Generic Offerwall',
+          status: 'approved',
+          source: 'generic_offerwall',
+          referenceId: `${userId}_${offerId}`,
+          metadata: { offerId, provider: 'generic_offerwall' },
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        // Award XP without touching wallet balances
         transaction.update(userRef, {
-          'wallet.balance': FieldValue.increment(amount),
-          'wallet.lastUpdated': FieldValue.serverTimestamp(),
-          walletBalanceCents: FieldValue.increment(Math.floor(amount / 10)),
           xp: FieldValue.increment(amount),
           updatedAt: FieldValue.serverTimestamp(),
         });
@@ -194,24 +211,20 @@ export async function GET(request: NextRequest) {
           if (referrerDoc.exists) {
             const referralCommission = Math.floor(amount * 0.05);
             if (referralCommission > 0) {
-              transaction.update(referrerRef, {
-                'wallet.balance': FieldValue.increment(referralCommission),
-                'wallet.lastUpdated': FieldValue.serverTimestamp(),
-                walletBalanceCents: FieldValue.increment(Math.floor(referralCommission / 10)),
-                updatedAt: FieldValue.serverTimestamp(),
-              });
-              
-              const refTransactionRef = adminDb.collection('transactions').doc();
-              transaction.set(refTransactionRef, {
-                id: refTransactionRef.id,
+              const refLedgerRef = adminDb.collection('ledger_transactions').doc(`ref_${userId}_${offerId}`);
+              transaction.set(refLedgerRef, {
+                id: refLedgerRef.id,
                 userId: userData.referredBy,
-                type: 'referral_commission',
-                amount: referralCommission,
-                payoutCents: Math.floor(referralCommission / 10),
+                type: 'approved_credit',
+                amountCoins: referralCommission,
+                balanceEffectCoins: referralCommission,
                 method: 'Referral Program',
-                status: 'completed',
-                fromUserId: userId,
+                status: 'approved',
+                source: 'referral_commission',
+                referenceId: `${userId}_${offerId}`,
+                metadata: { fromUserId: userId, offerId },
                 createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
               });
             }
           }
@@ -225,7 +238,7 @@ export async function GET(request: NextRequest) {
           updatedAt: FieldValue.serverTimestamp(),
         });
 
-        transaction.set(adminDb.collection('fraud_logs').doc(), {
+        transaction.set(adminDb.collection('fraud_flags').doc(), {
           ip,
           userId,
           email: userData.email,

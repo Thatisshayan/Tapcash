@@ -3,6 +3,7 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from '@/lib/antiFraud';
 import { withRateLimit } from '@/lib/rate-limit';
+import { logAdminAction } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -102,7 +103,20 @@ export async function POST(request: NextRequest) {
       status: 'clicked' as const,
     };
 
-    const docRef = await adminDb.collection('clicks').add(clickRecord);
+    const docRef = await adminDb.collection('offer_clicks').add(clickRecord);
+
+    await logAdminAction({
+      action: "offer_click",
+      actorUserId: userId,
+      targetType: "offer",
+      targetId: offerId,
+      metadata: {
+        provider,
+        ip,
+        userAgent,
+        clickId: docRef.id,
+      },
+    });
 
     return NextResponse.json(
       { success: true, clickId: docRef.id },

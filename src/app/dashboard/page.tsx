@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { doc, onSnapshot, collection, query, limit, orderBy, runTransaction, increment, serverTimestamp, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, limit, orderBy, runTransaction, serverTimestamp, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import OfferCard from "@/components/OfferCard";
 import Header from "@/components/Header";
@@ -73,6 +73,7 @@ const STREAK_STEPS = [
 export default function OffersPage() {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [ledgerBalance, setLedgerBalance] = useState<number>(0);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +123,7 @@ export default function OffersPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const q = query(
-      collection(db, "transactions"),
+      collection(db, "ledger_transactions"),
       where("userId", "==", user.uid),
       where("createdAt", ">=", todayStart)
     );
@@ -223,6 +224,30 @@ export default function OffersPage() {
     return () => unsubscribe();
   }, [user]);
 
+  useEffect(() => {
+    if (!user) {
+      setLedgerBalance(0);
+      return;
+    }
+
+    const q = query(
+      collection(db, "ledger_transactions"),
+      where("userId", "==", user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const total = snapshot.docs.reduce((sum, docSnap) => {
+        const data = docSnap.data() as { balanceEffectCoins?: number };
+        return sum + Number(data.balanceEffectCoins || 0);
+      }, 0);
+      setLedgerBalance(total);
+    }, (err) => {
+      console.log("Ledger balance subscription error:", err);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   // Load local poll state on start
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -240,7 +265,7 @@ export default function OffersPage() {
   // Subscribe to global real-time completed transaction alerts (Social Proof)
   useEffect(() => {
     const q = query(
-      collection(db, "transactions"),
+      collection(db, "ledger_transactions"),
       orderBy("createdAt", "desc"),
       limit(5)
     );
@@ -345,58 +370,34 @@ export default function OffersPage() {
     setStreakMessage(null);
 
     try {
-      const rewardCoins = STREAK_STEPS[streakCount - 1].reward;
-      const centsEquivalent = Math.floor(rewardCoins / 10);
       const isDay7 = streakCount === 7;
-
       const userRef = doc(db, "users", user.uid);
-      const transactionRef = doc(collection(db, "transactions"));
 
       await runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) throw new Error("Profile not found.");
 
         const nextStreakCount = isDay7 ? 1 : streakCount + 1;
-
-        // Atomic profile update
         transaction.update(userRef, {
-          "wallet.balance": increment(isDay7 ? 0 : rewardCoins), // Day 7 awards free spin instead
-          "wallet.lastUpdated": serverTimestamp(),
-          walletBalanceCents: increment(isDay7 ? 0 : centsEquivalent),
           streakCount: nextStreakCount,
           lastStreakClaim: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-
-        // Log transaction for tracking if not Day 7
-        if (!isDay7) {
-          transaction.set(transactionRef, {
-            id: transactionRef.id,
-            userId: user.uid,
-            type: "streak_bonus",
-            amount: rewardCoins,
-            payoutCents: centsEquivalent,
-            method: `Day ${streakCount} Streak Reward`,
-            status: "completed",
-            createdAt: serverTimestamp(),
-          });
-        }
       });
 
       setStreakClaimedToday(true);
       if (isDay7) {
         setStreakCount(1);
-        setStreakMessage("🎉 Day 7 Streak Claimed! You earned a Free Daily Wheel Spin! Opening Wheel...");
+        setStreakMessage("Day 7 streak tracked. Opening the daily wheel...");
         setTimeout(() => {
           setStreakMessage(null);
           handleOpenSpinModal();
         }, 3000);
       } else {
         setStreakCount((prev) => (prev === 7 ? 1 : prev + 1));
-        setStreakMessage(`🎉 Day ${streakCount} bonus claimed! +${rewardCoins} Coins added to your wallet.`);
+        setStreakMessage(`Day ${streakCount} streak tracked successfully.`);
         setTimeout(() => setStreakMessage(null), 5000);
       }
-
     } catch (err: any) {
       console.error("Streak claim error:", err);
       alert(err.message || "Failed to claim streak rewards.");
@@ -413,32 +414,16 @@ export default function OffersPage() {
 
     try {
       const userRef = doc(db, "users", user.uid);
-      const transactionRef = doc(collection(db, "transactions"));
 
       await runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) throw new Error("Profile not found");
 
         transaction.update(userRef, {
-          "wallet.balance": increment(10),
-          "wallet.lastUpdated": serverTimestamp(),
-          walletBalanceCents: increment(1),
           updatedAt: serverTimestamp(),
-        });
-
-        transaction.set(transactionRef, {
-          id: transactionRef.id,
-          userId: user.uid,
-          type: "community_poll",
-          amount: 10,
-          payoutCents: 1,
-          method: "Daily Community Poll",
-          status: "completed",
-          createdAt: serverTimestamp(),
         });
       });
 
-      // Update simulated poll vote distribution
       setPollVotes((prev) => {
         const next = [...prev];
         next[optionIdx] += 1;
@@ -447,12 +432,10 @@ export default function OffersPage() {
 
       setSelectedPollOption(optionIdx);
       setHasVotedPoll(true);
-      
       if (typeof window !== "undefined") {
         localStorage.setItem("tapcash_poll_voted_today", "true");
         localStorage.setItem("tapcash_poll_selected_option", optionIdx.toString());
       }
-
     } catch (err: any) {
       console.error("Poll vote transaction failure:", err);
       alert("Failed to submit your vote. Please try again.");
@@ -552,7 +535,7 @@ export default function OffersPage() {
   };
 
   // Real-time PrizeRebel-style VIP Loyalty Tier computation
-  const userBalance = profile?.wallet?.balance || 0;
+  const userBalance = ledgerBalance;
   let vipTier = "Bronze";
   let vipGlowColor = "shadow-zinc-500/10 border-zinc-800";
   let vipTextColor = "text-zinc-400";
@@ -1505,3 +1488,4 @@ export default function OffersPage() {
     </div>
   );
 }
+

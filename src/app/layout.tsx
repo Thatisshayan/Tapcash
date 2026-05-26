@@ -1,18 +1,8 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Outfit } from "next/font/google";
+import type { CSSProperties } from "react";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import GlobalNotificationListener from "@/components/GlobalNotificationListener";
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tapcash.online"),
@@ -50,11 +40,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fontVars = {
+    "--font-space-grotesk": '"Trebuchet MS", "Segoe UI", Arial, sans-serif',
+    "--font-outfit": '"Trebuchet MS", "Segoe UI", Arial, sans-serif',
+  } as CSSProperties;
+
   return (
-    <html
-      lang="en"
-      className={`${spaceGrotesk.variable} ${outfit.variable} h-full antialiased dark`}
-    >
+    <html lang="en" style={fontVars} className="h-full antialiased dark">
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
         <AuthProvider>
           <GlobalNotificationListener />

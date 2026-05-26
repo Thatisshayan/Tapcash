@@ -172,11 +172,6 @@ export async function POST(request: NextRequest) {
       deviceFingerprint: deviceFingerprint || "",
       referredBy: referredBy,
       createdAt: FieldValue.serverTimestamp(),
-      wallet: {
-        balance: 0,
-        lastUpdated: FieldValue.serverTimestamp(),
-      },
-      walletBalanceCents: 0, // Backward compatibility schema support
     });
 
     // 5. Send Welcome Email

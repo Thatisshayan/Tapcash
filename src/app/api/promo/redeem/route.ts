@@ -96,8 +96,6 @@ export async function POST(request: NextRequest) {
     const promo = PROMO_CODES[code];
     const promoRef = userRef.collection("redeemedPromos").doc(code);
 
-    const transactionRef = adminDb.collection("transactions").doc();
-
     await adminDb.runTransaction(async (transaction) => {
       // 1. Check if user already claimed this promo
       const promoSnap = await transaction.get(promoRef);
@@ -110,8 +108,6 @@ export async function POST(request: NextRequest) {
         throw new Error("User profile not found.");
       }
 
-      const centsEquivalent = Math.floor(promo.coins / 10);
-
       // 2. Claim lock
       transaction.set(promoRef, {
         code,
@@ -119,24 +115,38 @@ export async function POST(request: NextRequest) {
         rewardCoins: promo.coins,
       });
 
-      // 3. Credit wallet and legacy schemas
+      // 3. Credit ledger only
       transaction.update(userRef, {
-        "wallet.balance": admin.firestore.FieldValue.increment(promo.coins),
-        "wallet.lastUpdated": admin.firestore.FieldValue.serverTimestamp(),
-        walletBalanceCents: admin.firestore.FieldValue.increment(centsEquivalent),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // 4. Log the transaction
-      transaction.set(transactionRef, {
-        id: transactionRef.id,
+      const ledgerRef = adminDb.collection("ledger_transactions").doc();
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
         userId: uid,
-        type: "promo_code",
-        amount: promo.coins,
-        payoutCents: centsEquivalent,
+        type: "approved_credit",
+        amountCoins: promo.coins,
+        balanceEffectCoins: promo.coins,
         method: `Promo: ${code}`,
-        status: "completed",
+        status: "approved",
+        source: "promo_code",
+        referenceId: code,
+        metadata: { code, promoName: promo.name },
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const auditRef = adminDb.collection("admin_actions").doc();
+      transaction.set(auditRef, {
+        id: auditRef.id,
+        action: "promo_redeem",
+        actorUserId: uid,
+        targetType: "user",
+        targetId: uid,
+        metadata: { code, rewardCoins: promo.coins },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
 

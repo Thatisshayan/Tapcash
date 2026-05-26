@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import Header from "@/components/Header";
 import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -224,13 +224,18 @@ export default function CashoutStorePage() {
 
   // Subscribe to real-time balance
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setBalance(0);
+      return;
+    }
 
-    const userRef = doc(db, "users", user.uid);
-    const unsubscribe = onSnapshot(userRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setBalance(docSnap.data().wallet?.balance || 0);
-      }
+    const q = query(collection(db, "ledger_transactions"), where("userId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const total = snapshot.docs.reduce((sum, docSnap) => {
+        const data = docSnap.data() as { balanceEffectCoins?: number };
+        return sum + Number(data.balanceEffectCoins || 0);
+      }, 0);
+      setBalance(total);
     });
 
     return () => unsubscribe();

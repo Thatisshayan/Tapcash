@@ -127,9 +127,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const centsEquivalent = Math.floor(rewardCoins / 10);
-    const transactionRef = adminDb.collection("transactions").doc();
-
     // 8. DB Transaction to prevent double claiming under high concurrent clicks
     await adminDb.runTransaction(async (transaction) => {
       const freshUserSnap = await transaction.get(userRef);
@@ -149,23 +146,37 @@ export async function POST(request: NextRequest) {
       };
 
       transaction.update(userRef, {
-        "wallet.balance": admin.firestore.FieldValue.increment(rewardCoins),
-        "wallet.lastUpdated": admin.firestore.FieldValue.serverTimestamp(),
-        walletBalanceCents: admin.firestore.FieldValue.increment(centsEquivalent),
         [`claimedMissions.${todayStr}`]: updatedClaimsForDay,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // Register completion ledger transaction
-      transaction.set(transactionRef, {
-        id: transactionRef.id,
+      const ledgerRef = adminDb.collection("ledger_transactions").doc();
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
         userId: uid,
-        type: "daily_mission",
-        amount: rewardCoins,
-        payoutCents: centsEquivalent,
+        type: "approved_credit",
+        amountCoins: rewardCoins,
+        balanceEffectCoins: rewardCoins,
         method: `${missionName} Daily Bonus`,
-        status: "completed",
+        status: "approved",
+        source: "daily_mission",
+        referenceId: missionId,
+        metadata: { missionId, missionName },
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const auditRef = adminDb.collection("admin_actions").doc();
+      transaction.set(auditRef, {
+        id: auditRef.id,
+        action: "mission_reward",
+        actorUserId: uid,
+        targetType: "user",
+        targetId: uid,
+        metadata: { missionId, missionName, rewardCoins },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
 

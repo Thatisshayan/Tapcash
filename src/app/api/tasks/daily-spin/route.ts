@@ -79,8 +79,6 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    const transactionRef = adminDb.collection("transactions").doc();
-
     const result = await adminDb.runTransaction(async (transaction) => {
       // Re-read inside transaction for race conditions safety
       const freshUserSnap = await transaction.get(userRef);
@@ -127,27 +125,38 @@ export async function POST(request: NextRequest) {
         sectorIndex = 4;
       }
 
-      const centsEquivalent = Math.floor(rewardCoins / 10);
-
       // Atomic Update
       transaction.update(userRef, {
-        "wallet.balance": admin.firestore.FieldValue.increment(rewardCoins),
-        "wallet.lastUpdated": admin.firestore.FieldValue.serverTimestamp(),
         lastDailySpin: admin.firestore.FieldValue.serverTimestamp(),
-        walletBalanceCents: admin.firestore.FieldValue.increment(centsEquivalent),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Log credit transaction
-      transaction.set(transactionRef, {
-        id: transactionRef.id,
+      const ledgerRef = adminDb.collection("ledger_transactions").doc();
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
         userId: uid,
-        type: "daily_spin",
-        amount: rewardCoins,
-        payoutCents: centsEquivalent,
+        type: "approved_credit",
+        amountCoins: rewardCoins,
+        balanceEffectCoins: rewardCoins,
         method: "Daily Wheel",
-        status: "completed",
+        status: "approved",
+        source: "daily_spin",
+        referenceId: null,
+        metadata: { sectorIndex: rewardCoins === 10 ? 0 : rewardCoins === 25 ? 1 : rewardCoins === 50 ? 2 : rewardCoins === 100 ? 3 : 4 },
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const auditRef = adminDb.collection("admin_actions").doc();
+      transaction.set(auditRef, {
+        id: auditRef.id,
+        action: "daily_spin_award",
+        actorUserId: uid,
+        targetType: "user",
+        targetId: uid,
+        metadata: { rewardCoins, sectorIndex },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return { rewardCoins, sectorIndex };

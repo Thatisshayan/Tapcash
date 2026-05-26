@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import * as admin from 'firebase-admin';
+import { appendLedgerTransaction, computeLedgerBalance } from '@/lib/ledger';
+import { logAdminAction } from '@/lib/audit';
 
 /**
  * GET /api/admin/users
@@ -22,18 +24,23 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email');
     const limitCount = parseInt(searchParams.get('limit') || '20');
 
-    let q = adminDb.collection('users').orderBy('createdAt', 'desc').limit(limitCount);
+    let q: any = adminDb.collection('users').orderBy('createdAt', 'desc').limit(limitCount);
 
     if (email) {
-      q = adminDb.collection('users').where('email', '>=', email).where('email', '<=', email + '\uf8ff').limit(limitCount);
+      q = adminDb.collection('users')
+        .orderBy('email')
+        .startAt(email)
+        .endAt(email + '\uf8ff')
+        .limit(limitCount);
     }
 
     const snapshot = await q.get();
-    const users = snapshot.docs.map(doc => ({
+    const users = await Promise.all(snapshot.docs.map(async (doc: any) => ({
       uid: doc.id,
       ...doc.data(),
+      ledgerBalanceCoins: await computeLedgerBalance(doc.id),
       createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : doc.data().createdAt,
-    }));
+    })));
 
     return NextResponse.json({ users });
   } catch (error: any) {
@@ -87,9 +94,15 @@ export async function POST(request: NextRequest) {
       case 'adjust_balance':
         const amountCents = parseInt(value);
         if (isNaN(amountCents)) throw new Error('Invalid amount');
-        await userRef.update({
-          walletBalanceCents: admin.firestore.FieldValue.increment(amountCents),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        await appendLedgerTransaction({
+          userId: targetUid,
+          type: amountCents >= 0 ? 'approved_credit' : 'reversed_credit',
+          amountCoins: Math.abs(amountCents),
+          balanceEffectCoins: amountCents,
+          status: amountCents >= 0 ? 'approved' : 'reversed',
+          source: 'admin_adjustment',
+          referenceId: decodedToken.uid,
+          metadata: { amountCents, note: 'Admin adjustment' },
         });
         break;
 
@@ -109,6 +122,15 @@ export async function POST(request: NextRequest) {
       adminEmail,
       value: value || null,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await logAdminAction({
+      action: `user_${action}`,
+      actorUserId: decodedToken.uid,
+      actorEmail: adminEmail,
+      targetType: "user",
+      targetId: targetUid,
+      metadata: { value: value || null },
     });
 
     return NextResponse.json({ success: true });

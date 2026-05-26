@@ -14,15 +14,44 @@ service cloud.firestore {
       // Only allow update if they aren't touching secure fields
       allow update: if isOwner(userId)
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
-                      ['admin', 'walletBalanceCents', 'wallet', 'totalEarned', 'status', 'isFlagged', 'flaggedReason']
+                      ['admin', 'walletBalanceCents', 'wallet', 'ledgerBalanceCoins', 'totalEarned', 'status', 'isFlagged', 'flaggedReason']
                     );
       allow create: if isOwner(userId);
       allow delete: if false;
     }
 
-    // Root-level transactions (Public Ledger for Live Ticker)
+    // Ledger-first collections
+    match /ledger_transactions/{ledgerId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /offer_clicks/{clickId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /offer_postbacks/{postbackId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /cashout_requests/{requestId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /fraud_flags/{flagId} {
+      allow read, write: if false;
+    }
+
+    match /admin_actions/{actionId} {
+      allow read, write: if false;
+    }
+
+    // Legacy / transitional collections
     match /transactions/{transactionId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow write: if false; // Only written by Admin SDK
     }
 
@@ -49,7 +78,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if false;
     }
-    
+
     // Admin namespace placeholder
     match /admin/{document=**} {
       allow read, write: if false;

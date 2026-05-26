@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 
 interface Withdrawal {
   id: string;
   userId: string;
-  amount: number;
+  amountCoins: number;
   method: string;
   status: string;
   createdAt: any;
@@ -53,27 +51,20 @@ export default function AdminPage() {
   async function loadData() {
     setLoading(true);
     try {
-      // Pending withdrawals
-      const wq = query(collection(db, "withdrawals"), where("status", "==", "pending"), orderBy("createdAt", "desc"), limit(20));
-      const wSnap = await getDocs(wq);
-      setWithdrawals(wSnap.docs.map(d => ({ id: d.id, ...d.data() } as Withdrawal)));
+      const token = await user!.getIdToken();
+      const [adminDataRes, usersRes] = await Promise.all([
+        fetch("/api/admin/withdrawals", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/admin/users?limit=10", { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
 
-      // Recent postbacks
-      const pq = query(collection(db, "transactions"), where("type", "==", "offerwall_postback"), orderBy("createdAt", "desc"), limit(20));
-      const pSnap = await getDocs(pq);
-      setPostbacks(pSnap.docs.map(d => ({ id: d.id, ...d.data() } as Postback)));
+      const adminData = await adminDataRes.json();
+      const usersData = await usersRes.json();
 
-      // Flagged
-      const fq = query(collection(db, "transactions"), where("status", "==", "flagged"), limit(10));
-      const fSnap = await getDocs(fq);
-      setFlagged(fSnap.docs.map(d => ({ id: d.id, ...d.data() } as FlaggedTx)));
-
-      // Fetch users
-      const uq = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(10));
-      const uSnap = await getDocs(uq);
-      setUsers(uSnap.docs.map(d => ({ uid: d.id, ...d.data() })));
-
-      setStats({ users: uSnap.size, pending: wSnap.size, postbacks24h: pSnap.size });
+      if (adminData.withdrawals) setWithdrawals(adminData.withdrawals);
+      if (adminData.postbacks) setPostbacks(adminData.postbacks);
+      if (adminData.flagged) setFlagged(adminData.flagged);
+      if (usersData.users) setUsers(usersData.users);
+      if (adminData.stats) setStats(adminData.stats);
     } catch (e) {
       console.error("Admin load error:", e);
     } finally {
@@ -234,7 +225,7 @@ export default function AdminPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-emerald-400 font-black text-sm">${((w.amount || 0) / 100).toFixed(2)}</span>
+                        <span className="text-emerald-400 font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${w.method?.toLowerCase() === 'paypal' ? 'border-blue-500/20 text-blue-400 bg-blue-500/5' : 'border-amber-500/20 text-amber-400 bg-amber-500/5'}`}>
@@ -316,7 +307,7 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-emerald-400 font-black">${((u.walletBalanceCents || 0) / 100).toFixed(2)}</span>
+                      <span className="text-emerald-400 font-black">{(u.ledgerBalanceCoins || 0).toLocaleString()} Coins</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${u.status === 'banned' ? 'border-red-500/20 text-red-500 bg-red-500/5' : 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5'}`}>
@@ -354,4 +345,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

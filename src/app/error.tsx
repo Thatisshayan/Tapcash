@@ -2,9 +2,6 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Space_Grotesk } from 'next/font/google';
-
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
 
 export default function Error({
   error,
@@ -19,7 +16,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-white px-4">
-      <h1 className={`${spaceGrotesk.className} text-4xl md:text-6xl font-bold mb-4 text-red-500`}>
+      <h1 className="text-4xl md:text-6xl font-bold mb-4 text-red-500">
         Oops! Something went wrong
       </h1>
       <p className="text-gray-400 text-center max-w-md mb-8">

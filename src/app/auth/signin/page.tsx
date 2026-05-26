@@ -38,11 +38,6 @@ export default function SignInPage() {
           registrationIp: "google-oauth",
           userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "unknown",
           createdAt: serverTimestamp(),
-          wallet: {
-            balance: 0,
-            lastUpdated: serverTimestamp(),
-          },
-          walletBalanceCents: 0,
         });
       }
 

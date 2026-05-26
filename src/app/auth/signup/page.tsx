@@ -58,11 +58,6 @@ export default function SignUpPage() {
           deviceFingerprint: fingerprint,
           referredBy: referredBy,
           createdAt: serverTimestamp(),
-          wallet: {
-            balance: 0,
-            lastUpdated: serverTimestamp(),
-          },
-          walletBalanceCents: 0,
         });
       }
 

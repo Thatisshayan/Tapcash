@@ -5,16 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import Header from "@/components/Header";
-import { 
-  ArrowUpRight, ArrowDownLeft, 
-  Loader2, CheckCircle, Clock, AlertTriangle
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Loader2, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface LedgerTx {
   id: string;
   type: string;
-  amount: number;
+  amountCoins: number;
+  balanceEffectCoins?: number;
   method?: string;
   status: string;
   createdAt: any;
@@ -25,27 +23,30 @@ export default function TransactionsLedgerPage() {
   const [transactions, setTransactions] = useState<LedgerTx[]>([]);
   const [loadingTxs, setLoadingTxs] = useState(true);
 
-  // Subscribe to real-time transaction ledger
   useEffect(() => {
     if (!user) return;
 
     const q = query(
-      collection(db, "transactions"),
+      collection(db, "ledger_transactions"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const txs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as LedgerTx[];
-      setTransactions(txs);
-      setLoadingTxs(false);
-    }, (err) => {
-      console.error("Firestore transactions subscription error:", err);
-      setLoadingTxs(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const txs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as LedgerTx[];
+        setTransactions(txs);
+        setLoadingTxs(false);
+      },
+      (err) => {
+        console.error("Firestore transactions subscription error:", err);
+        setLoadingTxs(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
@@ -81,7 +82,6 @@ export default function TransactionsLedgerPage() {
       <Header />
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
-        {/* Page Title & Dashboard Intro */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-900">
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight">Ledger Records</h1>
@@ -89,7 +89,6 @@ export default function TransactionsLedgerPage() {
           </div>
         </div>
 
-        {/* Transaction History Ledger */}
         <div className="bg-zinc-950/40 border border-zinc-900 rounded-3xl overflow-hidden backdrop-blur-xl">
           {loadingTxs ? (
             <div className="p-12 text-center">
@@ -116,9 +115,10 @@ export default function TransactionsLedgerPage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-900/60">
                   {transactions.map((tx) => {
-                    const isAddition = tx.amount > 0;
-                    const formattedDate = tx.createdAt?.toDate 
-                      ? tx.createdAt.toDate().toLocaleString([], { dateStyle: "short", timeStyle: "short" }) 
+                    const amount = tx.balanceEffectCoins ?? tx.amountCoins ?? 0;
+                    const isAddition = amount > 0;
+                    const formattedDate = tx.createdAt?.toDate
+                      ? tx.createdAt.toDate().toLocaleString([], { dateStyle: "short", timeStyle: "short" })
                       : "—";
 
                     return (
@@ -138,22 +138,23 @@ export default function TransactionsLedgerPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4.5 font-semibold text-zinc-400">
-                          <span className="uppercase tracking-wider text-xs">
-                            {tx.method || "Offerwall"}
-                          </span>
+                          <span className="uppercase tracking-wider text-xs">{tx.method || "Offerwall"}</span>
                         </td>
                         <td className={`px-6 py-4.5 font-black ${isAddition ? "text-emerald-400" : "text-blue-400"}`}>
-                          {isAddition ? "+" : ""}{tx.amount.toLocaleString()} Coins
+                          {isAddition ? "+" : ""}
+                          {amount.toLocaleString()} Coins
                         </td>
                         <td className="px-6 py-4.5">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize ${
-                            tx.status === "completed" || tx.status === "approved"
-                              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                              : tx.status === "pending"
-                              ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
-                              : "bg-red-500/10 border-red-500/20 text-red-400"
-                          }`}>
-                            {tx.status === "completed" || tx.status === "approved" ? (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize ${
+                              tx.status === "completed" || tx.status === "approved" || tx.status === "paid"
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                : tx.status === "pending"
+                                ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+                                : "bg-red-500/10 border-red-500/20 text-red-400"
+                            }`}
+                          >
+                            {tx.status === "completed" || tx.status === "approved" || tx.status === "paid" ? (
                               <CheckCircle className="w-3 h-3" />
                             ) : tx.status === "pending" ? (
                               <Clock className="w-3 h-3" />
@@ -163,9 +164,7 @@ export default function TransactionsLedgerPage() {
                             <span>{tx.status}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4.5 text-zinc-500 text-xs font-semibold text-right">
-                          {formattedDate}
-                        </td>
+                        <td className="px-6 py-4.5 text-zinc-500 text-xs font-semibold text-right">{formattedDate}</td>
                       </tr>
                     );
                   })}

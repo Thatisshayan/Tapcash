@@ -1,140 +1,170 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { getClientIp } from '@/lib/antiFraud';
+import { NextRequest, NextResponse } from "next/server";
+import { Timestamp } from "firebase-admin/firestore";
+import * as admin from "firebase-admin";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { getClientIp } from "@/lib/antiFraud";
+import { logAdminAction } from "@/lib/audit";
 
-// Allowed RapidoReach Server IPs
 const RAPIDOREACH_IPS = [
-  '161.97.78.55', 
-  '173.212.227.149', 
-  '75.119.139.250', 
-  '75.119.139.251',
-  '127.0.0.1', // For local testing
-  '::1'
+  "161.97.78.55",
+  "173.212.227.149",
+  "75.119.139.250",
+  "75.119.139.251",
+  "127.0.0.1",
+  "::1",
 ];
+
+async function handlePostback(uid: string, txId: string, offerId: string, amountCoins: number, ip: string, userAgent: string) {
+  const postbackRef = adminDb.collection("offer_postbacks").doc(txId);
+  const pendingLedgerRef = adminDb.collection("ledger_transactions").doc(`pending_${txId}`);
+  const approvedLedgerRef = adminDb.collection("ledger_transactions").doc(`approved_${txId}`);
+  const clickSnap = await adminDb
+    .collection("offer_clicks")
+    .where("userId", "==", uid)
+    .where("offerId", "==", offerId)
+    .where("timestamp", ">=", Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)))
+    .limit(1)
+    .get();
+
+  await adminDb.runTransaction(async (transaction) => {
+    const existing = await transaction.get(postbackRef);
+    if (existing.exists) {
+      throw new Error("DUPLICATE");
+    }
+
+    const userRef = adminDb.collection("users").doc(uid);
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+      throw new Error("USER_NOT_FOUND");
+    }
+
+    const userData = userDoc.data()!;
+    const approved = !clickSnap.empty && userData.status !== "banned" && userData.isFlagged !== true;
+    const status = approved ? "approved" : "pending_review";
+
+    transaction.set(postbackRef, {
+      id: txId,
+      userId: uid,
+      offerId,
+      provider: "rapidoreach",
+      amountCoins,
+      ip,
+      userAgent,
+      clickVerified: !clickSnap.empty,
+      status,
+      source: "rapidoreach",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      metadata: { txId },
+    });
+
+    transaction.set(pendingLedgerRef, {
+      id: pendingLedgerRef.id,
+      userId: uid,
+      type: "pending_credit",
+      amountCoins,
+      balanceEffectCoins: 0,
+      status: "pending",
+      source: "rapidoreach_postback",
+      referenceId: txId,
+      metadata: { offerId, provider: "rapidoreach" },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    if (approved) {
+      transaction.set(approvedLedgerRef, {
+        id: approvedLedgerRef.id,
+        userId: uid,
+        type: "approved_credit",
+        amountCoins,
+        balanceEffectCoins: amountCoins,
+        status: "approved",
+        source: "rapidoreach_postback",
+        referenceId: txId,
+        metadata: { offerId, provider: "rapidoreach" },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  });
+
+  await logAdminAction({
+    action: "rapidoreach_postback",
+    actorUserId: uid,
+    targetType: "offer",
+    targetId: offerId,
+    metadata: { txId, amountCoins, ip, approved: true },
+  });
+}
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   const userAgent = request.headers.get("user-agent") || "unknown";
 
-  // 1. IP Whitelisting Security Check
-  if (!RAPIDOREACH_IPS.includes(ip) && process.env.NODE_ENV === 'production') {
-    console.error(`[RapidoReach Postback] Blocked unauthorized IP: ${ip}`);
-    return new NextResponse('Unauthorized IP', { status: 403 });
+  if (!RAPIDOREACH_IPS.includes(ip) && process.env.NODE_ENV === "production") {
+    return new NextResponse("Unauthorized IP", { status: 403 });
   }
 
   try {
     const searchParams = request.nextUrl.searchParams;
-    
-    // Log all incoming parameters from Rapidoreach for debugging
-    const params: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-
-    console.log(`[RapidoReach Postback] Received from ${ip}`, params);
-
-    // Extract standard parameters
-    const uid = searchParams.get('uid');
-    const rewardStr = searchParams.get('reward');
-    const txId = searchParams.get('tx_id') || searchParams.get('transaction_id') || searchParams.get('id');
+    const uid = searchParams.get("uid");
+    const rewardStr = searchParams.get("reward");
+    const txId = searchParams.get("tx_id") || searchParams.get("transaction_id") || searchParams.get("id");
+    const offerId = searchParams.get("offer_id") || searchParams.get("offerId") || "rapidoreach";
 
     if (!uid || !rewardStr || !txId) {
-      console.error('[RapidoReach Postback] Missing required parameters', params);
-      return new NextResponse('Missing parameters', { status: 400 });
+      return new NextResponse("Missing parameters", { status: 400 });
     }
 
-    const reward = parseFloat(rewardStr);
-    if (isNaN(reward) || reward <= 0) {
-      console.error('[RapidoReach Postback] Invalid reward amount', rewardStr);
-      return new NextResponse('Invalid reward', { status: 400 });
+    const amountCoins = parseInt(rewardStr, 10);
+    if (Number.isNaN(amountCoins) || amountCoins <= 0) {
+      return new NextResponse("Invalid reward", { status: 400 });
     }
 
-    const transactionRef = adminDb.collection('transactions').doc(txId);
-    const userRef = adminDb.collection('users').doc(uid);
-
-    // 2. Atomic Transaction to prevent double-crediting
-    await adminDb.runTransaction(async (transaction) => {
-      const txDoc = await transaction.get(transactionRef);
-      
-      if (txDoc.exists) {
-        // Transaction already processed, safely ignore to prevent double crediting
-        console.log(`[RapidoReach Postback] Duplicate transaction ignored: ${txId}`);
-        return;
-      }
-
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists) {
-        throw new Error(`User not found: ${uid}`);
-      }
-
-      // Record the transaction
-      transaction.set(transactionRef, {
-        id: txId,
-        userId: uid,
-        amount: reward,
-        type: 'earn',
-        source: 'rapidoreach',
-        status: 'completed',
-        ip,
-        userAgent,
-        rawParams: params,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-
-      // Increment user balance
-      transaction.update(userRef, {
-        coins: FieldValue.increment(reward),
-        totalEarned: FieldValue.increment(reward),
-        updatedAt: FieldValue.serverTimestamp()
-      });
-    });
-
-    console.log(`[RapidoReach Postback] Successfully credited ${reward} coins to user ${uid} (Tx: ${txId})`);
-
-    // Return '1' for success as required by most offerwalls
-    return new NextResponse('1', { status: 200 });
-
-  } catch (error) {
-    console.error('[RapidoReach Postback] Error processing request:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    await handlePostback(uid, txId, offerId, amountCoins, ip, userAgent);
+    return new NextResponse("1", { status: 200 });
+  } catch (error: any) {
+    if (error.message === "DUPLICATE") return new NextResponse("1", { status: 200 });
+    if (error.message === "USER_NOT_FOUND") return new NextResponse("User not found", { status: 404 });
+    console.error("[RapidoReach Postback] Error processing request:", error);
+    return new NextResponse("Internal server error", { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
-  // If RapidoReach sends a POST, we handle it similarly by extracting the body
   const ip = getClientIp(request);
-  
-  if (!RAPIDOREACH_IPS.includes(ip) && process.env.NODE_ENV === 'production') {
-    return new NextResponse('Unauthorized IP', { status: 403 });
+  const userAgent = request.headers.get("user-agent") || "unknown";
+
+  if (!RAPIDOREACH_IPS.includes(ip) && process.env.NODE_ENV === "production") {
+    return new NextResponse("Unauthorized IP", { status: 403 });
   }
 
   try {
-    const contentType = request.headers.get('content-type') || '';
-    let body: any = null;
+    const body = await request.json();
+    const uid = body.uid || body.userId;
+    const txId = body.txId || body.tx_id || body.transaction_id || body.id;
+    const amountCoins = parseInt(String(body.reward || body.amount || body.coins), 10);
+    const offerId = body.offerId || body.offer_id || "rapidoreach";
 
-    if (contentType.includes('application/json')) {
-      body = await request.json();
-    } else {
-      const text = await request.text();
-      body = { rawText: text };
+    if (!uid || !txId || Number.isNaN(amountCoins) || amountCoins <= 0) {
+      return new NextResponse("Missing parameters", { status: 400 });
     }
 
-    console.log(`[RapidoReach Postback] Received POST from ${ip}`, body);
+    await handlePostback(uid, txId, offerId, amountCoins, ip, userAgent);
 
-    // Save POST body to webhook_logs for inspection if they use POST
-    await adminDb.collection('webhook_logs').add({
-      provider: 'rapidoreach',
-      method: 'POST',
+    await adminDb.collection("webhook_logs").add({
+      provider: "rapidoreach",
+      method: "POST",
       ip,
       body,
-      timestamp: FieldValue.serverTimestamp(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    return new NextResponse('1', { status: 200 });
-
-  } catch (error) {
-    console.error('[RapidoReach Postback] Error processing POST:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    return new NextResponse("1", { status: 200 });
+  } catch (error: any) {
+    if (error.message === "DUPLICATE") return new NextResponse("1", { status: 200 });
+    console.error("[RapidoReach Postback] Error processing POST:", error);
+    return new NextResponse("Internal server error", { status: 500 });
   }
 }

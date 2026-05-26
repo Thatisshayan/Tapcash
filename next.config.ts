@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'rapidoreach.com' }
     ]
   },
+  turbopack: {
+    root: __dirname,
+  },
   async redirects() {
     return [
       {

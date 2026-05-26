@@ -24,8 +24,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid task data" }, { status: 400 });
     }
 
+    const rewardCoins = Math.floor(Number(rewardCents));
     const taskRef = adminDb.collection("tasks").doc(taskId);
-    const walletRef = adminDb.collection("users").doc(uid).collection("wallet").doc("balance");
+    const ledgerRef = adminDb.collection("ledger_transactions").doc();
+    const auditRef = adminDb.collection("admin_actions").doc();
 
     await adminDb.runTransaction(async (transaction) => {
       const taskDoc = await transaction.get(taskRef);
@@ -33,31 +35,38 @@ export async function POST(request: NextRequest) {
         throw new Error("Task already completed.");
       }
 
-      // Record task
       transaction.set(taskRef, {
         userId: uid,
         offerId,
         rewardCents,
         status: "completed",
-        completedAt: admin.firestore.FieldValue.serverTimestamp()
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Update wallet
-      transaction.set(walletRef, {
-        balanceCents: admin.firestore.FieldValue.increment(rewardCents),
-        totalEarnedCents: admin.firestore.FieldValue.increment(rewardCents),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
+        userId: uid,
+        type: "approved_credit",
+        amountCoins: rewardCoins,
+        balanceEffectCoins: rewardCoins,
+        method: "Task Completion",
+        status: "approved",
+        source: "task_completion",
+        referenceId: taskId,
+        metadata: { taskId, offerId, rewardCents },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-      // Audit log
-      const auditRef = adminDb.collection("audit").doc();
       transaction.set(auditRef, {
+        id: auditRef.id,
         action: "task_completed",
-        uid,
-        taskId,
-        offerId,
-        rewardCents,
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
+        actorUserId: uid,
+        targetType: "task",
+        targetId: taskId,
+        metadata: { offerId, rewardCents },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
 

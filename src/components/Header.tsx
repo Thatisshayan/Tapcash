@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter, usePathname } from "next/navigation";
@@ -55,6 +55,7 @@ export default function Header() {
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      setBalance(0);
       return;
     }
 
@@ -64,7 +65,6 @@ export default function Header() {
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setBalance(data.wallet?.balance || 0);
           setIsAdmin(data.admin === true);
         }
       },
@@ -72,6 +72,27 @@ export default function Header() {
         console.error("Error subscribing to user balance:", error);
       }
     );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const q = query(
+      collection(db, "ledger_transactions"),
+      where("userId", "==", user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const total = snapshot.docs.reduce((sum, docSnap) => {
+        const data = docSnap.data() as { balanceEffectCoins?: number };
+        return sum + Number(data.balanceEffectCoins || 0);
+      }, 0);
+      setBalance(total);
+    });
 
     return () => unsubscribe();
   }, [user]);

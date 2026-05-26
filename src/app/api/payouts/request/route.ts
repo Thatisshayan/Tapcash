@@ -1,40 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
+import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
+import { computeLedgerBalance } from "@/lib/ledger";
+import { logAdminAction } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   try {
-    // 0. Rate Limiting (1 request per minute per IP to prevent spam)
-    const rateLimitResponse = await withRateLimit(request, { limit: 1, windowMs: 60000 });
+    const rateLimitResponse = await withRateLimit(request, { limit: 3, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
-    // 1. Verify user authentication
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized: Missing authorization header" },
-        { status: 401 }
-      );
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized: Missing authorization header" }, { status: 401 });
     }
 
     const idToken = authHeader.split("Bearer ")[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (err) {
-      return NextResponse.json(
-        { error: "Unauthorized: Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
+
     const ip = getClientIp(request);
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    // 2. Sniff out Headless Automation Tools/Scrapers on Cashout
     const botCheck = isBotAgent(userAgent);
     if (botCheck.isBot) {
       await logFraudAttempt({
@@ -48,86 +36,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied. Automated web requests are prohibited." }, { status: 403 });
     }
 
-    // 3. Parse and validate request body
     const body = await request.json();
     const { amountCoins, method, destination, deviceFingerprint } = body;
 
-    // Anti-Sybil: Verify deviceFingerprint consistency on payout
-    if (deviceFingerprint && typeof deviceFingerprint === "string" && deviceFingerprint.trim().length > 0) {
-      const dupeQuery = await adminDb.collection("users")
-        .where("deviceFingerprint", "==", deviceFingerprint)
-        .limit(2)
-        .get();
-
-      for (const docSnap of dupeQuery.docs) {
-        if (docSnap.id !== uid) {
-          // Found duplicate accounts using the same hardware fingerprint! Flag both!
-          await adminDb.collection("users").doc(uid).update({
-            status: "flagged",
-            isFlagged: true,
-            flaggedReason: `Device fingerprint collision on payout request: ${deviceFingerprint}. Shared with user: ${docSnap.id}`,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-
-          await adminDb.collection("users").doc(docSnap.id).update({
-            status: "flagged",
-            isFlagged: true,
-            flaggedReason: `Device fingerprint collision on payout request from user: ${uid}. Shared: ${deviceFingerprint}`,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-
-          await logFraudAttempt({
-            ip,
-            userId: uid,
-            action: "PAYOUT_BLOCKED_FINGERPRINT_COLLISION",
-            reason: `Multi-accounting fingerprint collision on payout request. Shared: ${deviceFingerprint}`,
-            userAgent,
-            createdAt: new Date(),
-          });
-
-          return NextResponse.json({ 
-            error: "Security Alert: This device signature is linked to multiple accounts. Withdrawals held for administrator review." 
-          }, { status: 403 });
-        }
-      }
-    }
-
     if (!amountCoins || !method || !destination) {
-      return NextResponse.json(
-        { error: "Missing required fields: amountCoins, method, or destination" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields: amountCoins, method, or destination" }, { status: 400 });
     }
 
     const coinsNum = parseInt(amountCoins, 10);
-    if (isNaN(coinsNum) || coinsNum < 2000) {
-      return NextResponse.json(
-        { error: "Invalid amount. Minimum cashout is 2,000 coins ($2.00)." },
-        { status: 400 }
-      );
+    if (Number.isNaN(coinsNum) || coinsNum < 2000) {
+      return NextResponse.json({ error: "Invalid amount. Minimum cashout is 2,000 coins ($2.00)." }, { status: 400 });
     }
 
-    const allowedMethods = [
-      "paypal", "litecoin", "bitcoin", "visa", "steam", "roblox",
-      "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"
-    ];
+    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
     if (!allowedMethods.includes(method)) {
-      return NextResponse.json(
-        { error: `Invalid payout method: ${method}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `Invalid payout method: ${method}` }, { status: 400 });
     }
 
-    if (typeof destination !== "string" || destination.trim().length === 0) {
-      return NextResponse.json(
-        { error: "A valid payment destination is required." },
-        { status: 400 }
-      );
+    const cleanDest = String(destination).trim().toLowerCase();
+    if (!cleanDest) {
+      return NextResponse.json({ error: "A valid payment destination is required." }, { status: 400 });
     }
 
-    const cleanDest = destination.trim().toLowerCase();
-
-    // 4. Verify user exists and status checks (flagged/banned)
     const userRef = adminDb.collection("users").doc(uid);
     const userSnap = await userRef.get();
     if (!userSnap.exists) {
@@ -145,81 +75,63 @@ export async function POST(request: NextRequest) {
         userAgent,
         createdAt: new Date(),
       });
-      return NextResponse.json(
-        { error: "Your account is currently locked or flagged for review. Withdrawals disabled." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Your account is currently locked or flagged for review. Withdrawals disabled." }, { status: 403 });
     }
 
-    // 5. Perform VPN/Proxy checking via ProxyCheck.io on Cashouts
     const ipCheck = await isIpSuspicious(ip, "PAYOUT_BLOCKED_VPN", uid, userData.email, userAgent);
     if (ipCheck.suspicious) {
-      return NextResponse.json({ 
-        error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on requesting payouts." 
-      }, { status: 403 });
+      return NextResponse.json({ error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on requesting payouts." }, { status: 403 });
     }
 
-    // 6. ENFORCE: Single Active Pending Withdrawal Limit
+    const ledgerBalance = await computeLedgerBalance(uid);
+    if (ledgerBalance < coinsNum) {
+      return NextResponse.json({ error: "Insufficient balance for this cashout." }, { status: 400 });
+    }
+
     const pendingSnap = await adminDb
-      .collection("withdrawals")
+      .collection("cashout_requests")
       .where("userId", "==", uid)
-      .where("status", "==", "pending")
+      .where("status", "==", "pending_review")
       .limit(1)
       .get();
 
     if (!pendingSnap.empty) {
-      return NextResponse.json(
-        { error: "You already have a pending withdrawal request. Please wait until it is processed before submitting another." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "You already have a pending withdrawal request." }, { status: 400 });
     }
 
-    // 7. ENFORCE: Minimum Engagement Lock (At least 2 real offer completions)
-    const offerCompletionsSnap = await adminDb
-      .collection("transactions")
+    const offerCountSnap = await adminDb
+      .collection("offer_postbacks")
       .where("userId", "==", uid)
-      .where("type", "in", ["offer", "postback"])
-      .count()
+      .where("status", "==", "approved")
       .get();
 
-    const offerCount = offerCompletionsSnap.data().count;
-    if (offerCount < 2) {
-      return NextResponse.json(
-        { error: "Engagement Lock: To cash out, you must complete at least 2 active offers/surveys on our offerwall first. This verifies you are a real user and prevents automated reward farming." },
-        { status: 400 }
-      );
+    if (offerCountSnap.size < 2) {
+      return NextResponse.json({ error: "Engagement Lock: complete at least 2 approved offers before cashing out." }, { status: 400 });
     }
 
-    // 8. ENFORCE: Unique Payment Destination Link Check (Prevent Multi-Account Sybil Cashouts)
     const duplicateDestSnap = await adminDb
-      .collection("withdrawals")
+      .collection("cashout_requests")
       .where("destination", "==", cleanDest)
       .limit(1)
       .get();
 
     if (!duplicateDestSnap.empty) {
       const duplicateRecord = duplicateDestSnap.docs[0].data();
-      
-      // If the destination belongs to a different user, flag both accounts immediately!
       if (duplicateRecord.userId !== uid) {
-        // Flag current user
         await userRef.update({
           status: "flagged",
           isFlagged: true,
-          flaggedReason: `Attempted to cash out to payment address (${cleanDest}) already linked to user: ${duplicateRecord.userId}`,
+          flaggedReason: `Attempted payout destination already linked to another account.`,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // Flag the linked user as well
-        const linkedUserRef = adminDb.collection("users").doc(duplicateRecord.userId);
-        await linkedUserRef.update({
+        await adminDb.collection("users").doc(duplicateRecord.userId).update({
           status: "flagged",
           isFlagged: true,
-          flaggedReason: `Linked payment address (${cleanDest}) was inputted in withdrawal request by user: ${uid}`,
+          flaggedReason: `Payment address linked to another account was reused.`,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // Log critical fraud alert
         await logFraudAttempt({
           ip,
           userId: uid,
@@ -228,93 +140,72 @@ export async function POST(request: NextRequest) {
           reason: `Linked payment address (${cleanDest}) found across accounts: ${uid} and ${duplicateRecord.userId}. Both accounts auto-flagged.`,
           userAgent,
           createdAt: new Date(),
-          details: {
-            cleanDest,
-            suspectUserId: uid,
-            linkedUserId: duplicateRecord.userId,
-          }
+          details: { cleanDest, suspectUserId: uid, linkedUserId: duplicateRecord.userId },
         });
 
-        return NextResponse.json(
-          { error: "Security Alert: This payment address is already linked to another active account. Both accounts have been flagged for administrator investigation." },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Security Alert: This payment address is already linked to another active account." }, { status: 403 });
       }
     }
 
-    // 9. Database Execution: Atomic Transaction
-    const withdrawalRef = adminDb.collection("withdrawals").doc();
-    const transactionRef = adminDb.collection("transactions").doc();
+    const cashoutRef = adminDb.collection("cashout_requests").doc();
+    const ledgerRef = adminDb.collection("ledger_transactions").doc();
 
-    const result = await adminDb.runTransaction(async (transaction) => {
+    await adminDb.runTransaction(async (transaction) => {
       const freshUserSnap = await transaction.get(userRef);
       if (!freshUserSnap.exists) {
         throw new Error("User profile not found in database.");
       }
 
       const freshUserData = freshUserSnap.data()!;
-      
-      // Double check status again inside transaction block
       if (freshUserData.status === "banned" || freshUserData.isFlagged === true) {
         throw new Error("Withdrawals disabled for flagged or locked accounts.");
       }
-      
-      const currentBalance = freshUserData.wallet?.balance ?? freshUserData.walletBalanceCoins ?? 0;
-      
-      if (currentBalance < coinsNum) {
-        throw new Error("Insufficient balance for this cashout.");
-      }
 
-      const centsEquivalent = Math.floor(coinsNum / 10);
-
-      // Atomic Balance Deductions
-      transaction.update(userRef, {
-        "wallet.balance": admin.firestore.FieldValue.increment(-coinsNum),
-        "wallet.lastUpdated": admin.firestore.FieldValue.serverTimestamp(),
-        walletBalanceCents: admin.firestore.FieldValue.increment(-centsEquivalent),
+      transaction.set(cashoutRef, {
+        id: cashoutRef.id,
+        userId: uid,
+        amountCoins: coinsNum,
+        amountCents: Math.floor(coinsNum / 10),
+        method,
+        destination: cleanDest,
+        status: "pending_review",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ip,
+        deviceFingerprint: deviceFingerprint || null,
       });
 
-      // Log withdrawal request
-      transaction.set(withdrawalRef, {
-        id: withdrawalRef.id,
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
         userId: uid,
-        amount: coinsNum,
-        amountCents: centsEquivalent,
-        method: method,
-        destination: cleanDest, // save lowercase clean destination
+        type: "cashout_requested",
+        amountCoins: coinsNum,
+        balanceEffectCoins: -Math.abs(coinsNum),
         status: "pending",
+        source: "cashout_request",
+        referenceId: cashoutRef.id,
+        metadata: { method, destination: cleanDest },
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
+    });
 
-      // Log user ledger transaction entry
-      transaction.set(transactionRef, {
-        id: transactionRef.id,
-        userId: uid,
-        type: "withdrawal",
-        amount: -coinsNum,
-        payoutCents: centsEquivalent,
-        method: method,
-        status: "pending",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return { coinsNum, centsEquivalent, withdrawalId: withdrawalRef.id };
+    await logAdminAction({
+      action: "cashout_requested",
+      actorUserId: uid,
+      targetType: "cashout_request",
+      targetId: cashoutRef.id,
+      metadata: { amountCoins: coinsNum, method, destination: cleanDest },
     });
 
     return NextResponse.json({
       success: true,
       message: "Withdrawal request submitted successfully.",
-      withdrawalId: result.withdrawalId,
-      deducted: result.coinsNum,
+      withdrawalId: cashoutRef.id,
+      deducted: coinsNum,
     });
-
   } catch (error: any) {
     console.error("Withdrawal API transaction error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal transaction failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || "Internal transaction failed" }, { status: 500 });
   }
 }

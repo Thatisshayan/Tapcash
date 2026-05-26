@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getDoc, doc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 
 export default function AdminLayout({
   children,
@@ -23,8 +22,12 @@ export default function AdminLayout({
       }
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().admin === true) {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/admin/withdrawals', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
           setIsAdmin(true);
         } else {
           router.push('/');

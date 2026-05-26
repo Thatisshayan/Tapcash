@@ -5,29 +5,20 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// 1. Auth Hook: Initialize wallet on new user signup
+// 1. Auth Hook: Initialize user profile on new signup
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   const userRef = db.collection("users").doc(user.uid);
   const batch = db.batch();
 
   // Create base user document
   batch.set(userRef, {
-    email: user.email,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    lastLogin: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
-  // Create initial wallet document
-  const walletRef = userRef.collection("wallet").doc("balance");
-  batch.set(walletRef, {
-    balanceCents: 0,
-    pendingCents: 0,
-    totalEarnedCents: 0,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
+      email: user.email,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
   await batch.commit();
-  console.log(`User ${user.uid} created and wallet initialized.`);
+  console.log(`User ${user.uid} created.`);
 });
 
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
@@ -43,7 +34,7 @@ export const completeTask = functions.https.onCall(async (data, context) => {
 
   const uid = context.auth.uid;
   const taskRef = db.collection("tasks").doc(taskId);
-  const walletRef = db.collection("users").doc(uid).collection("wallet").doc("balance");
+  const ledgerRef = db.collection("ledger_transactions").doc();
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -62,11 +53,19 @@ export const completeTask = functions.https.onCall(async (data, context) => {
         completedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update the wallet balance
-      transaction.update(walletRef, {
-        balanceCents: admin.firestore.FieldValue.increment(rewardCents),
-        totalEarnedCents: admin.firestore.FieldValue.increment(rewardCents),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      // Append to the ledger
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
+        userId: uid,
+        type: "approved_credit",
+        amountCoins: rewardCents,
+        balanceEffectCoins: rewardCents,
+        status: "approved",
+        source: "cloud_function_task",
+        referenceId: taskId,
+        metadata: { offerId, rewardCents },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // Write an audit log
@@ -100,35 +99,45 @@ export const requestPayout = functions.https.onCall(async (data, context) => {
   }
 
   const uid = context.auth.uid;
-  const walletRef = db.collection("users").doc(uid).collection("wallet").doc("balance");
+  const withdrawalRef = db.collection("cashout_requests").doc();
+  const ledgerRef = db.collection("ledger_transactions").doc();
 
   try {
-    await db.runTransaction(async (transaction) => {
-      const walletDoc = await transaction.get(walletRef);
-      if (!walletDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Wallet not found.");
-      }
+    const ledgerSnap = await db.collection("ledger_transactions").where("userId", "==", uid).get();
+    let currentBalance = 0;
+    ledgerSnap.forEach((doc) => {
+      currentBalance += Number(doc.data().balanceEffectCoins || 0);
+    });
 
-      const currentBalance = walletDoc.data()?.balanceCents || 0;
+    await db.runTransaction(async (transaction) => {
       if (currentBalance < amountCents) {
         throw new functions.https.HttpsError("failed-precondition", "Insufficient funds.");
       }
 
-      // Deduct balance and increase pending
-      transaction.update(walletRef, {
-        balanceCents: admin.firestore.FieldValue.increment(-amountCents),
-        pendingCents: admin.firestore.FieldValue.increment(amountCents),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      // Record the withdrawal request (simulating sending to a Cloud Task queue later)
-      const withdrawalRef = db.collection("users").doc(uid).collection("withdrawals").doc();
       transaction.set(withdrawalRef, {
+        id: withdrawalRef.id,
+        userId: uid,
         amountCents,
+        amountCoins: amountCents,
         method,
         payoutAddress,
+        status: "pending_review",
+        requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      transaction.set(ledgerRef, {
+        id: ledgerRef.id,
+        userId: uid,
+        type: "cashout_requested",
+        amountCoins: amountCents,
+        balanceEffectCoins: -Math.abs(amountCents),
         status: "pending",
-        requestedAt: admin.firestore.FieldValue.serverTimestamp()
+        source: "cloud_function_cashout",
+        referenceId: withdrawalRef.id,
+        metadata: { method, payoutAddress },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       
       // Write audit
