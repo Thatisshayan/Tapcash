@@ -104,12 +104,53 @@ export default function RapidoReachPage() {
               </span>
               <div className="space-y-3">
                 <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.92] tap-gradient-text font-display">
-                  Earn inside a cleaner, trusted survey wall.
+                  Open the offerwall and start earning from a cleaner, trusted flow.
                 </h1>
                 <p className="text-zinc-400 max-w-xl text-sm md:text-base leading-relaxed">
                   RapidoReach opens inside TapCash with a signed UID, server-side verification, and manual payout control. The UI stays calm, premium, and transparent.
                 </p>
               </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="tap-card rounded-[1.5rem] p-4">
+                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#00e6c3]">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Signed session</p>
+                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">Only authenticated users load a provider URL.</p>
+              </div>
+              <div className="tap-card rounded-[1.5rem] p-4">
+                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#7aa7ff]">
+                  <CircleGauge className="w-5 h-5" />
+                </div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Fast session</p>
+                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">The offerwall loads inside a cleaner, quieter shell.</p>
+              </div>
+              <div className="tap-card rounded-[1.5rem] p-4">
+                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#8cf8e9]">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Auditable path</p>
+                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">Clicks, callbacks, and credits are tracked server-side.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+              >
+                Back to dashboard
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+              <a
+                href="#wall"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
+              >
+                Jump to wall
+                <ExternalLink className="w-4 h-4" />
+              </a>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -151,7 +192,7 @@ export default function RapidoReachPage() {
             </div>
           </section>
 
-          <section className="tap-card rounded-[2rem] overflow-hidden min-h-[72vh] flex flex-col shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <section id="wall" className="tap-card rounded-[2rem] overflow-hidden min-h-[72vh] flex flex-col shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
             <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-white/5 bg-white/3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">RapidoReach</p>

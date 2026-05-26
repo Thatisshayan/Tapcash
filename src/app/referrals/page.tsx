@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Copy, Check, Users, Gift, ArrowUpRight, Loader2, AlertTriangle, Coins } from "lucide-react";
+import { Copy, Check, Users, Gift, ArrowUpRight, Loader2, AlertTriangle, Coins, Sparkles, ArrowRight, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function ReferralsPage() {
@@ -124,20 +124,77 @@ export default function ReferralsPage() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
 
       <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 space-y-12 relative z-10">
-        
-        {/* Header Section */}
-        <div className="text-center max-w-2xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black uppercase rounded-full tracking-widest mx-auto">
-            <Gift className="w-3.5 h-3.5" />
-            <span>Lifetime 5% Affiliate Program</span>
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/10 blur-3xl" />
+            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/10 blur-3xl" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
-            Invite Friends & Earn <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">Passive Income</span>
-          </h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-lg mx-auto leading-relaxed">
-            Share your link anywhere. Whenever someone signs up through your link, you'll earn a massive 5% commission on everything they earn... forever.
-          </p>
-        </div>
+
+          <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-start">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Referral growth
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
+                  Lifetime commission
+                </span>
+              </div>
+
+              <div className="max-w-2xl space-y-3">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
+                  Invite friends and turn traffic into recurring TapCash earnings.
+                </h1>
+                <p className="text-zinc-400 text-sm md:text-base max-w-lg leading-relaxed">
+                  Share one clean link, keep the invite flow simple, and earn a recurring commission when your referrals complete offers and cash out.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleCopy}
+                  className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-all duration-300 ${
+                    copied
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                      : "bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                  }`}
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? "Copied" : "Copy referral link"}
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
+                >
+                  Open dashboard
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Invite link</p>
+                <div className="mt-3 rounded-2xl border border-white/6 bg-white/[0.04] p-4 break-all text-sm text-zinc-300 font-mono">
+                  {inviteLink || "Loading invite link..."}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Invited</p>
+                  <p className="mt-2 text-2xl font-black text-white">{loading ? "..." : stats.invited}</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Earned</p>
+                  <p className="mt-2 text-2xl font-black text-[#8cf8e9]">{loading ? "..." : `+${stats.earned.toLocaleString()}`}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Invite Link Card */}
         <div className="relative overflow-hidden bg-zinc-950 border border-zinc-900 shadow-2xl rounded-3xl p-6 md:p-10 group">

@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle } from "lucide-react";
+import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle, ArrowRight, ShieldCheck, BadgeCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import { 
@@ -365,23 +365,83 @@ export default function CashoutStorePage() {
       </div>
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
-        {/* Page Title & Dashboard Intro */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-900">
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Reward Store</h1>
-            <p className="text-zinc-500 text-sm mt-1">Exchange your accumulated TapCash coins for real cash & premium gift cards.</p>
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/10 blur-3xl" />
+            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/10 blur-3xl" />
           </div>
 
-          <div className="bg-zinc-950/40 border border-zinc-900 py-3.5 px-6 rounded-2xl flex items-center gap-4">
-            <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
-              <Coins className="w-5 h-5 animate-pulse" />
+          <div className="relative grid gap-6 lg:grid-cols-[1.25fr_0.75fr] items-start">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Cashout control
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
+                  Manual review queue
+                </span>
+              </div>
+
+              <div className="max-w-3xl space-y-3">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[0.92] font-display text-white">
+                  Redeem your ledger balance with a cleaner payout funnel.
+                </h1>
+                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-2xl">
+                  TapCash keeps redemption simple: pick a reward method, confirm the destination, and submit for admin approval. Nothing pays out automatically.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                >
+                  Back to dashboard
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/transactions"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
+                >
+                  View ledger
+                  <BadgeCheck className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Your Wallet</p>
-              <p className="text-xl font-black text-emerald-400 tracking-tight mt-1">{balance.toLocaleString()} Coins</p>
+
+            <div className="space-y-4">
+              <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Your wallet</p>
+                <div className="mt-2 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-3xl font-black text-white">{balance.toLocaleString()}</p>
+                    <p className="text-sm text-zinc-400">coins available for redemption</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816]">
+                    <Coins className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Min payout</p>
+                  <p className="mt-2 text-xl font-black text-white">2,000+</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Approval</p>
+                  <p className="mt-2 text-xl font-black text-white">Manual</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Trust level</p>
+                  <p className="mt-2 text-xl font-black text-white">Checked</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Brand Grid Section */}
         <div className="space-y-6">
