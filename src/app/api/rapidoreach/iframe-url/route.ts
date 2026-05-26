@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const checksum = crypto.createHash('md5').update(rawString).digest('hex').slice(0, 10);
   const rapidoreachUid = `${userId}-${appId}-${checksum}`;
 
-  const iframeUrl = `https://www.rapidoreach.com/offerwall/?userId=${encodeURIComponent(rapidoreachUid)}`;
+  const iframeUrl = `https://www.rapidoreach.com/ofw/?userId=${encodeURIComponent(rapidoreachUid)}`;
 
   return NextResponse.json({ iframeUrl });
 }

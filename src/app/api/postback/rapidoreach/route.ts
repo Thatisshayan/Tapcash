@@ -4,6 +4,7 @@ import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp } from "@/lib/antiFraud";
 import { logAdminAction } from "@/lib/audit";
+import crypto from "crypto";
 
 const RAPIDOREACH_IPS = [
   "161.97.78.55",
@@ -35,6 +36,22 @@ function isCompletedStatus(rawStatus: string | null): boolean {
 
   const normalized = rawStatus.trim().toLowerCase();
   return ["c", "complete", "completed", "approved", "success"].includes(normalized);
+}
+
+function verifyOidHash(offerInvitationId: string | null, oidHash: string | null): boolean {
+  if (!offerInvitationId || !oidHash) return false;
+  const appKey = process.env.RAPIDOREACH_APP_KEY || "";
+  if (!appKey) return false;
+  const expected = crypto.createHash("md5").update(`${offerInvitationId}${appKey}`).digest("hex");
+  return expected.toLowerCase() === oidHash.toLowerCase();
+}
+
+function verifyTxnHash(transactionId: string | null, txnHash: string | null): boolean {
+  if (!transactionId || !txnHash) return false;
+  const transactionKey = process.env.RAPIDOREACH_TRANSACTION_KEY || process.env.RAPIDOREACH_APP_KEY || "";
+  if (!transactionKey) return false;
+  const expected = crypto.createHash("md5").update(`${transactionId}${transactionKey}`).digest("hex");
+  return expected.toLowerCase() === txnHash.toLowerCase();
 }
 
 async function handlePostback(
@@ -145,9 +162,15 @@ export async function GET(request: NextRequest) {
     const txId = searchParams.get("transactionId") || searchParams.get("txnId") || searchParams.get("tx_id") || searchParams.get("transaction_id") || searchParams.get("id");
     const offerId = searchParams.get("offerInvitationId") || searchParams.get("offer_id") || searchParams.get("offerId") || "rapidoreach";
     const callbackStatus = searchParams.get("status") || searchParams.get("cmd");
+    const oidHash = searchParams.get("oidHash");
+    const txnHash = searchParams.get("txnHash");
 
     if (!uid || !rewardStr || !txId) {
       return new NextResponse("Missing parameters", { status: 400 });
+    }
+
+    if (!verifyOidHash(offerId, oidHash) || !verifyTxnHash(txId, txnHash)) {
+      return new NextResponse("Invalid callback signature", { status: 403 });
     }
 
     const amountCoins = parseAmountCoins(rewardStr);
@@ -180,9 +203,15 @@ export async function POST(request: NextRequest) {
     const amountCoins = parseAmountCoins(String(body.currencyAmt || body.reward || body.amount || body.coins || body.amt || ""));
     const offerId = body.offerId || body.offer_id || body.offerInvitationId || "rapidoreach";
     const callbackStatus = body.status || body.cmd || null;
+    const oidHash = body.oidHash || body.oid_hash || null;
+    const txnHash = body.txnHash || body.txn_hash || null;
 
     if (!uid || !txId || Number.isNaN(amountCoins) || amountCoins <= 0) {
       return new NextResponse("Missing parameters", { status: 400 });
+    }
+
+    if (!verifyOidHash(String(offerId), oidHash) || !verifyTxnHash(String(txId), txnHash)) {
+      return new NextResponse("Invalid callback signature", { status: 403 });
     }
 
     await handlePostback(uid, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
