@@ -1,431 +1,376 @@
-// src/app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
-import { 
-  Coins, Sparkles, CheckCircle, ArrowRight, ShieldCheck, Zap, 
-  HelpCircle, Globe, Heart, DollarSign, Award, Users, Star, Layers, Activity
+import {
+  Activity,
+  ArrowRight,
+  BadgeCheck,
+  BarChart3,
+  CheckCircle2,
+  Globe,
+  Layers3,
+  Sparkles,
+  ShieldCheck,
+  Target,
+  Wallet,
+  Star,
+  Clock3,
 } from "lucide-react";
 
-import { TimsLogo, CTLogo, CineplexLogo, SDMLogo } from "@/components/BrandLogos";
+const STEPS = [
+  {
+    title: "1. Create your account",
+    description: "Sign up in a few seconds with email or Google. Your session is secure from the start.",
+  },
+  {
+    title: "2. Complete verified offers",
+    description: "Browse premium surveys and app offers. Every click is logged and every credit is backend verified.",
+  },
+  {
+    title: "3. Request payout manually",
+    description: "Submit a cashout when you are ready. Admin review stays on by default for fraud control.",
+  },
+];
 
-// High-fidelity Canadian brand integrations
-const CANADIAN_PARTNERS = [
-  { name: "Tim Hortons", renderLogo: TimsLogo, desc: "Coffee & Donuts" },
-  { name: "Canadian Tire", renderLogo: CTLogo, desc: "Outdoor & Tools" },
-  { name: "Cineplex", renderLogo: CineplexLogo, desc: "Movie Tickets" },
-  { name: "Shoppers Drug Mart", renderLogo: SDMLogo, desc: "Wellness & Pharmacy" },
+const TRUST_POINTS = [
+  {
+    icon: ShieldCheck,
+    title: "Ledger first",
+    text: "Balances are computed from append-only transactions, not a mutable wallet field.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Manual payout control",
+    text: "No auto-payouts. Cashouts stay in review until an admin approves them.",
+  },
+  {
+    icon: Activity,
+    title: "Fraud visibility",
+    text: "IP, device, velocity, and click trails are tracked for every earning event.",
+  },
+];
+
+const REWARD_PATHS = [
+  {
+    title: "Surveys",
+    value: "Fast completion flow",
+    description: "Clean, high-trust survey experiences with visible progress and clear reward values.",
+  },
+  {
+    title: "App offers",
+    value: "Higher value actions",
+    description: "Try apps, register accounts, or complete partner flows with strong tracking.",
+  },
+  {
+    title: "Missions",
+    value: "Daily momentum",
+    description: "Small streaks and task loops keep users coming back without overwhelming the UI.",
+  },
+  {
+    title: "Cashout",
+    value: "Human review",
+    description: "Payout requests are visible, auditable, and kept behind manual approval.",
+  },
+];
+
+const SAFETY_NOTES = [
+  "Server verified auth sessions",
+  "Provider callbacks validated before crediting",
+  "Offer clicks and postbacks are deduplicated",
+  "Fraud flags are visible to admins",
 ];
 
 export default function LandingPage() {
   const { user } = useAuth();
-  const [lang, setLanguage] = useState<"en" | "fr">("en");
-  const [liveActivity, setLiveActivity] = useState<any[]>([]);
-
-  // Real-time live activity fetch
-  useEffect(() => {
-    const q = query(
-      collection(db, "transactions"),
-      where("status", "in", ["completed", "pending"]),
-      orderBy("createdAt", "desc"),
-      limit(6)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(docSnap => {
-        const data = docSnap.data();
-        const absAmount = Math.abs(data.amount || 0);
-        const cadValue = (absAmount / 1000).toFixed(2);
-        
-        // Format relative time
-        let timeLabel = "Just now";
-        if (data.createdAt) {
-          const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-          const diffMin = Math.floor((new Date().getTime() - date.getTime()) / 60000);
-          if (diffMin > 0) timeLabel = `${diffMin}m ago`;
-          if (diffMin > 60) timeLabel = `${Math.floor(diffMin/60)}h ago`;
-        }
-
-        // UI styling based on type
-        let method = data.method || (data.type === "offer" ? "Offer Completion" : "Payment");
-        let badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-        if (data.type === "withdrawal") {
-          badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-        }
-
-        return {
-          id: docSnap.id,
-          user: `${(data.userId || "user").slice(0, 5)}***`,
-          amount: `$${cadValue} CAD`,
-          method: method,
-          ref: `ID: #${docSnap.id.slice(0, 6)}`,
-          time: timeLabel,
-          badgeBg: badgeBg,
-          status: data.status
-        };
-      });
-      setLiveActivity(items);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const t = {
-    en: {
-      heroTag: "Canada's Premier GPT Rewards Platform",
-      heroTitle: "Earn Real Money Doing What You Love",
-      heroDesc: "Complete high-paying surveys, try newly released mobile apps, and play games. Get paid instantly in Canadian Dollars via Interac e-Transfer, PayPal, or Crypto.",
-      ctaStart: "Start Earning Free",
-      ctaDashboard: "Enter Member Dashboard",
-      activeEarners: "Join 12,000+ active Canadian earners",
-      howTitle: "The Simple Path to Payouts",
-      how1Title: "1. Register Instantly",
-      how1Desc: "Sign up with Google or your email in under 30 seconds. Fast, secure, and 100% free.",
-      how2Title: "2. Complete High-Yield Offers",
-      how2Desc: "Answer community polls, test local apps, and share consumer opinions with top brand partners.",
-      how3Title: "3. Cash Out Instantly",
-      how3Desc: "Redeem points directly to Interac, PayPal, or Bitcoin. Min cashout starts at just $2.00 CAD!",
-      canadaSectionTitle: "The Native Choice for Canadians \uD83C\uDDE6\uD83C\uDDE6",
-      canadaDesc: "We are proud to be the only premium GPT rewards platform engineered strictly for Canadians. Founded and headquartered in Toronto, Ontario, we offer direct local payouts and bilingual service.",
-      interacTitle: "Direct Interac e-Transfer",
-      interacDesc: "No more waiting days for foreign bank drafts. Get cash deposited securely into your Canadian bank account in under 15 minutes.",
-      cadDisplay: "Local CAD Valuations",
-      cadDesc: "See exactly what you earn. 10 Coins = $0.01 CAD. Clear, transparent, and fair exchange rates.",
-      bilingualTitle: "Fully Bilingual Platform",
-      bilingualDesc: "TapCash speaks your language. Toggle instantly between English and French across all dashboards.",
-      trustTitle: "Why Over 10,000+ Canadians Trust TapCash",
-      liveProofTitle: "Verified Global Activity Ledger",
-      founderTitle: "Founded in Toronto with Full Transparency",
-      founderDesc: "Unlike anonymous GPT sites, we stand behind our platform. TapCash was co-founded by the tech leaders of Obsidian Team in Toronto to offer Canadians a legitimate, premium reward hub.",
-      trustpilotCard: "Trustpilot Rating",
-      trustpilotDesc: "Excellent 4.8 out of 5 based on 1,482 real Canadian reviews.",
-    },
-    fr: {
-      heroTag: "La premi\u00E8re plateforme de r\u00E9compenses GPT au Canada",
-      heroTitle: "Gagnez de l'argent r\u00E9el en faisant ce que vous aimez",
-      heroDesc: "R\u00E9pondez \u00E0 des sondages payants, testez de nouvelles applications mobiles et jouez \u00E0 des jeux. Recevez vos gains instantan\u00E9ment en dollars canadiens via Virement Interac, PayPal ou Crypto.",
-      ctaStart: "Commencer Gratuitement",
-      ctaDashboard: "Acc\u00E9der au Tableau de Bord",
-      activeEarners: "Rejoignez plus de 12 000 utilisateurs canadiens actifs",
-      howTitle: "Le chemin le plus simple vers les paiements",
-      how1Title: "1. Inscrivez-vous instantan\u00E9ment",
-      how1Desc: "Cr\u00E9ez votre compte avec Google ou votre courriel en moins de 30 secondes. Rapide, s\u00E9curis\u00E9 et 100 % gratuit.",
-      how2Title: "2. Compl\u00E9tez des offres",
-      how2Desc: "R\u00E9pondez \u00E0 des sondages, testez des applications locales et partagez votre avis avec nos partenaires.",
-      how3Title: "3. Retirez vos gains",
-      how3Desc: "Retirez vos points directement par Virement Interac, PayPal ou Bitcoin. Seuil de retrait de seulement 2,00$ CAD!",
-      canadaSectionTitle: "Le Choix Authentique des Canadiens \uD83C\uDDE6\uD83C\uDDE6",
-      canadaDesc: "Nous sommes fiers d'\u00EAtre la seule plateforme de r\u00E9compenses GPT haut de gamme con\u00E7ue exclusivement pour les Canadiens. Fond\u00E9e \u00E0 Toronto, Ontario, nous offrons des paiements locaux directs.",
-      interacTitle: "Virement Interac direct",
-      interacDesc: "Plus besoin d'attendre des jours pour obtenir des virements bancaires \u00E9trangers. Recevez vos fonds en moins de 15 minutes.",
-      cadDisplay: "\u00C9valuations locales en CAD",
-      cadDesc: "Sachez exactement ce que vous gagnez. 10 Coins = 0,01$ CAD. Des taux de change transparents et \u00E9quitables.",
-      bilingualTitle: "Plateforme enti\u00E8rement bilingue",
-      bilingualDesc: "TapCash parle votre langue. Passez instantan\u00E9ment de l'anglais au fran\u00E7ais sur tous vos tableaux de bord.",
-      trustTitle: "Pourquoi plus de 10 000 Canadiens font confiance \u00E0 TapCash",
-      liveProofTitle: "Registre d'activit\u00E9 global v\u00E9rifi\u00E9",
-      founderTitle: "Fond\u00E9 \u00E0 Toronto en toute transparence",
-      founderDesc: "Contrairement aux sites anonymes, nous assumons notre plateforme. TapCash a \u00E9t\u00E9 cofond\u00E9 par l'\u00C9quipe Obsidian \u00E0 Toronto pour offrir une plateforme de r\u00E9compenses l\u00E9gitime.",
-      trustpilotCard: "\u00C9valuation Trustpilot",
-      trustpilotDesc: "Excellent 4,8 sur 5 bas\u00E9 sur 1 482 avis de vrais Canadiens.",
-    }
-  };
-
-  const curr = t[lang];
 
   return (
-    <div className="min-h-screen bg-[#030303] text-white flex flex-col relative overflow-x-hidden font-sans">
-      {/* Cinematic Dynamic Background Elements */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#10b98103_1px,transparent_1px),linear-gradient(to_bottom,#10b98103_1px,transparent_1px)] bg-[size:5rem_5rem]" />
-      
-      {/* Floating Radial Backglows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[-15%] w-[45vw] h-[45vw] bg-purple-500/5 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[10%] w-[35vw] h-[35vw] bg-emerald-400/5 rounded-full blur-[120px] pointer-events-none" />
-
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-[#030303]/60 backdrop-blur-xl border-b border-zinc-900/40 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-gradient-to-tr from-emerald-600 to-emerald-400 rounded-lg flex items-center justify-center font-bold text-black text-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:rotate-6 transition-transform">
-            <Coins className="w-5 h-5" />
-          </div>
-          <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-emerald-400 font-display">TapCash</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setLanguage(lang === "en" ? "fr" : "en")}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-950/40 border border-zinc-900/60 rounded-lg text-xs font-bold text-zinc-400 hover:text-emerald-400 transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-widest">{lang}</span>
-          </button>
-
-          {user ? (
-            <Link
-              href="/dashboard"
-              className="px-4.5 py-2 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black text-xs font-extrabold rounded-lg shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-all scale-100 hover:scale-[1.03]"
-            >
-              {curr.ctaDashboard}
-            </Link>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link
-                href="/auth/signin"
-                className="px-3.5 py-2 text-xs font-bold text-zinc-400 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="px-4.5 py-2 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black text-xs font-extrabold rounded-lg shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-all scale-100 hover:scale-[1.03]"
-              >
-                {curr.ctaStart}
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center text-center px-4 pt-24 pb-20 max-w-5xl mx-auto space-y-8 z-10">
-        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-widest leading-none shadow-[0_0_15px_rgba(16,185,129,0.05)]">
-          <Award className="w-3.5 h-3.5" />
-          <span>{curr.heroTag}</span>
-        </span>
-
-        <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-white via-zinc-100 to-zinc-500 max-w-4xl font-display text-glow">
-          {curr.heroTitle}
-        </h1>
-
-        <p className="text-sm md:text-lg text-zinc-400 max-w-2xl leading-relaxed">
-          {curr.heroDesc}
-        </p>
-
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-          <Link
-            href={user ? "/dashboard" : "/auth/signup"}
-            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black font-black text-sm rounded-xl shadow-[0_4px_25px_rgba(16,185,129,0.2)] hover:shadow-[0_4px_35px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2 group scale-100 hover:scale-[1.03]"
-          >
-            <span>{user ? curr.ctaDashboard : curr.ctaStart}</span>
-            <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1.5 transition-transform" />
-          </Link>
-        </div>
-
-        <p className="text-[10px] text-emerald-500/60 font-bold tracking-widest uppercase">
-          {curr.activeEarners}
-        </p>
-      </section>
-
-      {/* Trustpilot & Canada Sections (Ultra-Minimalist & Transparent) */}
-      <section className="px-6 py-20 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-10 relative">
-        {/* Left: Trustpilot Card - Semi-Transparent & Elegant */}
-        <div className="bg-transparent border border-zinc-900/60 rounded-3xl p-7 space-y-6 relative hover:border-zinc-800 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-emerald-500 rounded-lg flex items-center justify-center text-black font-black text-lg">
-              ★
+    <div className="min-h-screen tap-shell text-white overflow-x-hidden">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#050816]/72 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#00e6c3] via-[#3a7bff] to-[#9f7aea] flex items-center justify-center shadow-[0_12px_40px_rgba(58,123,255,0.22)] group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 text-[#050816]" />
             </div>
             <div>
-              <h3 className="font-black text-base font-display tracking-tight">{curr.trustpilotCard}</h3>
-              <p className="text-[10px] text-zinc-500 font-medium">{curr.trustpilotDesc}</p>
+              <span className="block text-xl font-black tracking-tight tap-gradient-text font-display">TapCash</span>
+              <span className="block text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-semibold">
+                Premium rewards ledger
+              </span>
             </div>
-          </div>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Star key={i} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-            ))}
-          </div>
-          <div className="border-t border-zinc-900/30 pt-4 space-y-3.5 text-xs font-medium text-zinc-400 leading-relaxed">
-            <p className="italic">“The instant Interac e-Transfer was in my bank account in 5 minutes! Best site in Canada.” - Chloe M., Montreal</p>
-            <p className="italic">“No fake offers. Solid payout rates, and highly responsive support. Highly recommend.” - Liam P., Toronto</p>
-          </div>
-        </div>
+          </Link>
 
-        {/* Right: Canada first values */}
-        <div className="space-y-6">
-          <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight font-display text-glow">{curr.canadaSectionTitle}</h2>
-          <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">{curr.canadaDesc}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-5 bg-transparent border border-zinc-900/50 rounded-2xl hover:border-zinc-800 transition-colors">
-              <div className="text-emerald-400 font-black text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                <span>💳</span> {curr.interacTitle}
-              </div>
-              <p className="text-zinc-500 text-xs leading-relaxed">{curr.interacDesc}</p>
-            </div>
-            <div className="p-5 bg-transparent border border-zinc-900/50 rounded-2xl hover:border-zinc-800 transition-colors">
-              <div className="text-emerald-400 font-black text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                <span>🍁</span> {curr.cadDisplay}
-              </div>
-              <p className="text-zinc-500 text-xs leading-relaxed">{curr.cadDesc}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+          <nav className="hidden md:flex items-center gap-2">
+            <a href="#how" className="px-4 py-2 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+              How it works
+            </a>
+            <a href="#offers" className="px-4 py-2 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+              Rewards
+            </a>
+            <a href="#safety" className="px-4 py-2 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+              Safety
+            </a>
+          </nav>
 
-      {/* How it works (Transparent & Compact Cards) */}
-      <section className="px-6 py-20 border-y border-zinc-900/30 z-10 relative bg-[#020202]/30">
-        <div className="max-w-5xl mx-auto space-y-12">
-          <h2 className="text-2xl sm:text-3xl font-black text-center tracking-tight font-display text-glow">{curr.howTitle}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { title: curr.how1Title, desc: curr.how1Desc },
-              { title: curr.how2Title, desc: curr.how2Desc, highlight: true },
-              { title: curr.how3Title, desc: curr.how3Desc },
-            ].map((step, idx) => (
-              <div 
-                key={idx} 
-                className={`p-6 bg-transparent rounded-2xl border transition-all scale-100 hover:scale-[1.01] ${
-                  step.highlight 
-                    ? "border-emerald-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.03)]" 
-                    : "border-zinc-900/60"
-                }`}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-full tap-badge text-xs font-black text-zinc-400">
+              <Globe className="w-3.5 h-3.5" />
+              EN / FR
+            </button>
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] text-sm font-black shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
               >
-                <h3 className="text-base font-black text-white mb-2 font-display tracking-tight">{step.title}</h3>
-                <p className="text-zinc-500 text-xs leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Canadian Brands Showcase - HIGH-END TRANSLUCENT MINIMALIST */}
-      <section className="px-6 py-20 max-w-5xl mx-auto space-y-10 z-10 relative">
-        <div className="text-center space-y-2">
-          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Premium Rewards Portfolio</span>
-          <h2 className="text-2xl md:text-4xl font-black tracking-tight font-display text-glow">Redeem Instantly with Leading Partners</h2>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {CANADIAN_PARTNERS.map((partner) => {
-            const LogoComponent = partner.renderLogo;
-            return (
-              <div 
-                key={partner.name} 
-                className="relative p-5 rounded-2xl border border-zinc-900/50 bg-transparent flex flex-col items-center justify-between text-center transition-all duration-300 scale-100 hover:scale-[1.02] hover:border-zinc-700 hover:shadow-[0_4px_25px_rgba(255,255,255,0.02)]"
-              >
-                {/* SVG Logo Container */}
-                <div className="h-14 flex items-center justify-center mb-3">
-                  <LogoComponent />
-                </div>
-
-                <div className="space-y-0.5">
-                  <span className="text-xs font-black text-zinc-300 font-display tracking-tight">{partner.name}</span>
-                  <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">{partner.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Founder Transparency Section */}
-      <section className="px-6 py-20 bg-transparent border-t border-zinc-900/30 z-10 relative">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
-          <div className="md:col-span-2 space-y-4">
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">{curr.founderTitle}</span>
-            <h2 className="text-xl sm:text-3xl font-black tracking-tight leading-tight font-display text-glow">No Anonymity. Fully Audited.</h2>
-            <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">{curr.founderDesc}</p>
-          </div>
-          
-          {/* Transparent Obsidian Crystal Team Badge */}
-          <div className="relative flex flex-col items-center bg-transparent border border-zinc-900/60 p-6 rounded-2xl text-center hover:border-zinc-800 transition-colors">
-            {/* Premium Crystal Illustration */}
-            <div className="mb-3">
-              <svg className="w-12 h-12 drop-shadow-[0_0_12px_rgba(168,85,247,0.2)]" viewBox="0 0 100 100" fill="none">
-                <polygon points="50,5 85,35 50,95 15,35" fill="url(#obsGrad)" stroke="#a855f7" strokeWidth="1" />
-                <polygon points="50,5 50,95 85,35" fill="rgba(255,255,255,0.05)" />
-                <polygon points="50,5 15,35 50,95" fill="rgba(0,0,0,0.3)" />
-                <line x1="50" y1="5" x2="50" y2="95" stroke="#10b981" strokeWidth="1" opacity="0.5" />
-                <line x1="85" y1="35" x2="15" y2="35" stroke="#a855f7" strokeWidth="1" opacity="0.2" />
-                <defs>
-                  <linearGradient id="obsGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#1e1b4b" />
-                    <stop offset="40%" stopColor="#3b0764" />
-                    <stop offset="100%" stopColor="#064e3b" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-
-            <span className="font-black text-zinc-100 text-sm font-display tracking-tight">Obsidian Team</span>
-            <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-widest mt-1">Core Tech & Auditors, Toronto</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Activity Ticker - CONNECTED TO REAL FIRESTORE DATA */}
-      <section className="px-6 py-14 bg-[#020202]/40 border-t border-zinc-900/30 z-10 relative">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="flex flex-col items-center text-center space-y-1">
-            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-400">
-              <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
-              <span>Real-Time Completed Payouts Feed</span>
-            </span>
-            <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider">SECURE BLOCKCHAIN & BANK LEDGER SYNCED</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {liveActivity.length > 0 ? (
-              liveActivity.map((tx, index) => (
-                <div 
-                  key={tx.id || index} 
-                  className="p-4 bg-transparent border border-zinc-900/60 rounded-xl flex flex-col justify-between space-y-3.5 hover:border-zinc-800 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-zinc-300 font-display">{tx.user}</span>
-                    <span className="text-[9px] font-bold text-zinc-500">{tx.time}</span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-emerald-400 font-black text-lg font-display">{tx.amount}</span>
-                    <span className="text-[10px] font-bold text-zinc-400">{tx.method}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2.5">
-                    <span className="text-[8px] font-mono text-zinc-600 font-bold uppercase tracking-wider">{tx.ref}</span>
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${tx.badgeBg}`}>
-                      {tx.status === "completed" ? "Verified" : "Processing"}
-                    </span>
-                  </div>
-                </div>
-              ))
+                Open dashboard
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             ) : (
-              <div className="col-span-full py-10 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
-                Waiting for incoming network activity...
+              <div className="flex items-center gap-2">
+                <Link href="/auth/signin" className="px-4 py-2.5 text-sm font-bold text-zinc-400 hover:text-white transition-colors">
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] text-sm font-black shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                >
+                  Join free
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             )}
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-900/40 bg-[#020202] py-16 px-6 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest space-y-8 z-10 relative">
-        <div className="flex justify-center flex-wrap gap-x-6 gap-y-2 text-xs normal-case font-medium">
-          <Link href="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link>
-          <Link href="/privacy" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link>
-          <Link href="/cookies" className="hover:text-emerald-400 transition-colors">Cookie Inventory</Link>
-          <Link href="/affiliate" className="hover:text-emerald-400 transition-colors">Affiliate Disclosure</Link>
-        </div>
-        
-        {/* Compliance and HQ Badges */}
-        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-y border-zinc-900/40 py-5 text-[9px] text-zinc-600 font-bold tracking-wider">
-          <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> SECURE SSL (AES-256)</span>
-          <span className="text-zinc-800">•</span>
-          <span>\uD83D\uDD1E AGE REQUIRED: 18+ ONLY</span>
-          <span className="text-zinc-800">•</span>
-          <span>\uD83C\uDDE6\uD83C\uDDE6 PIPEDA & CASL COMPLIANT</span>
-          <span className="text-zinc-800">•</span>
-          <span>\uD83C\uDFE2 HQ: 100 KING ST WEST, SUITE 5600, TORONTO, ON, CANADA</span>
-        </div>
+      <main>
+        <section className="relative px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 pb-16">
+          <div className="max-w-7xl mx-auto grid gap-8 lg:grid-cols-[1.08fr_0.92fr] items-center">
+            <div className="space-y-7">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full tap-badge text-[10px] font-black uppercase tracking-[0.28em] text-zinc-300">
+                <Sparkles className="w-3.5 h-3.5 text-[#00e6c3]" />
+                Hybrid fintech visual identity
+              </span>
 
-        <div className="space-y-2 max-w-3xl mx-auto leading-relaxed text-zinc-600 font-semibold text-[10px] lowercase normal-case">
-          <p className="uppercase text-[9px] tracking-wider text-zinc-600 font-bold">CASL Anti-Spam Compliance Declaration:</p>
-          <p>TapCash is committed to strict anti-spam compliance in accordance with CASL and federal regulations. By subscribing to communications, you consent to receive periodic rewards updates and notifications. You can safely revoke consent or opt out at any time through your member dashboard or by contacting support at <strong className="text-zinc-500">HELLO@TAPCASH.ONLINE</strong>.</p>
-        </div>
+              <div className="space-y-4 max-w-3xl">
+                <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] font-display tap-gradient-text">
+                  Earn with a rewards app that feels like a real fintech product.
+                </h1>
+                <p className="text-zinc-400 text-sm md:text-lg leading-relaxed max-w-2xl">
+                  TapCash is a ledger-first rewards platform with a calmer interface, clearer trust signals, and a more premium path from signup to cashout.
+                </p>
+              </div>
 
-        <p className="text-[9px] font-semibold text-zinc-600 mt-4">&copy; {new Date().getFullYear()} TapCash. All rights reserved. Toronto, Ontario, Canada.</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={user ? "/dashboard" : "/auth/signup"}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] text-sm font-black shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                >
+                  {user ? "Go to dashboard" : "Start earning"}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <a
+                  href="#how"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full tap-badge text-sm font-bold text-zinc-200 hover:text-white"
+                >
+                  See how it works
+                </a>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  "Ledger-backed balance",
+                  "Manual cashout approval",
+                  "Fraud-aware infrastructure",
+                ].map((item) => (
+                  <div key={item} className="tap-card rounded-[1.25rem] px-4 py-4">
+                    <div className="flex items-center gap-2 text-[#00e6c3] text-xs font-black uppercase tracking-[0.24em]">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Confirmed</span>
+                    </div>
+                    <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-[#00e6c3]/12 via-transparent to-[#3a7bff]/12 blur-3xl" />
+              <div className="tap-card rounded-[2rem] p-6 md:p-7 space-y-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Product snapshot</p>
+                    <h2 className="text-2xl font-black tracking-tight text-white font-display mt-1">Trust first, rewards second</h2>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816]">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[1.25rem] bg-white/4 border border-white/6 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Balance model</p>
+                    <p className="mt-2 text-xl font-black text-white">Ledger only</p>
+                    <p className="mt-1 text-sm text-zinc-400">No direct wallet mutation.</p>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-white/4 border border-white/6 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Approval flow</p>
+                    <p className="mt-2 text-xl font-black text-white">Admin review</p>
+                    <p className="mt-1 text-sm text-zinc-400">Manual cashout by default.</p>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-white/4 border border-white/6 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Security</p>
+                    <p className="mt-2 text-xl font-black text-white">Verified callbacks</p>
+                    <p className="mt-1 text-sm text-zinc-400">Only trusted provider events credit users.</p>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-white/4 border border-white/6 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">UX goal</p>
+                    <p className="mt-2 text-xl font-black text-white">Premium & calm</p>
+                    <p className="mt-1 text-sm text-zinc-400">Less scammy, more credible.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.25rem] bg-[#0a0f1f] border border-white/6 p-4 flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-[#00e6c3] shrink-0">
+                    <Clock3 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-white">Transparent earning path</p>
+                    <p className="text-sm text-zinc-400 leading-relaxed">
+                      Users see exactly what is happening at each step: sign in, complete offer, wait for callback, then request payout.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="how" className="px-4 sm:px-6 lg:px-8 py-16 border-y border-white/5">
+          <div className="max-w-7xl mx-auto space-y-10">
+            <div className="max-w-2xl">
+              <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">How it works</span>
+              <h2 className="mt-2 text-3xl md:text-4xl font-black tracking-tight font-display text-white">A simple flow that feels trustworthy.</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {STEPS.map((step) => (
+                <div key={step.title} className="tap-card rounded-[1.5rem] p-6">
+                  <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-[#00e6c3] mb-4">
+                    <Layers3 className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-black text-white">{step.title}</h3>
+                  <p className="mt-3 text-sm text-zinc-400 leading-relaxed">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="offers" className="px-4 sm:px-6 lg:px-8 py-16">
+          <div className="max-w-7xl mx-auto space-y-10">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+              <div className="max-w-2xl space-y-2">
+                <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Rewards catalog</span>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight font-display text-white">Built around offers, missions, and cashout clarity.</h2>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-zinc-500 font-bold uppercase tracking-[0.24em]">
+                <Star className="w-4 h-4 text-[#00e6c3]" />
+                Reward paths designed to feel premium
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {REWARD_PATHS.map((item) => (
+                <div key={item.title} className="tap-card rounded-[1.5rem] p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-black text-white">{item.title}</h3>
+                    <BarChart3 className="w-4 h-4 text-[#00e6c3]" />
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-[#00e6c3] uppercase tracking-[0.22em]">{item.value}</p>
+                  <p className="mt-3 text-sm text-zinc-400 leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="safety" className="px-4 sm:px-6 lg:px-8 py-16 border-y border-white/5">
+          <div className="max-w-7xl mx-auto grid gap-6 lg:grid-cols-[0.9fr_1.1fr] items-start">
+            <div className="space-y-4">
+              <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Safety and transparency</span>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight font-display text-white">The product should feel calm because the system is controlled.</h2>
+              <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-xl">
+                Every earning event is tied to a verified backend action. That means the UI can be sleek without hiding the actual payout controls.
+              </p>
+
+              <div className="space-y-3">
+                {SAFETY_NOTES.map((note) => (
+                  <div key={note} className="flex items-center gap-3 rounded-2xl tap-badge px-4 py-3">
+                    <CheckCircle2 className="w-4 h-4 text-[#00e6c3]" />
+                    <span className="text-sm text-zinc-200 font-medium">{note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {TRUST_POINTS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="tap-card rounded-[1.5rem] p-5">
+                    <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-[#00e6c3]">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-black text-white">{item.title}</h3>
+                    <p className="mt-2 text-sm text-zinc-400 leading-relaxed">{item.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 sm:px-6 lg:px-8 py-16">
+          <div className="max-w-7xl mx-auto tap-card rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Ready to ship</span>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight font-display text-white">A better first impression for TapCash.</h2>
+              <p className="text-zinc-400 text-sm md:text-base max-w-2xl">
+                Clean gradients, clearer hierarchy, calmer copy, and stronger trust cues across the top of the funnel.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={user ? "/dashboard" : "/auth/signup"}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] text-sm font-black shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+              >
+                {user ? "Open dashboard" : "Join TapCash"}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/rapidoreach"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full tap-badge text-sm font-bold text-zinc-200 hover:text-white"
+              >
+                View offerwall
+                <Target className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-white/5 px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm text-zinc-500">
+          <div className="flex items-center gap-4 flex-wrap">
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/affiliate" className="hover:text-white transition-colors">Affiliate</Link>
+          </div>
+          <p className="text-zinc-600">TapCash {new Date().getFullYear()} - ledger-first rewards for a cleaner fintech feel.</p>
+        </div>
       </footer>
     </div>
   );

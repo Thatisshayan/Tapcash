@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-space-grotesk), sans-serif;
-  --font-display: var(--font-outfit), sans-serif;
+  --font-sans: var(--font-manrope), sans-serif;
+  --font-display: var(--font-space-grotesk), sans-serif;
   
-  --color-background: #050505;
+  --color-background: #050816;
   --color-foreground: #ffffff;
-  --color-emerald: #10b981;
-  --color-emerald-light: #34d399;
+  --color-emerald: #00e6c3;
+  --color-emerald-light: #3a7bff;
 }
 
 body {
-  background: #050505;
+  background:
+    radial-gradient(circle at top, rgba(0, 230, 195, 0.12), transparent 32%),
+    radial-gradient(circle at 80% 0%, rgba(58, 123, 255, 0.10), transparent 28%),
+    linear-gradient(180deg, #050816 0%, #03060f 45%, #050505 100%);
   color: #ffffff;
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -37,11 +40,53 @@ body {
 
 /* Card glass styling */
 .glass-panel {
-  background: linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(5, 5, 5, 0.9) 100%);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(8, 12, 24, 0.84) 0%, rgba(5, 8, 22, 0.94) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .glass-panel:hover {
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(58, 123, 255, 0.28);
+}
+
+.tap-card {
+  background: linear-gradient(180deg, rgba(10, 15, 31, 0.9) 0%, rgba(5, 8, 22, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.tap-card:hover {
+  border-color: rgba(0, 230, 195, 0.24);
+}
+
+.tap-shell {
+  background:
+    radial-gradient(circle at top left, rgba(0, 230, 195, 0.10), transparent 24%),
+    radial-gradient(circle at top right, rgba(58, 123, 255, 0.10), transparent 20%),
+    linear-gradient(180deg, rgba(7, 10, 24, 0.98), rgba(4, 6, 16, 0.98));
+}
+
+.tap-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+}
+
+.tap-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tap-gradient-text {
+  background: linear-gradient(90deg, #ffffff 0%, #dbeafe 40%, #00e6c3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tap-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 230, 195, 0.35), 0 0 0 6px rgba(58, 123, 255, 0.14);
 }

@@ -6,8 +6,8 @@ import GlobalNotificationListener from "@/components/GlobalNotificationListener"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tapcash.online"),
-  title: "TapCash | Earn Rewards in Canada",
-  description: "Earn real cash by completing surveys, playing games, and downloading apps. Fast payouts and secure rewards.",
+  title: "TapCash | Ledger-First Rewards",
+  description: "A premium rewards platform with verified offers, ledger-backed balances, and manual cashout control.",
   alternates: {
     canonical: "/",
   },
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   openGraph: {
-    title: "TapCash | Earn Rewards in Canada",
-    description: "Earn real cash by completing surveys, playing games, and downloading apps. Fast payouts and secure rewards.",
+    title: "TapCash | Ledger-First Rewards",
+    description: "A premium rewards platform with verified offers, ledger-backed balances, and manual cashout control.",
     url: "https://tapcash.online",
     siteName: "TapCash",
     images: [
@@ -27,10 +27,10 @@ export const metadata: Metadata = {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "TapCash | Earn Rewards in Canada",
+        alt: "TapCash | Ledger-First Rewards",
       },
     ],
-    locale: "en_CA",
+    locale: "en_US",
     type: "website",
   },
 };
@@ -40,13 +40,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fontVars = {
-    "--font-space-grotesk": '"Trebuchet MS", "Segoe UI", Arial, sans-serif',
-    "--font-outfit": '"Trebuchet MS", "Segoe UI", Arial, sans-serif',
-  } as CSSProperties;
-
   return (
-    <html lang="en" style={fontVars} className="h-full antialiased dark">
+    <html
+      lang="en"
+      style={
+        {
+          "--font-space-grotesk": '"Space Grotesk", "Segoe UI", sans-serif',
+          "--font-manrope": '"Manrope", "Segoe UI", sans-serif',
+        } as CSSProperties
+      }
+      className="h-full antialiased dark"
+    >
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
         <AuthProvider>
           <GlobalNotificationListener />
