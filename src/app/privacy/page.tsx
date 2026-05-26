@@ -2,6 +2,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Lock, Eye, CheckCircle2, AlertTriangle, Scale, RefreshCw, FileText } from "lucide-react";
 import Link from "next/link";
 
@@ -168,6 +169,19 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm text-zinc-400 leading-relaxed">
             Your trust is our most valuable asset. We use standard industry practices, secure database setups, and strict third-party data rules to ensure your earnings, logs, and information remain secure, transparent, and compliant with all international requirements.
           </p>
+        </div>
+
+        <div className="mb-12">
+          <ConversionStrip
+            eyebrow="Start earning"
+            title="A privacy-first rewards flow can still convert well."
+            description="TapCash keeps user trust visible while routing offers, referrals, and cashout controls through the backend."
+            primaryHref="/auth/signup"
+            primaryLabel="Create account"
+            secondaryHref="/dashboard"
+            secondaryLabel="View dashboard"
+            bullets={["Server-side session handling", "Ledger-backed balance tracking", "Fraud-aware offer logging"]}
+          />
         </div>
 
         {/* Dynamic Legal sections list */}

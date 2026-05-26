@@ -6,6 +6,7 @@ import { doc, onSnapshot, collection, query, limit, orderBy, runTransaction, ser
 import { db } from "@/lib/firebase";
 import OfferCard from "@/components/OfferCard";
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Offer } from "@/types/offer";
 import Link from "next/link";
 import { 
@@ -591,6 +592,20 @@ export default function OffersPage() {
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <ConversionStrip
+          eyebrow="Boost earnings"
+          title="Keep the balance moving with offers, referrals, and streaks."
+          description="Use the dashboard to find active offers, complete missions, and keep your ledger growing without leaving the premium interface."
+          primaryHref="/rapidoreach"
+          primaryLabel="Open offerwall"
+          secondaryHref="/referrals"
+          secondaryLabel="Invite friends"
+          variant="private"
+          bullets={["Active offer opportunities", "Referral commissions", "Manual cashout workflow"]}
+        />
+      </div>
 
       {/* Real-time Global scrolling ticker (Social Proof) */}
       {tickerTxs.length > 0 && (

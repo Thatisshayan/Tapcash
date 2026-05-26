@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Copy, Check, Users, Gift, ArrowUpRight, Loader2, AlertTriangle, Coins } from "lucide-react";
 import Link from "next/link";
 
@@ -74,6 +75,19 @@ export default function ReferralsPage() {
     return (
       <div className="min-h-screen bg-[#060606] text-white flex flex-col">
         <Header />
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+          <ConversionStrip
+            eyebrow="Invite growth"
+            title="Referrals are easier to share when the product looks premium."
+            description="Get a clean invite link, share it anywhere, and turn your audience into recurring TapCash earnings."
+            primaryHref="/auth/signup"
+            primaryLabel="Create account"
+            secondaryHref="/auth/signin"
+            secondaryLabel="Sign in"
+            variant="private"
+            bullets={["Passive referral earnings", "Clean invite-link sharing", "Audience-friendly rewards"]}
+          />
+        </div>
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 text-center backdrop-blur-xl">
             <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
@@ -91,6 +105,20 @@ export default function ReferralsPage() {
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <ConversionStrip
+          eyebrow="Referral growth"
+          title="Turn one good audience into a recurring rewards channel."
+          description="Your referral link can drive signups, offer completions, and long-term passive coins while the ledger stays transparent."
+          primaryHref="/dashboard"
+          primaryLabel="Open dashboard"
+          secondaryHref="/affiliate"
+          secondaryLabel="Read policy"
+          variant="private"
+          bullets={["Clean invite-link sharing", "Passive commissions", "Track invited users and earnings"]}
+        />
+      </div>
 
       {/* Decorative background grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />

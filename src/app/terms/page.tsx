@@ -2,6 +2,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, FileText, CheckCircle2, AlertTriangle, Scale, RefreshCw, Landmark, HelpCircle, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -172,6 +173,19 @@ export default function TermsOfServicePage() {
           <p className="text-sm text-zinc-400 leading-relaxed">
             By creating an account, logging in, or completing tasks on **TapCash**, you agree to be bound by these Terms of Service, our Privacy Policy, Cookie Policy, and Affiliate Policy. If you do not agree to these terms, you are not authorized to use our platform or payout services.
           </p>
+        </div>
+
+        <div className="mb-12">
+          <ConversionStrip
+            eyebrow="Start earning"
+            title="Clear rules make a better rewards funnel."
+            description="Users convert faster when the payout rules, anti-fraud policy, and offer flow are easy to find."
+            primaryHref="/auth/signup"
+            primaryLabel="Create account"
+            secondaryHref="/rapidoreach"
+            secondaryLabel="Open offers"
+            bullets={["Manual payout approval", "Transparent coin valuation", "Fraud controls in place"]}
+          />
         </div>
 
         {/* Dynamic Legal sections list */}

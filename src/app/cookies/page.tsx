@@ -2,6 +2,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers } from "lucide-react";
 import Link from "next/link";
 
@@ -178,6 +179,19 @@ export default function CookiePolicyPage() {
           <p className="text-sm text-zinc-400 leading-relaxed">
             We use secure browser cookies and storage sessions primarily to track your virtual rewards, protect the integrity of our affiliate program, and shield TapCash from fraudulent automated botting scripts. We never sell or rent cookie-related tracking data to malicious third parties.
           </p>
+        </div>
+
+        <div className="mb-12">
+          <ConversionStrip
+            eyebrow="Secure session"
+            title="Tracking should support the product, not hide it."
+            description="TapCash uses cookies and local storage for sign-in, offer attribution, and anti-fraud controls so the earning flow stays reliable."
+            primaryHref="/auth/signup"
+            primaryLabel="Join TapCash"
+            secondaryHref="/dashboard"
+            secondaryLabel="Open dashboard"
+            bullets={["Secure auth session", "Offer attribution intact", "Fraud and duplicate protection"]}
+          />
         </div>
 
         {/* Dynamic Legal sections list */}

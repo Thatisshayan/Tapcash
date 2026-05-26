@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ConversionStrip from "@/components/ConversionStrip";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -225,19 +226,33 @@ export default function RapidoReachPage() {
         </div>
 
         {!loading && user && iframeUrl && (
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <a
-              href={iframeUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-4 py-2 text-sm font-bold text-zinc-200 hover:text-white hover:border-white/15 transition-colors"
-            >
-              Open in new tab
-              <ExternalLink className="w-4 h-4" />
-            </a>
-            <p className="text-xs text-zinc-500">
-              Completed offers are credited only after the backend verifies the callback and writes the ledger.
-            </p>
+          <div className="mt-5 space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={iframeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-4 py-2 text-sm font-bold text-zinc-200 hover:text-white hover:border-white/15 transition-colors"
+              >
+                Open in new tab
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <p className="text-xs text-zinc-500">
+                Completed offers are credited only after the backend verifies the callback and writes the ledger.
+              </p>
+            </div>
+
+            <ConversionStrip
+              eyebrow="Keep earning"
+              title="More offers live in the dashboard, where every click becomes a tracked ledger event."
+              description="Return to TapCash after completing surveys to keep your streak, referral, and payout flow moving forward."
+              primaryHref="/dashboard"
+              primaryLabel="Back to dashboard"
+              secondaryHref="/referrals"
+              secondaryLabel="Invite friends"
+              variant="private"
+              bullets={["Offerwall access", "Ledger-backed crediting", "Manual payout controls"]}
+            />
           </div>
         )}
       </main>

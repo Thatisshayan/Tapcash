@@ -2,6 +2,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, HelpCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -126,6 +127,19 @@ export default function AffiliatePolicyPage() {
           <p className="text-sm text-zinc-400 leading-relaxed">
             We highly value active creators and promoters. When you build an audience and share TapCash ethically, you help us grow. This Affiliate Policy ensures that everyone plays by the same fair rules, keeping our rewards pool sustainable and safe for everyone.
           </p>
+        </div>
+
+        <div className="mb-12">
+          <ConversionStrip
+            eyebrow="Grow earnings"
+            title="Use your affiliate link to turn traffic into recurring rewards."
+            description="TapCash lets referrals generate passive commission while still keeping the product clean, transparent, and compliant."
+            primaryHref="/auth/signup"
+            primaryLabel="Join TapCash"
+            secondaryHref="/dashboard"
+            secondaryLabel="Open dashboard"
+            bullets={["Fast signup flow", "Referral tracking built in", "Passive earning through offers"]}
+          />
         </div>
 
         {/* Dynamic Legal sections list */}

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
@@ -318,6 +319,19 @@ export default function CashoutStorePage() {
     return (
       <div className="min-h-screen bg-[#060606] text-white flex flex-col">
         <Header />
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+          <ConversionStrip
+            eyebrow="Earn first"
+            title="Cashout works best when the ledger keeps growing."
+            description="Complete more verified offers and your redemption flow becomes faster, cleaner, and easier to approve."
+            primaryHref="/dashboard"
+            primaryLabel="Open dashboard"
+            secondaryHref="/auth/signup"
+            secondaryLabel="Create account"
+            variant="private"
+            bullets={["Ledger-backed balances", "Manual approval queue", "Gift card and cash options"]}
+          />
+        </div>
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 text-center backdrop-blur-xl">
             <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
@@ -335,6 +349,20 @@ export default function CashoutStorePage() {
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <ConversionStrip
+          eyebrow="Cashout control"
+          title="Manual review keeps payouts safer for everyone."
+          description="Use the cashout store to review reward options, track minimum thresholds, and keep the payout queue clean."
+          primaryHref="/dashboard"
+          primaryLabel="Back to dashboard"
+          secondaryHref="/transactions"
+          secondaryLabel="View ledger"
+          variant="private"
+          bullets={["Clear minimum thresholds", "Admin review before payout", "Reward methods and tracking"]}
+        />
+      </div>
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
         {/* Page Title & Dashboard Intro */}

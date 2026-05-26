@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import Header from "@/components/Header";
+import ConversionStrip from "@/components/ConversionStrip";
 import { ArrowUpRight, ArrowDownLeft, Loader2, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
@@ -63,6 +64,19 @@ export default function TransactionsLedgerPage() {
     return (
       <div className="min-h-screen bg-[#060606] text-white flex flex-col">
         <Header />
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+          <ConversionStrip
+            eyebrow="Track progress"
+            title="The ledger tells a better story when more offers are completed."
+            description="Open the dashboard to earn more, then review how each reward, reversal, and cashout maps into your transaction history."
+            primaryHref="/dashboard"
+            primaryLabel="Open dashboard"
+            secondaryHref="/auth/signin"
+            secondaryLabel="Sign in"
+            variant="private"
+            bullets={["Verified transaction log", "Offer and payout history", "Easy balance review"]}
+          />
+        </div>
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 text-center backdrop-blur-xl">
             <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
@@ -80,6 +94,20 @@ export default function TransactionsLedgerPage() {
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <ConversionStrip
+          eyebrow="Ledger clarity"
+          title="Use the transaction view to turn raw activity into trust."
+          description="A clear ledger helps users understand the reward flow and gives them confidence to complete more offers."
+          primaryHref="/rapidoreach"
+          primaryLabel="Open offers"
+          secondaryHref="/cashout"
+          secondaryLabel="Go to cashout"
+          variant="private"
+          bullets={["Chronological reward history", "Cashout and reversal status", "More reasons to keep earning"]}
+        />
+      </div>
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-900">
