@@ -47,6 +47,12 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
+  // Balance adjustment modal state
+  const [adjModal, setAdjModal] = useState<{ uid: string; email: string } | null>(null);
+  const [adjAmount, setAdjAmount] = useState("");
+  const [adjReason, setAdjReason] = useState("");
+  const [adjSubmitting, setAdjSubmitting] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     loadData();
@@ -135,6 +141,32 @@ export default function AdminPage() {
     } finally {
       setActionLoading(null);
       setTimeout(() => setMessage(null), 3000);
+    }
+  }
+
+  async function handleAdjustSubmit() {
+    if (!adjModal || !adjAmount.trim() || !adjReason.trim()) return;
+    const parsed = parseInt(adjAmount, 10);
+    if (isNaN(parsed)) return;
+    setAdjSubmitting(true);
+    try {
+      await handleUserAction(adjModal.uid, "adjust_balance", parsed.toString());
+      // Write audit log entry
+      const token = await user!.getIdToken();
+      await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          targetUid: adjModal.uid,
+          action: "audit_log",
+          value: { delta: parsed, reason: adjReason, adminEmail: user?.email },
+        }),
+      });
+      setAdjModal(null);
+      setAdjAmount("");
+      setAdjReason("");
+    } finally {
+      setAdjSubmitting(false);
     }
   }
 
@@ -400,14 +432,11 @@ export default function AdminPage() {
                         >
                           {u.status === 'banned' ? 'Unban' : 'Ban'}
                         </button>
-                        <button 
-                          onClick={() => {
-                            const adj = prompt("Enter adjustment amount in CENTS (e.g. 100 for $1.00, -100 for -$1.00)");
-                            if (adj) handleUserAction(u.uid, 'adjust_balance', adj);
-                          }}
+                        <button
+                          onClick={() => setAdjModal({ uid: u.uid, email: u.email || u.uid })}
                           className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 text-[9px] font-black uppercase tracking-widest hover:text-white transition-all active:scale-95"
                         >
-                          Adj
+                          Adjust
                         </button>
                       </div>
                     </td>
@@ -415,6 +444,56 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Balance Adjustment Modal */}
+      {adjModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div>
+              <h3 className="text-lg font-black text-white">Adjust Balance</h3>
+              <p className="text-xs text-zinc-500 mt-1 font-mono">{adjModal.email}</p>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Amount (coins, use negative to deduct)</span>
+              <input
+                type="number"
+                value={adjAmount}
+                onChange={e => setAdjAmount(e.target.value)}
+                placeholder="e.g. 500 or -200"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40"
+              />
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Reason (required for audit log)</span>
+              <input
+                type="text"
+                value={adjReason}
+                onChange={e => setAdjReason(e.target.value)}
+                placeholder="e.g. Bonus for support ticket #123"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40"
+              />
+            </label>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => { setAdjModal(null); setAdjAmount(""); setAdjReason(""); }}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-400 text-xs font-black uppercase hover:text-white transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdjustSubmit}
+                disabled={adjSubmitting || !adjAmount.trim() || !adjReason.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-[#00e6c3] text-black text-xs font-black uppercase disabled:opacity-40 hover:bg-[#00ffda] transition"
+              >
+                {adjSubmitting ? "Saving..." : "Confirm Adjustment"}
+              </button>
+            </div>
           </div>
         </div>
       )}

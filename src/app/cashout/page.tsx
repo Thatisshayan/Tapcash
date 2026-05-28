@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle, ArrowRight, ShieldCheck, BadgeCheck, Sparkles, CheckCircle2, Gift, ChevronRight } from "lucide-react";
+import { Coins, Wallet, Landmark, X, Loader2, AlertTriangle, ArrowRight, ShieldCheck, BadgeCheck, Sparkles, CheckCircle2, Gift, ChevronRight, PartyPopper } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import { 
@@ -222,6 +223,7 @@ export default function CashoutStorePage() {
   const [destination, setDestination] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [successOverlay, setSuccessOverlay] = useState<{ coins: number; method: string } | null>(null);
 
   // Subscribe to real-time balance
   useEffect(() => {
@@ -294,6 +296,7 @@ export default function CashoutStorePage() {
         throw new Error(data.error || "Failed to submit cashout request.");
       }
 
+      setSuccessOverlay({ coins: selectedCoins, method: activeMethod?.name || "cashout" });
       setMessage({ text: `Success! ${selectedCoins.toLocaleString()} coins deducted. Your cashout is pending approval.`, type: "success" });
       setTimeout(() => {
         handleCloseDrawer();
@@ -348,6 +351,72 @@ export default function CashoutStorePage() {
 
   return (
     <div className="min-h-screen bg-[#050816] text-white flex flex-col relative overflow-x-hidden">
+      {/* Full-screen success overlay */}
+      <AnimatePresence>
+        {successOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050816]/95 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="max-w-sm w-full mx-4 text-center space-y-6"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 15 }}
+                className="w-24 h-24 mx-auto rounded-full bg-[#f5c842]/15 border border-[#f5c842]/40 flex items-center justify-center"
+              >
+                <span className="text-4xl">🎉</span>
+              </motion.div>
+
+              <div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="text-3xl font-black text-white"
+                >
+                  Cashout Submitted!
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.45 }}
+                  className="text-zinc-400 text-sm mt-2"
+                >
+                  <span className="gold-text font-black">{successOverlay.coins.toLocaleString()} coins</span> via <span className="text-white font-bold">{successOverlay.method}</span>
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-zinc-600 text-xs mt-2"
+                >
+                  Your request is in the review queue. Typical approval: 1–3 business days.
+                </motion.p>
+              </div>
+
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => setSuccessOverlay(null)}
+                className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-black font-black text-sm"
+              >
+                Back to Cashout
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Header />
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">

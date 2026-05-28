@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
 import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, User, MailCheck } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -16,6 +17,14 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [agreedToPolicies, setAgreedToPolicies] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      document.cookie = `tapcash_ref=${encodeURIComponent(ref)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    }
+  }, [searchParams]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,13 +198,21 @@ export default function SignUpPage() {
                 </button>
               </form>
 
-              <div className="mt-5 rounded-2xl border border-[#00e6c3]/15 bg-[#00e6c3]/8 px-4 py-4 text-sm text-zinc-300 leading-relaxed">
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex-1 h-px bg-white/8" />
+                <span className="text-xs text-zinc-600 font-semibold">or</span>
+                <div className="flex-1 h-px bg-white/8" />
+              </div>
+
+              <GoogleSignInButton label="Sign up with Google" />
+
+              <div className="rounded-2xl border border-[#00e6c3]/15 bg-[#00e6c3]/8 px-4 py-4 text-sm text-zinc-300 leading-relaxed">
                 <div className="flex items-center gap-2 text-[#8cf8e9] font-black uppercase tracking-[0.24em] text-[10px]">
                   <MailCheck className="w-3.5 h-3.5" />
                   Verification required before access
                 </div>
                 <p className="mt-2 text-zinc-400">
-                  TapCash now sends you to a verification step first. That keeps fake signups out and helps the real rewards flow stay clean.
+                  TapCash sends you to a verification step first. That keeps fake signups out and helps the real rewards flow stay clean.
                 </p>
               </div>
 

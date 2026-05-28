@@ -11,10 +11,10 @@ describe('Payout Request Security checks', () => {
     expect(true).toBe(true);
   });
   
-  it('should enforce rate limits on payouts', () => {
-    (checkRateLimit as jest.Mock).mockReturnValue({ success: false });
-    
-    const result = checkRateLimit('127.0.0.1', { limit: 1, windowMs: 1000 });
+  it('should enforce rate limits on payouts', async () => {
+    (checkRateLimit as jest.Mock).mockResolvedValue({ success: false });
+
+    const result = await checkRateLimit('127.0.0.1', { limit: 1, windowMs: 1000 });
     expect(result.success).toBe(false);
   });
 });

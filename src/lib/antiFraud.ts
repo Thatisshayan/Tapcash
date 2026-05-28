@@ -104,7 +104,11 @@ export async function isIpSuspicious(ip: string, action: string, userId?: string
     return { suspicious: false };
   } catch (error: any) {
     console.error("ProxyCheck request error:", error);
-    return { suspicious: false }; // Fail-safe to avoid locking out genuine users in case of DNS failures
+    // Fail closed for non-local IPs — a timed-out check should not let proxies through
+    if (LOCAL_IPS.includes(ip) || LOCAL_SUBNETS.some(subnet => ip.startsWith(subnet))) {
+      return { suspicious: false };
+    }
+    return { suspicious: true, reason: "IP verification service unreachable — treating as suspicious" };
   }
 }
 

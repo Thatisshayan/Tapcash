@@ -30,17 +30,18 @@ export default function ReferralsPage() {
         const usersSnap = await getDocs(usersQ);
         const totalInvited = usersSnap.size;
 
-        // Sum total passive coins earned
+        // Sum total passive coins earned from ledger (referral commissions only)
         const txQ = query(
-          collection(db, "transactions"), 
+          collection(db, "ledger_transactions"),
           where("userId", "==", user.uid),
-          where("type", "==", "referral_commission")
+          where("type", "==", "approved_credit"),
+          where("source", "==", "referral_commission")
         );
         const txSnap = await getDocs(txQ);
-        
+
         let totalEarned = 0;
         txSnap.forEach(doc => {
-          totalEarned += doc.data().amount || 0;
+          totalEarned += doc.data().balanceEffectCoins || 0;
         });
 
         setStats({ invited: totalInvited, earned: totalEarned });

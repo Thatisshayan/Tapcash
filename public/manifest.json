@@ -1,11 +1,11 @@
 {
   "name": "TapCash Rewards",
   "short_name": "TapCash",
-  "description": "Earn Cash Effortlessly Completing Fast Tasks",
-  "start_url": "/",
+  "description": "Earn real cash completing surveys, games & videos. Cashout via PayPal, Interac, crypto.",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#060606",
-  "theme_color": "#10b981",
+  "background_color": "#050816",
+  "theme_color": "#050816",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -14,5 +14,24 @@
       "type": "image/jpeg",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Offerwall",
+      "short_name": "Earn",
+      "description": "Jump straight to the RapidoReach offerwall",
+      "url": "/rapidoreach",
+      "icons": [{ "src": "/icon.jpg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Cash Out",
+      "short_name": "Cashout",
+      "description": "Request a payout",
+      "url": "/cashout",
+      "icons": [{ "src": "/icon.jpg", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["finance", "entertainment", "games"],
+  "screenshots": [],
+  "prefer_related_applications": false
 }

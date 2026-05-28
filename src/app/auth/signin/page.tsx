@@ -3,16 +3,36 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
-import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, MailCheck } from "lucide-react";
+import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError("Enter your email address above first, then click Forgot Password.");
+      return;
+    }
+    setResetLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setResetSent(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset email.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,16 +159,32 @@ export default function SignInPage() {
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                   <span>{loading ? "Signing in..." : "Sign in"}</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="w-full text-center text-sm text-zinc-500 hover:text-[#00e6c3] transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {resetLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+                  Forgot password?
+                </button>
               </form>
 
-              <div className="mt-5 rounded-2xl border border-[#00e6c3]/15 bg-[#00e6c3]/8 px-4 py-4 text-sm text-zinc-300 leading-relaxed">
-                <div className="flex items-center gap-2 text-[#8cf8e9] font-black uppercase tracking-[0.24em] text-[10px]">
-                  <MailCheck className="w-3.5 h-3.5" />
-                  No placeholder social login
+              {resetSent && (
+                <div className="mt-4 rounded-2xl border border-[#00e6c3]/20 bg-[#00e6c3]/8 px-4 py-4 text-sm text-[#8cf8e9]">
+                  Reset email sent to <strong>{email}</strong>. Check your inbox.
                 </div>
-                <p className="mt-2 text-zinc-400">
-                  We removed the fake-looking Google sign-in path for now. Email login stays honest and verification-ready.
-                </p>
+              )}
+
+              <div className="mt-5 flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/8" />
+                <span className="text-xs text-zinc-600 font-semibold">or</span>
+                <div className="flex-1 h-px bg-white/8" />
+              </div>
+
+              <div className="mt-4">
+                <GoogleSignInButton label="Sign in with Google" />
               </div>
 
               <p className="mt-6 text-center text-sm text-zinc-500">

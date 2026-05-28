@@ -19,10 +19,15 @@ interface LedgerTx {
   createdAt: any;
 }
 
+type FilterType = "all" | "credits" | "cashouts" | "pending";
+
 export default function TransactionsLedgerPage() {
   const { user, loading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<LedgerTx[]>([]);
   const [loadingTxs, setLoadingTxs] = useState(true);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     if (!user) return;
@@ -178,18 +183,55 @@ export default function TransactionsLedgerPage() {
         </section>
 
         <div className="bg-zinc-950/40 border border-zinc-900 rounded-3xl overflow-hidden backdrop-blur-xl">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1 p-4 border-b border-zinc-900 overflow-x-auto">
+            {(["all", "credits", "cashouts", "pending"] as FilterType[]).map(f => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setPage(0); }}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
+                  filter === f
+                    ? "bg-[#00e6c3] text-black"
+                    : "text-zinc-500 hover:text-white bg-zinc-900/40"
+                }`}
+              >
+                {f === "all" ? "All" : f === "credits" ? "Credits" : f === "cashouts" ? "Cashouts" : "Pending"}
+              </button>
+            ))}
+            <span className="ml-auto text-[10px] text-zinc-600 font-bold uppercase tracking-widest whitespace-nowrap">
+              {transactions.filter(tx => {
+                if (filter === "all") return true;
+                if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
+                if (filter === "cashouts") return tx.type?.includes("cashout");
+                if (filter === "pending") return tx.status === "pending";
+                return true;
+              }).length} entries
+            </span>
+          </div>
+
           {loadingTxs ? (
             <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-2" />
+              <Loader2 className="w-8 h-8 text-[#00e6c3] animate-spin mx-auto mb-2" />
               <p className="text-zinc-500 text-xs">Syncing ledger records...</p>
             </div>
           ) : transactions.length === 0 ? (
             <div className="p-12 text-center text-zinc-500 text-sm max-w-sm mx-auto">
               <Clock className="w-10 h-10 text-zinc-700 mx-auto mb-4" />
               <p className="font-bold text-zinc-400">No Transactions Yet</p>
-              <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">Your ledger is clean. Go complete high-paying offers on the homepage to start stacking rewards!</p>
+              <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">Your ledger is clean. Go complete high-paying offers to start stacking rewards!</p>
             </div>
-          ) : (
+          ) : (() => {
+            const filtered = transactions.filter(tx => {
+              if (filter === "all") return true;
+              if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
+              if (filter === "cashouts") return tx.type?.includes("cashout");
+              if (filter === "pending") return tx.status === "pending";
+              return true;
+            });
+            const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            return (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-zinc-950/60 border-b border-zinc-900/80 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
@@ -202,7 +244,7 @@ export default function TransactionsLedgerPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900/60">
-                  {transactions.map((tx) => {
+                  {paginated.map((tx) => {
                     const amount = tx.balanceEffectCoins ?? tx.amountCoins ?? 0;
                     const isAddition = amount > 0;
                     const formattedDate = tx.createdAt?.toDate
@@ -259,7 +301,31 @@ export default function TransactionsLedgerPage() {
                 </tbody>
               </table>
             </div>
-          )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-900">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl bg-zinc-900 text-zinc-400 hover:text-white disabled:opacity-30 transition"
+                >
+                  Previous
+                </button>
+                <span className="text-xs text-zinc-500 font-bold">
+                  Page {page + 1} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl bg-zinc-900 text-zinc-400 hover:text-white disabled:opacity-30 transition"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+            </>
+            );
+          })()}
         </div>
       </main>
     </div>

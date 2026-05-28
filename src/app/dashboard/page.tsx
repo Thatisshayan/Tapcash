@@ -7,13 +7,16 @@ import { db } from "@/lib/firebase";
 import OfferCard from "@/components/OfferCard";
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
+import OnboardingModal from "@/components/OnboardingModal";
+import PushNotificationPrompt from "@/components/PushNotificationPrompt";
 import { Offer } from "@/types/offer";
 import Link from "next/link";
-import { 
-  Sparkles, Trophy, Flame, UserCheck, ArrowRight, Wallet, Users, 
+import {
+  Sparkles, Trophy, Flame, UserCheck, ArrowRight, Wallet, Users,
   ArrowUpRight, Coins, Loader2, Sparkle, AlertCircle, Play, CheckCircle, X,
   Check, Ticket, Award, BarChart3, Star, Gift, Crown, HelpCircle, CheckCircle2
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MOCK_OFFERS: Offer[] = [
   {
@@ -113,6 +116,13 @@ export default function OffersPage() {
   const [claimingMission, setClaimingMission] = useState<string | null>(null);
   const [missionClaimMsg, setMissionClaimMessage] = useState<string | null>(null);
 
+  // Real leaderboard state
+  const [leaderboardData, setLeaderboardData] = useState<{ rank: number; displayName: string; coins: number }[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+
+  // Onboarding modal state — show when profile loads and onboardingComplete is falsy
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   // Subscribe to user transactions from today to compute gamification missions progress
   useEffect(() => {
     if (!user) {
@@ -193,6 +203,11 @@ export default function OffersPage() {
           const data = docSnap.data();
           setProfile(data);
 
+          // Show onboarding modal on first ever login
+          if (!data.onboardingComplete) {
+            setShowOnboarding(true);
+          }
+
           // Check if eligible for daily spin
           if (data.lastDailySpin) {
             const lastSpinDate = data.lastDailySpin.toDate ? data.lastDailySpin.toDate() : new Date(data.lastDailySpin);
@@ -261,6 +276,17 @@ export default function OffersPage() {
         }
       }
     }
+  }, []);
+
+  // Fetch real leaderboard from API (cached 5 min server-side)
+  useEffect(() => {
+    fetch("/api/leaderboard")
+      .then(r => r.json())
+      .then(data => {
+        if (data.leaderboard) setLeaderboardData(data.leaderboard);
+      })
+      .catch(() => {})
+      .finally(() => setLeaderboardLoading(false));
   }, []);
 
   // Subscribe to global real-time completed transaction alerts (Social Proof)
@@ -536,42 +562,54 @@ export default function OffersPage() {
     setSpinError(null);
   };
 
-  // Real-time PrizeRebel-style VIP Loyalty Tier computation
+  // VIP Loyalty Tier computation
   const userBalance = ledgerBalance;
   let vipTier = "Bronze";
-  let vipGlowColor = "shadow-zinc-500/10 border-zinc-800";
-  let vipTextColor = "text-zinc-400";
+  let vipCardClass = "vip-bronze";
+  let vipTextColor = "text-amber-600";
+  let vipBarColor = "";
+  let vipIcon = "🥉";
   let nextTierThreshold = 1000;
   let prevTierThreshold = 0;
 
   if (userBalance < 1000) {
-    vipTier = "Bronze VIP";
-    vipGlowColor = "shadow-amber-900/10 border-amber-950/40";
+    vipTier = "Bronze";
+    vipCardClass = "vip-bronze";
     vipTextColor = "text-amber-600";
+    vipBarColor = "from-amber-700 to-amber-500";
+    vipIcon = "🥉";
     nextTierThreshold = 1000;
     prevTierThreshold = 0;
   } else if (userBalance < 5000) {
-    vipTier = "Silver VIP";
-    vipGlowColor = "shadow-zinc-500/10 border-zinc-700/50";
+    vipTier = "Silver";
+    vipCardClass = "vip-silver";
     vipTextColor = "text-zinc-300";
+    vipBarColor = "from-zinc-500 to-zinc-300";
+    vipIcon = "🥈";
     nextTierThreshold = 5000;
     prevTierThreshold = 1000;
   } else if (userBalance < 25000) {
-    vipTier = "Gold VIP";
-    vipGlowColor = "shadow-yellow-500/10 border-yellow-500/20";
-    vipTextColor = "text-yellow-400 animate-pulse";
+    vipTier = "Gold";
+    vipCardClass = "vip-gold";
+    vipTextColor = "gold-text font-black";
+    vipBarColor = "from-[#c9a02a] to-[#f5c842]";
+    vipIcon = "👑";
     nextTierThreshold = 25000;
     prevTierThreshold = 5000;
   } else if (userBalance < 100000) {
-    vipTier = "Platinum VIP";
-    vipGlowColor = "shadow-teal-500/20 border-teal-500/30";
-    vipTextColor = "text-teal-400 font-extrabold";
+    vipTier = "Platinum";
+    vipCardClass = "vip-platinum";
+    vipTextColor = "text-[#00e6c3] font-extrabold";
+    vipBarColor = "from-[#00c4a7] to-[#00e6c3]";
+    vipIcon = "💎";
     nextTierThreshold = 100000;
     prevTierThreshold = 25000;
   } else {
-    vipTier = "Diamond VIP";
-    vipGlowColor = "shadow-emerald-500/30 border-emerald-400/40 bg-gradient-to-tr from-emerald-950/20 via-zinc-950/30 to-black";
-    vipTextColor = "text-emerald-300 font-black animate-bounce-slow";
+    vipTier = "Diamond";
+    vipCardClass = "vip-diamond";
+    vipTextColor = "text-[#3a7bff] font-black";
+    vipBarColor = "from-[#2563eb] to-[#3a7bff]";
+    vipIcon = "🔮";
     nextTierThreshold = 100000;
     prevTierThreshold = 100000;
   }
@@ -604,6 +642,17 @@ const leaderboardEarners = [
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
       <Header />
+
+      {/* First-login onboarding modal */}
+      {showOnboarding && user && (
+        <OnboardingModal
+          userId={user.uid}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+
+      {/* Push notification prompt (shown 8s after load, once per session) */}
+      <PushNotificationPrompt />
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
         <ConversionStrip
@@ -799,48 +848,50 @@ const leaderboardEarners = [
                   {/* Title and user stats */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-900/60 pb-6">
                     <div>
-                      <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
-                        <Sparkles className="w-4 h-4 animate-spin-slow" />
-                        <span>Welcome Back, Earn Active</span>
+                      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#f5c842]" />
+                        {(() => {
+                          const h = new Date().getHours();
+                          return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+                        })()}
                       </span>
                       <h1 className="text-3xl font-black text-white tracking-tight leading-tight">
-                        Hello, {profile?.displayName || "Explorer"}!
+                        {profile?.displayName || user?.email?.split("@")[0] || "Explorer"} 👋
                       </h1>
-                      {profile?.email && (
-                        <p className="text-zinc-500 text-xs font-semibold mt-1">
-                          ✉️ Logged in via: <span className="text-emerald-500/80 font-bold">{profile.email}</span>
-                        </p>
-                      )}
+                      <p className="text-zinc-500 text-xs font-semibold mt-1.5 flex items-center gap-1.5">
+                        <span className={`text-xs font-black ${vipTextColor}`}>{vipIcon} {vipTier}</span>
+                        <span className="text-zinc-700">•</span>
+                        <span>{userBalance.toLocaleString()} coins available</span>
+                      </p>
                     </div>
-                    {/* Tiny stats & Level */}
-                    <div className="flex flex-col gap-3 self-start w-full sm:w-auto">
-                      <div className="flex items-center gap-4 bg-zinc-900/20 border border-zinc-900 rounded-2xl px-4 py-2.5">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
-                          <span>Streak: <strong className="text-white">{streakCount}/7 Days</strong></span>
+                    {/* Streak + XP stats */}
+                    <div className="flex flex-col gap-3 self-start w-full sm:w-auto min-w-[220px]">
+                      <div className="flex items-center gap-3 bg-zinc-900/30 border border-zinc-900 rounded-2xl px-4 py-2.5">
+                        <Flame className={`w-4 h-4 flex-shrink-0 ${streakCount >= 3 ? "text-[#f5c842]" : "text-zinc-600"}`} />
+                        <div>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Streak</p>
+                          <p className="text-sm font-black text-white">{streakCount}<span className="text-zinc-600">/7</span></p>
                         </div>
-                        <div className="w-1 h-3 bg-zinc-800" />
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                          <Award className="w-4 h-4 text-emerald-400" />
-                          <span>VIP: <strong className="text-emerald-400">{vipTier}</strong></span>
-                        </div>
-                        <div className="w-1 h-3 bg-zinc-800" />
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
-                          <Star className="w-4 h-4 text-blue-400" />
-                          <span>Level: <strong className="text-blue-400">{Math.floor((profile?.xp || 0) / 1000) + 1}</strong></span>
+                        <div className="w-px h-8 bg-zinc-800 mx-1" />
+                        <Star className="w-4 h-4 text-[#3a7bff] flex-shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Level</p>
+                          <p className="text-sm font-black text-white">{Math.floor((profile?.xp || 0) / 1000) + 1}</p>
                         </div>
                       </div>
-                      
+
                       {/* XP Progress Bar */}
                       <div className="bg-zinc-900/20 border border-zinc-900 rounded-xl px-4 py-2.5">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">XP Progress</span>
-                          <span className="text-[10px] font-black text-blue-400">{((profile?.xp || 0) % 1000).toLocaleString()} / 1,000 XP</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">XP</span>
+                          <span className="text-[10px] font-black text-[#f5c842]">{((profile?.xp || 0) % 1000).toLocaleString()} / 1,000</span>
                         </div>
-                        <div className="w-full h-1.5 bg-zinc-950 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full" 
-                            style={{ width: `${(((profile?.xp || 0) % 1000) / 1000) * 100}%` }}
+                        <div className="xp-bar">
+                          <motion.div
+                            className="xp-bar-fill"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(((profile?.xp || 0) % 1000) / 1000) * 100}%` }}
+                            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
                           />
                         </div>
                       </div>
@@ -878,37 +929,34 @@ const leaderboardEarners = [
                       {STREAK_STEPS.map((step) => {
                         const isCompleted = step.day < streakCount;
                         const isActive = step.day === streakCount && !streakClaimedToday;
-                        const isCurrentDayNotClaimed = step.day === streakCount && streakClaimedToday;
-                        const isLocked = step.day > streakCount || isCurrentDayNotClaimed;
+                        const isLocked = step.day > streakCount || (step.day === streakCount && streakClaimedToday);
 
-                        let cardBg = "bg-zinc-900/30 border-zinc-900";
-                        let textClass = "text-zinc-500";
-                        let numberBg = "bg-zinc-900 text-zinc-600";
-
-                        if (isCompleted) {
-                          cardBg = "bg-emerald-950/10 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.03)]";
-                          textClass = "text-emerald-400 font-extrabold";
-                          numberBg = "bg-emerald-500 text-black";
-                        } else if (isActive) {
-                          cardBg = "bg-zinc-900 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.05)] animate-pulse";
-                          textClass = "text-emerald-300 font-black";
-                          numberBg = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-                        } else if (isLocked) {
-                          cardBg = "bg-zinc-950/20 border-zinc-900 opacity-60";
-                          textClass = "text-zinc-600";
-                          numberBg = "bg-zinc-900/50 text-zinc-700";
-                        }
+                        const cardClass = isCompleted ? "streak-day done" : isActive ? "streak-day active" : "streak-day locked";
 
                         return (
-                          <div key={step.day} className={`border rounded-2xl p-3.5 flex flex-col items-center justify-between text-center gap-3 transition-all duration-300 ${cardBg}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${numberBg}`}>
-                              {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.day}
+                          <motion.div
+                            key={step.day}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: step.day * 0.04 }}
+                            className={`${cardClass} p-3.5 flex flex-col items-center justify-between text-center gap-3`}
+                          >
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 ${
+                              isCompleted
+                                ? "bg-[#00e6c3] text-black"
+                                : isActive
+                                ? "bg-[#f5c842]/20 border border-[#f5c842]/50 gold-text"
+                                : "bg-zinc-900 text-zinc-600"
+                            }`}>
+                              {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : step.day === 7 ? "🎰" : step.day}
                             </span>
                             <div className="flex flex-col items-center">
-                              <span className={`text-xs font-black ${textClass}`}>{step.label}</span>
-                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">Day {step.day}</span>
+                              <span className={`text-xs font-black ${isCompleted ? "text-[#00e6c3]" : isActive ? "gold-text" : "text-zinc-600"}`}>
+                                {step.label}
+                              </span>
+                              <span className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest mt-0.5">Day {step.day}</span>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -1003,7 +1051,7 @@ const leaderboardEarners = [
                       return (
                         <>
                           {/* Mission 1: Poll Connoisseur */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-900/10 border border-zinc-900/60 rounded-2xl gap-4 hover:border-zinc-850/50 transition duration-300">
+                          <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 mission-card ${isPollCompleted ? "completed" : ""}`}>
                             <div className="space-y-2 flex-grow">
                               <div className="flex items-center gap-2.5">
                                 <span className={`w-2.5 h-2.5 rounded-full ${isPollCompleted ? "bg-emerald-500 animate-ping-slow" : "bg-zinc-700"}`} />
@@ -1037,7 +1085,7 @@ const leaderboardEarners = [
                           </div>
 
                           {/* Mission 2: Daily Survey Explorer */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-900/10 border border-zinc-900/60 rounded-2xl gap-4 hover:border-zinc-850/50 transition duration-300">
+                          <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 mission-card ${isSurveyCompleted ? "completed" : ""}`}>
                             <div className="space-y-2 flex-grow">
                               <div className="flex items-center gap-2.5">
                                 <span className={`w-2.5 h-2.5 rounded-full ${isSurveyCompleted ? "bg-emerald-500 animate-ping-slow" : "bg-zinc-700"}`} />
@@ -1071,7 +1119,7 @@ const leaderboardEarners = [
                           </div>
 
                           {/* Mission 3: High Earner Boost */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-900/10 border border-zinc-900/60 rounded-2xl gap-4 hover:border-zinc-850/50 transition duration-300">
+                          <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 mission-card ${isHighEarnerCompleted ? "completed" : ""}`}>
                             <div className="space-y-2 flex-grow">
                               <div className="flex items-center gap-2.5">
                                 <span className={`w-2.5 h-2.5 rounded-full ${isHighEarnerCompleted ? "bg-emerald-500 animate-ping-slow" : "bg-zinc-700"}`} />
@@ -1257,9 +1305,14 @@ const leaderboardEarners = [
                   </div>
 
                   <div className="relative my-6">
-                    <p className="text-4xl font-black text-emerald-400 tracking-tight leading-none">
+                    <motion.p
+                      key={userBalance}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-4xl font-black gold-text gold-glow tracking-tight leading-none"
+                    >
                       {userBalance.toLocaleString()}
-                    </p>
+                    </motion.p>
                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mt-1.5">
                       Available Coins
                     </p>
@@ -1276,52 +1329,57 @@ const leaderboardEarners = [
                   </div>
                 </div>
 
-                {/* Tiered VIP Loyalty levels panel (PrizeRebel-style) */}
-                <div className={`relative overflow-hidden bg-zinc-950/40 border rounded-3xl p-8 shadow-2xl transition-all duration-300 ${vipGlowColor}`}>
-                  <div className="absolute top-0 right-0 w-20 h-24 bg-emerald-500/[0.01] pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-850 flex items-center justify-center text-emerald-400">
-                        <Award className="w-4.5 h-4.5" />
-                      </div>
+                {/* VIP Loyalty Tier Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className={`relative overflow-hidden border rounded-3xl p-8 shadow-2xl transition-all duration-300 ${vipCardClass}`}
+                >
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{vipIcon}</span>
                       <div>
-                        <h4 className="text-sm font-black leading-none">Loyalty Rank</h4>
-                        <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-1">PrizeRebel-Style VIP</p>
+                        <h4 className="text-sm font-black leading-none text-white">Loyalty Rank</h4>
+                        <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-1">TapCash VIP</p>
                       </div>
                     </div>
-                    <span className={`text-xs font-black uppercase tracking-wider ${vipTextColor}`}>{vipTier}</span>
+                    <span className={`text-sm font-black uppercase tracking-wider ${vipTextColor}`}>{vipTier}</span>
                   </div>
 
-                  <div className="space-y-2 mt-6">
+                  <div className="space-y-2">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-zinc-500 font-bold uppercase tracking-wider">Tier Progress</span>
                       {userBalance >= 100000 ? (
-                        <span className="text-emerald-400 font-extrabold">MAX LEVEL</span>
+                        <span className="text-[#00e6c3] font-extrabold">MAX TIER</span>
                       ) : (
                         <span className="text-zinc-400 font-bold">
-                          {userBalance.toLocaleString()} / {nextTierThreshold.toLocaleString()} Coins
+                          {userBalance.toLocaleString()} / {nextTierThreshold.toLocaleString()}
                         </span>
                       )}
                     </div>
-                    <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-md shadow-emerald-500/20 rounded-full transition-all duration-500"
-                        style={{ width: `${vipProgressPct}%` }}
+                    <div className="xp-bar">
+                      <motion.div
+                        className={`h-full rounded-full bg-gradient-to-r ${vipBarColor} shadow-sm`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${vipProgressPct}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
                       />
                     </div>
                   </div>
 
-                  <div className="mt-5 p-3.5 bg-zinc-900/10 border border-zinc-900 rounded-2xl text-[10px] text-zinc-500 leading-normal font-medium">
+                  <div className="mt-5 p-3.5 bg-black/20 border border-white/5 rounded-2xl text-[10px] text-zinc-400 leading-normal font-medium">
                     {userBalance < 1000 ? (
-                      <span>Earn <strong>{(1000 - userBalance).toLocaleString()} more Coins</strong> to level up to <strong className="text-zinc-300">Silver VIP</strong> and claim lower cashout approval holds!</span>
+                      <span>Earn <strong className="text-zinc-200">{(1000 - userBalance).toLocaleString()} more coins</strong> to reach <strong className="text-zinc-300">Silver</strong> — unlocks faster cashout approvals.</span>
                     ) : userBalance < 5000 ? (
-                      <span>Earn <strong>{(5000 - userBalance).toLocaleString()} more Coins</strong> to reach <strong className="text-yellow-400">Gold VIP</strong> and receive a permanent <strong>+2% referral rate boost</strong>!</span>
+                      <span>Earn <strong className="text-zinc-200">{(5000 - userBalance).toLocaleString()} more coins</strong> to reach <strong className="gold-text">Gold</strong> — permanent +2% referral boost.</span>
+                    ) : userBalance < 25000 ? (
+                      <span>Earn <strong className="text-zinc-200">{(25000 - userBalance).toLocaleString()} more coins</strong> to reach <strong className="text-[#00e6c3]">Platinum</strong> — priority payouts.</span>
                     ) : (
-                      <span>You are a high-tier earner. Lower payouts manual hold limits are bypassed on your wallet!</span>
+                      <span>You are a high-tier earner. Manual hold limits are bypassed on your wallet!</span>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Secure Promo Code Redemption system (Freecash-style) */}
                 <div className="relative overflow-hidden bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 space-y-5">
@@ -1369,44 +1427,54 @@ const leaderboardEarners = [
                   </div>
                 </div>
 
-                {/* Daily Earners Leaderboard (Freecash-style) */}
+                {/* Live Leaderboard */}
                 <div className="relative overflow-hidden bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 space-y-4">
-                  <div className="flex items-center gap-2.5 border-b border-zinc-900 pb-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-850 flex items-center justify-center text-emerald-400">
-                      <Crown className="w-4.5 h-4.5" />
+                  <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-850 flex items-center justify-center">
+                        <Crown className="w-4.5 h-4.5 gold-text" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black leading-none">Top Earners</h4>
+                        <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-1">All-time leaderboard</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-black leading-none">Daily Leaderboard</h4>
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-1">Today's top earners</p>
-                    </div>
+                    <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Live</span>
                   </div>
 
-                  <div className="space-y-2.5">
-                    {leaderboardEarners.map((earner) => (
-                      <div key={earner.rank} className="flex items-center justify-between p-2.5 bg-zinc-900/10 border border-zinc-900/40 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          {earner.isGold ? (
-                            <span className="w-5.5 h-5.5 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-extrabold text-[10px] shadow-sm">
-                              👑
+                  <div className="space-y-2">
+                    {leaderboardLoading ? (
+                      [1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="skeleton h-9 w-full" />
+                      ))
+                    ) : leaderboardData.length === 0 ? (
+                      <p className="text-xs text-zinc-600 text-center py-4">No data yet — be the first to top the board!</p>
+                    ) : (
+                      leaderboardData.map((earner) => (
+                        <motion.div
+                          key={earner.rank}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: earner.rank * 0.04 }}
+                          className="flex items-center justify-between p-2.5 bg-zinc-900/10 border border-zinc-900/40 rounded-2xl"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[11px] ${
+                              earner.rank === 1 ? "bg-[#f5c842]/15 border border-[#f5c842]/40 gold-text" :
+                              earner.rank === 2 ? "bg-zinc-400/10 border border-zinc-400/25 text-zinc-300" :
+                              earner.rank === 3 ? "bg-amber-800/15 border border-amber-700/25 text-amber-600" :
+                              "bg-zinc-900 text-zinc-600"
+                            }`}>
+                              {earner.rank === 1 ? "👑" : earner.rank}
                             </span>
-                          ) : earner.isSilver ? (
-                            <span className="w-5.5 h-5.5 rounded-full bg-zinc-300/10 border border-zinc-400/20 flex items-center justify-center text-zinc-300 font-extrabold text-[10px]">
-                              2
-                            </span>
-                          ) : earner.isBronze ? (
-                            <span className="w-5.5 h-5.5 rounded-full bg-amber-900/10 border border-amber-950/20 flex items-center justify-center text-amber-700 font-extrabold text-[10px]">
-                              3
-                            </span>
-                          ) : (
-                            <span className="w-5.5 h-5.5 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-600 text-[10px] font-black">
-                              {earner.rank}
-                            </span>
-                          )}
-                          <span className="text-xs text-zinc-300 font-extrabold">{earner.name}</span>
-                        </div>
-                        <span className="text-xs font-black text-emerald-400">+{earner.coins.toLocaleString()} Coins</span>
-                      </div>
-                    ))}
+                            <span className="text-xs text-zinc-300 font-extrabold truncate max-w-[100px]">{earner.displayName}</span>
+                          </div>
+                          <span className={`text-xs font-black ${earner.rank === 1 ? "gold-text" : "text-[#00e6c3]"}`}>
+                            {earner.coins.toLocaleString()} coins
+                          </span>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
                 </div>
 

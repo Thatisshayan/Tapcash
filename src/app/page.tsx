@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -19,9 +20,9 @@ import {
   Zap,
 } from "lucide-react";
 
-// ─── Static data ─────────────────────────────────────────────────────────────
+// ─── Static fallback data ─────────────────────────────────────────────────────
 
-const tickerItems = [
+const FALLBACK_TICKER = [
   "User_***92 earned +500 coins via RapidoReach Survey",
   "User_***15 cashed out $25.00 CAD via PayPal",
   "User_***44 completed Daily Mission +200 coins",
@@ -31,6 +32,17 @@ const tickerItems = [
   "User_***83 cashed out $10 via Bitcoin",
   "User_***19 earned +800 coins via offerwall",
 ];
+
+function useLiveActivity() {
+  const [items, setItems] = useState<string[]>(FALLBACK_TICKER);
+  useEffect(() => {
+    fetch("/api/activity")
+      .then((r) => r.json())
+      .then((d) => { if (d.items?.length) setItems(d.items); })
+      .catch(() => {});
+  }, []);
+  return items;
+}
 
 const earnMethods = [
   {
@@ -168,6 +180,7 @@ const streakDays = [
 
 export default function LandingPage() {
   const { user } = useAuth();
+  const tickerItems = useLiveActivity();
 
   return (
     <div className="min-h-screen bg-[#050816] text-white overflow-x-hidden">

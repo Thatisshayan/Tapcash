@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import crypto from 'crypto';
 import { getClientIp, logFraudAttempt } from '@/lib/antiFraud';
+import { getActiveMultiplier } from '@/lib/multiplier';
 
 interface OfferwallPayload {
   userId: string;
@@ -54,10 +55,12 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing required parameters', { status: 400 });
     }
 
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
+    const rawAmount = parseFloat(amountStr);
+    if (isNaN(rawAmount) || rawAmount <= 0) {
       return new NextResponse('Invalid amount', { status: 400 });
     }
+    const multiplier = await getActiveMultiplier();
+    const amount = Math.floor(rawAmount * multiplier);
 
     // Build payload for signature verification
     const payload: OfferwallPayload = {
@@ -204,12 +207,17 @@ export async function GET(request: NextRequest) {
           updatedAt: FieldValue.serverTimestamp(),
         });
 
-        // Award 5% commission to referrer if they exist
+        // Award tiered commission to referrer based on their VIP tier
         if (userData.referredBy) {
           const referrerRef = adminDb.collection("users").doc(userData.referredBy);
           const referrerDoc = await transaction.get(referrerRef);
           if (referrerDoc.exists) {
-            const referralCommission = Math.floor(amount * 0.05);
+            const vipTier = (referrerDoc.data()!.vipTier as string) || "Bronze";
+            const tierRates: Record<string, number> = {
+              Bronze: 0.05, Silver: 0.08, Gold: 0.12, Platinum: 0.15, Diamond: 0.20,
+            };
+            const rate = tierRates[vipTier] ?? 0.05;
+            const referralCommission = Math.floor(amount * rate);
             if (referralCommission > 0) {
               const refLedgerRef = adminDb.collection('ledger_transactions').doc(`ref_${userId}_${offerId}`);
               transaction.set(refLedgerRef, {
@@ -222,7 +230,7 @@ export async function GET(request: NextRequest) {
                 status: 'approved',
                 source: 'referral_commission',
                 referenceId: `${userId}_${offerId}`,
-                metadata: { fromUserId: userId, offerId },
+                metadata: { fromUserId: userId, offerId, tier: vipTier, rate },
                 createdAt: FieldValue.serverTimestamp(),
                 updatedAt: FieldValue.serverTimestamp(),
               });
