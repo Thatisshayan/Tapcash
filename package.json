@@ -15,9 +15,9 @@
   "dependencies": {
     "@react-email/components": "^1.0.12",
     "@tailwindcss/postcss": "^4",
+    "@upstash/redis": "^1.38.0",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.10.0",
-    "ioredis": "^5.10.1",
     "jose": "^6.2.3",
     "lucide-react": "latest",
     "next": "16.2.6",

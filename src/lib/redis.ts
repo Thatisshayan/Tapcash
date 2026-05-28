@@ -1,11 +1,12 @@
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
-// Centralized Redis client for rate limiting
-// It connects only if REDIS_URL is provided, allowing fallback to in-memory locally.
-export const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
-
-if (redis) {
-  redis.on("error", (err) => {
-    console.error("Redis connection error:", err);
-  });
-}
+// Serverless-safe Redis client via Upstash REST API.
+// Requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars.
+// Falls back to null so rate-limit.ts can degrade gracefully to in-memory.
+export const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;

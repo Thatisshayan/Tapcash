@@ -69,7 +69,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-500/20",
     textColor: "text-red-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-red-500/20",
+    iconBg: "bg-red-500/10 border-red-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -84,7 +84,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-600/20",
     textColor: "text-red-500",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-red-600/20",
+    iconBg: "bg-red-600/10 border-red-600/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -114,7 +114,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-red-900/20",
     textColor: "text-red-300",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-red-900/20",
+    iconBg: "bg-red-900/10 border-red-900/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -144,7 +144,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-sky-500/20",
     textColor: "text-sky-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-sky-500/20",
+    iconBg: "bg-sky-500/10 border-sky-500/20",
     destinationLabel: "PayPal Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -174,7 +174,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-emerald-500/20",
     textColor: "text-emerald-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-emerald-500/20",
+    iconBg: "bg-emerald-500/10 border-emerald-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -204,7 +204,7 @@ const REWARD_METHODS: RewardMethod[] = [
     color: "from-zinc-900 to-zinc-950 hover:border-rose-500/20",
     textColor: "text-rose-400",
     borderColor: "border-zinc-900",
-    iconBg: "bg-white border-rose-500/20",
+    iconBg: "bg-rose-500/10 border-rose-500/20",
     destinationLabel: "Delivery Email Address",
     destinationPlaceholder: "you@example.com",
     destinationType: "email",
@@ -347,7 +347,7 @@ export default function CashoutStorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f2e8] text-slate-950 flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050816] text-white flex flex-col relative overflow-x-hidden">
       <Header />
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
@@ -365,30 +365,30 @@ export default function CashoutStorePage() {
       </div>
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
-        <section className="relative overflow-hidden rounded-[2rem] border border-black/8 bg-white p-6 sm:p-8 lg:p-10 shadow-[0_24px_60px_rgba(15,23,42,0.06)]">
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#1e2d4f] bg-[#07111e] p-6 sm:p-8 lg:p-10 shadow-[0_24px_60px_rgba(0,0,0,0.4)]">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#4c7dff]/10 blur-3xl" />
-            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#1cd3b0]/10 blur-3xl" />
+            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/[0.08] blur-3xl" />
+            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/[0.06] blur-3xl" />
           </div>
 
           <div className="relative grid gap-6 lg:grid-cols-[1.25fr_0.75fr] items-start">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1cd3b0]/20 bg-[#1cd3b0]/10 text-[#0f766e] text-[10px] font-black uppercase tracking-[0.28em]">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/[0.06] text-[#00e6c3] text-[10px] font-black uppercase tracking-[0.28em]">
                   <Sparkles className="w-3.5 h-3.5" />
                   Payout store
                 </span>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/10 bg-white text-slate-600 text-[10px] font-black uppercase tracking-[0.22em]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#4c7dff]" />
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/[0.04] text-zinc-400 text-[10px] font-black uppercase tracking-[0.22em]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#3a7bff]" />
                   Manual review queue
                 </span>
               </div>
 
               <div className="max-w-3xl space-y-3">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[0.92] font-display text-slate-950">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[0.92] font-display text-white">
                   Redeem your balance with a cleaner payout funnel.
                 </h1>
-                <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-2xl">
+                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-2xl">
                   TapCash keeps redemption simple: pick a reward method, confirm the destination, and submit for admin approval. No auto-payouts, no clutter, no mystery.
                 </p>
               </div>
@@ -396,14 +396,14 @@ export default function CashoutStorePage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_0_30px_rgba(0,230,195,0.25)] hover:opacity-90 transition"
                 >
                   Back to dashboard
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/transactions"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 hover:text-slate-950 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-zinc-300 hover:text-white hover:bg-white/[0.07] transition-colors"
                 >
                   View ledger
                   <BadgeCheck className="w-4 h-4" />
@@ -412,31 +412,31 @@ export default function CashoutStorePage() {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-[1.75rem] border border-black/8 bg-[#f8fafc] p-5 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Your wallet</p>
+              <div className="rounded-[1.75rem] border border-[#1e2d4f] bg-[#0a1628] p-5">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Your wallet</p>
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-3xl font-black text-slate-950">{balance.toLocaleString()}</p>
-                    <p className="text-sm text-slate-500">coins available for redemption</p>
+                    <p className="text-3xl font-black text-[#00e6c3]">{balance.toLocaleString()}</p>
+                    <p className="text-sm text-zinc-500">coins available for redemption</p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#1cd3b0] to-[#4c7dff] flex items-center justify-center text-white">
+                  <div className="w-12 h-12 rounded-2xl bg-[#00e6c3]/10 border border-[#00e6c3]/20 flex items-center justify-center text-[#00e6c3]">
                     <Coins className="w-5 h-5" />
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.25rem] border border-black/8 bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Min payout</p>
-                  <p className="mt-2 text-xl font-black text-slate-950">2,000+</p>
+                <div className="rounded-[1.25rem] border border-[#1e2d4f] bg-[#07111e] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Min payout</p>
+                  <p className="mt-2 text-xl font-black text-white">2,000+</p>
                 </div>
-                <div className="rounded-[1.25rem] border border-black/8 bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Approval</p>
-                  <p className="mt-2 text-xl font-black text-slate-950">Manual</p>
+                <div className="rounded-[1.25rem] border border-[#1e2d4f] bg-[#07111e] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Approval</p>
+                  <p className="mt-2 text-xl font-black text-white">Manual</p>
                 </div>
-                <div className="rounded-[1.25rem] border border-black/8 bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-black">Trust level</p>
-                  <p className="mt-2 text-xl font-black text-slate-950">Checked</p>
+                <div className="rounded-[1.25rem] border border-[#1e2d4f] bg-[#07111e] p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Trust level</p>
+                  <p className="mt-2 text-xl font-black text-white">Checked</p>
                 </div>
               </div>
             </div>
@@ -448,11 +448,11 @@ export default function CashoutStorePage() {
           <div>
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <h2 className="text-xl font-black text-slate-950 tracking-tight">Select cashout method</h2>
-                <p className="text-slate-500 text-xs mt-0.5">Pick one payout path and submit it for manual review.</p>
+                <h2 className="text-xl font-black text-white tracking-tight">Select cashout method</h2>
+                <p className="text-zinc-500 text-xs mt-0.5">Pick one payout path and submit it for manual review.</p>
               </div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-black text-slate-600">
-                <Gift className="w-3.5 h-3.5 text-[#1cd3b0]" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-zinc-400">
+                <Gift className="w-3.5 h-3.5 text-[#00e6c3]" />
                 Rewards are shown in a plain, scannable grid
               </span>
             </div>
@@ -465,10 +465,10 @@ export default function CashoutStorePage() {
                 <div
                   key={method.id}
                   onClick={() => handleOpenDrawer(method)}
-                  className={`group relative overflow-hidden bg-white border border-black/8 p-6 rounded-[1.75rem] cursor-pointer hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[12rem] shadow-[0_12px_36px_rgba(15,23,42,0.05)]`}
+                  className={`group relative overflow-hidden border border-[#1e2d4f] bg-[#07111e] p-6 rounded-[1.75rem] cursor-pointer hover:-translate-y-1 hover:border-[#00e6c3]/25 transition-all duration-300 flex flex-col justify-between min-h-[12rem] shadow-[0_12px_40px_rgba(0,0,0,0.35)]`}
                 >
-                  <div className="absolute inset-0 bg-[#1cd3b0]/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                  
+                  <div className="absolute inset-0 bg-[#00e6c3]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
                   <div className="flex items-start justify-between">
                     <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-bold overflow-hidden relative ${method.iconBg}`}>
                       {(() => {
@@ -476,15 +476,15 @@ export default function CashoutStorePage() {
                         return Logo ? <Logo className="w-8 h-8 object-contain" /> : <Wallet className="w-6 h-6" />;
                       })()}
                     </div>
-                    <span className="px-2.5 py-1 bg-[#f8fafc] border border-black/10 text-slate-500 text-[10px] font-black uppercase rounded-full tracking-wider leading-none">
+                    <span className="px-2.5 py-1 bg-white/[0.05] border border-white/8 text-zinc-400 text-[10px] font-black uppercase rounded-full tracking-wider leading-none">
                       {method.badge}
                     </span>
                   </div>
 
                   <div className="mt-4">
-                    <h3 className="text-lg font-bold text-slate-950 group-hover:text-[#0f766e] transition-colors">{method.name}</h3>
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-black/5 text-xs">
-                      <span className="text-slate-500 font-semibold">Min. payout</span>
+                    <h3 className="text-lg font-bold text-white group-hover:text-[#00e6c3] transition-colors">{method.name}</h3>
+                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/5 text-xs">
+                      <span className="text-zinc-500 font-semibold">Min. payout</span>
                       <span className={`font-black ${method.textColor}`}>
                         {method.minCoins.toLocaleString()} Coins (${method.minUSD.toFixed(2)})
                       </span>
@@ -507,9 +507,9 @@ export default function CashoutStorePage() {
           />
 
           {/* Bottom Sheet Body */}
-          <div className="relative w-full max-w-lg bg-white border-t border-black/10 rounded-t-3xl p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-[#07111e] border-t border-[#1e2d4f] rounded-t-3xl p-6 shadow-[0_-10px_60px_rgba(0,0,0,0.7)] transition-transform duration-300 max-h-[90vh] overflow-y-auto">
             {/* Grabber bar for mobile native feel */}
-            <div className="w-12 h-1 bg-black/15 rounded-full mx-auto mb-6" />
+            <div className="w-12 h-1 bg-white/15 rounded-full mx-auto mb-6" />
 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -520,13 +520,13 @@ export default function CashoutStorePage() {
                   })()}
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-950 leading-none">{activeMethod.name} cashout</h3>
-                  <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-1">Secure redemption</p>
+                  <h3 className="text-lg font-black text-white leading-none">{activeMethod.name} cashout</h3>
+                  <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest mt-1">Secure redemption</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={handleCloseDrawer}
-                className="w-8 h-8 rounded-full bg-white border border-black/10 hover:border-black/20 flex items-center justify-center text-slate-500 hover:text-slate-950 transition"
+                className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/10 hover:border-white/20 flex items-center justify-center text-zinc-400 hover:text-white transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -534,9 +534,9 @@ export default function CashoutStorePage() {
 
             {message && (
               <div className={`p-4 mb-6 rounded-2xl border text-sm font-semibold ${
-                message.type === "success" 
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700" 
-                  : "bg-red-500/10 border-red-500/20 text-red-700"
+                message.type === "success"
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  : "bg-red-500/10 border-red-500/20 text-red-400"
               }`}>
                 {message.text}
               </div>
