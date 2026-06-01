@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, BadgeCheck, Coins, Loader2, Sparkles, Wallet } from "lucide-react";
+import { BadgeCheck, Coins, Loader2, Sparkles, Wallet } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { accentClass, formatCoins, formatCadFromCoins, tapCashPayoutMethods } from "@shared/tapcash-content";
+import { CTAButton, MotionWrap, StatCard } from "@/components/PremiumUi";
 
 type LedgerSummaryResponse = {
   balanceCoins?: number;
@@ -30,9 +30,7 @@ export default function CashoutPage() {
   );
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     const currentUser = user;
     let cancelled = false;
@@ -89,17 +87,10 @@ export default function CashoutPage() {
           <div className="w-full rounded-[2rem] border border-white/8 bg-white/[0.03] p-8 text-center">
             <Wallet className="mx-auto h-12 w-12 text-[#8cf8e9]" />
             <h1 className="mt-4 text-3xl font-black tracking-tight text-white">Sign in to review cashout options</h1>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              The payout store is private because the balance and withdrawal queue are user-specific.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">The payout store is private because the balance and withdrawal queue are user-specific.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link href="/auth/signin" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3 text-sm font-black text-[#04101d]">
-                Sign in
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/" className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white">
-                Back home
-              </Link>
+              <CTAButton href="/auth/signin" label="Sign in" />
+              <CTAButton href="/" label="Back home" variant="secondary" />
             </div>
           </div>
         </main>
@@ -111,96 +102,79 @@ export default function CashoutPage() {
     <div className="min-h-screen bg-[#040913] text-white">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <motion.section {...motionProps} className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,200,66,0.1),transparent_28%),linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#f5c842]/20 bg-[#f5c842]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#f5c842]">
-              <Sparkles className="h-3.5 w-3.5" />
-              Payout store
-            </div>
-            <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
-              The cashout side stays visible, readable, and easy to trust.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
-              TapCash keeps the withdrawal options up front so users know what they can redeem and when they can do it.
-            </p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Balance</p>
-                <p className="mt-2 text-3xl font-black text-white">{formatCoins(balanceCoins)}</p>
-                <p className="mt-1 text-sm text-zinc-400">{formatCadFromCoins(balanceCoins)}</p>
+        <MotionWrap>
+          <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,200,66,0.1),transparent_28%),linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#f5c842]/20 bg-[#f5c842]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#f5c842]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Payout store
               </div>
-              <div className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Pending</p>
-                <p className="mt-2 text-3xl font-black text-white">{formatCoins(pendingCoins)}</p>
-                <p className="mt-1 text-sm text-zinc-400">Queued for review</p>
+              <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
+                The cashout side stays visible, readable, and easy to trust.
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+                TapCash keeps the withdrawal options up front so users know what they can redeem and when they can do it.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <StatCard label="Balance" value={formatCoins(balanceCoins)} detail={formatCadFromCoins(balanceCoins)} />
+                <StatCard label="Pending" value={formatCoins(pendingCoins)} detail="Queued for review" />
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <CTAButton href="/cashout/status" label="Check payout status" />
+                <CTAButton href="/dashboard" label="Back to dashboard" variant="secondary" />
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/cashout/status" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
-                Check payout status
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
-                Back to dashboard
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {tapCashPayoutMethods.map((method) => {
-              const classes = accentClass(method.accent);
-              return (
-                <div key={method.id} className={`rounded-[1.75rem] border ${classes.ring} bg-white/[0.03] p-5 ${classes.glow}`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${classes.badge}`}>
-                        {method.audience}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {tapCashPayoutMethods.map((method, index) => {
+                const classes = accentClass(method.accent);
+                return (
+                  <motion.div key={method.id} {...motionProps} transition={{ ...(motionProps.transition as object), delay: reduceMotion ? 0 : index * 0.04 }} className={`rounded-[1.75rem] border ${classes.ring} bg-white/[0.03] p-5 ${classes.glow}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${classes.badge}`}>
+                          {method.audience}
+                        </div>
+                        <h2 className="mt-4 text-2xl font-black text-white">{method.label}</h2>
                       </div>
-                      <h2 className="mt-4 text-2xl font-black text-white">{method.label}</h2>
+                      <BadgeCheck className="h-5 w-5 text-[#8cf8e9]" />
                     </div>
-                    <BadgeCheck className="h-5 w-5 text-[#8cf8e9]" />
-                  </div>
+                    <p className="mt-3 text-sm leading-relaxed text-zinc-400">{method.subtitle}</p>
+                    <div className="mt-5 space-y-3 border-t border-white/6 pt-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-zinc-500">Minimum</span>
+                        <span className="font-semibold text-white">{formatCoins(method.minCoins)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-zinc-500">Timing</span>
+                        <span className="font-semibold text-white">{method.eta}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
 
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-400">{method.subtitle}</p>
-
-                  <div className="mt-5 space-y-3 border-t border-white/6 pt-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-500">Minimum</span>
-                      <span className="font-semibold text-white">{formatCoins(method.minCoins)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-500">Timing</span>
-                      <span className="font-semibold text-white">{method.eta}</span>
-                    </div>
+              <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5 sm:col-span-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Verification model</p>
+                    <h2 className="mt-2 text-2xl font-black text-white">Server-approved, not client-pretend.</h2>
                   </div>
+                  <Coins className="h-6 w-6 text-[#f5c842]" />
                 </div>
-              );
-            })}
-
-            <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5 sm:col-span-2">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Verification model</p>
-                  <h2 className="mt-2 text-2xl font-black text-white">Server-approved, not client-pretend.</h2>
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {["Sensitive actions stay ledger-backed.", "The queue is visible before you request a payout.", "Users can review the status flow from one place."].map((point) => (
+                    <div key={point} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3 text-sm text-zinc-300">
+                      {point}
+                    </div>
+                  ))}
                 </div>
-                <Coins className="h-6 w-6 text-[#f5c842]" />
-              </div>
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
-                {[
-                  "Sensitive actions stay ledger-backed.",
-                  "The queue is visible before you request a payout.",
-                  "Users can review the status flow from one place.",
-                ].map((point) => (
-                  <div key={point} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3 text-sm text-zinc-300">
-                    {point}
-                  </div>
-                ))}
               </div>
             </div>
-          </div>
-        </motion.section>
+          </section>
+        </MotionWrap>
       </main>
     </div>
   );

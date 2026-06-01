@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BadgeCheck,
-  CircleGauge,
-  Loader2,
-  Sparkles,
-  Trophy,
-  Wallet,
-  ShieldCheck,
-  Activity,
-} from "lucide-react";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { ArrowRight, BadgeCheck, CircleGauge, Loader2, Sparkles, ShieldCheck, Trophy, Wallet } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import { accentClass, formatCoins, formatCadFromCoins, tapCashOffers, tapCashLeaderboardSeed, tapCashActivity } from "@shared/tapcash-content";
+import { db } from "@/lib/firebase";
+import { accentClass, formatCadFromCoins, formatCoins, tapCashActivity, tapCashLeaderboardSeed, tapCashOffers } from "@shared/tapcash-content";
+import { CTAButton, MotionWrap, PageShell } from "@/components/PremiumUi";
+
+type LedgerTx = {
+  id: string;
+  type: string;
+  amountCoins: number;
+  balanceEffectCoins?: number;
+  method?: string;
+  status: string;
+  createdAt: Date | string | { toDate?: () => Date } | null;
+};
+
+type FilterType = "all" | "credits" | "cashouts" | "pending";
 
 type LedgerSummaryResponse = {
   balanceCoins?: number;
@@ -25,39 +28,18 @@ type LedgerSummaryResponse = {
   verificationState?: string;
 };
 
-type LeaderboardEntry = {
-  rank: number;
-  displayName: string;
-  coins: number;
-};
-
-function useDashboardMotion() {
-  const reduceMotion = useReducedMotion();
-
-  return useMemo(
-    () => ({
-      initial: reduceMotion ? { opacity: 1 } : { opacity: 0, y: 18 },
-      whileInView: { opacity: 1, y: 0 },
-      viewport: { once: true, margin: "-10%" },
-      transition: reduceMotion ? { duration: 0 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
-    }),
-    [reduceMotion]
-  );
-}
-
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const motionProps = useDashboardMotion();
   const [ledger, setLedger] = useState<LedgerSummaryResponse | null>(null);
   const [offers, setOffers] = useState(tapCashOffers);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(tapCashLeaderboardSeed);
+  const [leaderboard, setLeaderboard] = useState(tapCashLeaderboardSeed);
+  const [transactions, setTransactions] = useState<LedgerTx[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     const currentUser = user;
     let cancelled = false;
@@ -69,16 +51,14 @@ export default function DashboardPage() {
 
         const token = await currentUser.getIdToken();
         const [ledgerResponse, offersResponse, leaderboardResponse] = await Promise.allSettled([
-          fetch("/api/debug/ledger-summary", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          fetch("/api/debug/ledger-summary", { headers: { Authorization: `Bearer ${token}` } }),
           fetch("/api/offers"),
           fetch("/api/leaderboard"),
         ]);
 
         if (!cancelled && ledgerResponse.status === "fulfilled" && ledgerResponse.value.ok) {
-          const ledgerData = (await ledgerResponse.value.json()) as LedgerSummaryResponse;
-          setLedger(ledgerData);
+          const data = (await ledgerResponse.value.json()) as LedgerSummaryResponse;
+          setLedger(data);
         }
 
         if (!cancelled && offersResponse.status === "fulfilled" && offersResponse.value.ok) {
@@ -108,13 +88,9 @@ export default function DashboardPage() {
         }
       } catch (dashboardError) {
         console.error("Dashboard load failed:", dashboardError);
-        if (!cancelled) {
-          setError("We could not refresh the live dashboard data right now.");
-        }
+        if (!cancelled) setError("We could not refresh the live dashboard data right now.");
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -125,15 +101,34 @@ export default function DashboardPage() {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const ledgerQuery = query(
+      collection(db, "ledger_transactions"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      ledgerQuery,
+      (snapshot) => {
+        setTransactions(snapshot.docs.slice(0, 6).map((doc) => ({ id: doc.id, ...doc.data() })) as LedgerTx[]);
+      },
+      (snapshotError) => {
+        console.error("Ledger subscription error:", snapshotError);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
   if (authLoading || (user && loading && !ledger)) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
         <Header />
         <div className="flex min-h-[70vh] items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#00e6c3]" />
-            <p className="mt-4 text-sm text-zinc-400">Loading the dashboard shell...</p>
-          </div>
+          <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
         </div>
       </div>
     );
@@ -148,16 +143,11 @@ export default function DashboardPage() {
             <ShieldCheck className="mx-auto h-12 w-12 text-[#8cf8e9]" />
             <h1 className="mt-4 text-3xl font-black tracking-tight text-white">Sign in to open your dashboard</h1>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              The dashboard stays visible, but the full ledger and offer data only open after authentication.
+              The full ledger and offer data open after authentication.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link href="/auth/signin" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3 text-sm font-black text-[#04101d]">
-                Sign in
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white">
-                Back to home
-              </Link>
+              <CTAButton href="/auth/signin" label="Sign in" />
+              <CTAButton href="/" label="Back to home" variant="secondary" />
             </div>
           </div>
         </main>
@@ -168,61 +158,63 @@ export default function DashboardPage() {
   const balanceCoins = ledger?.balanceCoins ?? 24750;
   const pendingCoins = ledger?.pendingCoins ?? 1200;
   const verificationState = ledger?.verificationState ?? "Verified";
+  const filteredTransactions = transactions.filter((tx) => {
+    if (filter === "all") return true;
+    if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
+    if (filter === "cashouts") return tx.type?.includes("cashout");
+    if (filter === "pending") return tx.status === "pending";
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-[#040913] text-white">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <motion.section {...motionProps} className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_28%),linear-gradient(180deg,rgba(7,15,24,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#8cf8e9]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Dashboard shell
-              </div>
-              <div>
-                <h1 className="max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
-                  A cleaner place to scan rewards, balance, and next actions.
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
-                  TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.
-                </p>
+        <MotionWrap>
+          <section className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_28%),linear-gradient(180deg,rgba(7,15,24,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="space-y-5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#8cf8e9]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Dashboard shell
+                </div>
+                <div>
+                  <h1 className="max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
+                    A cleaner place to scan rewards, balance, and next actions.
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+                    TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <CTAButton href="/rapidoreach" label="Open offerwall" />
+                  <CTAButton href="/cashout" label="Review cashout" variant="secondary" />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href="/rapidoreach" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
-                  Open offerwall
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-                <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
-                  Review cashout
-                  <Wallet className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { label: "Balance", value: formatCoins(balanceCoins), detail: formatCadFromCoins(balanceCoins), icon: CircleGauge },
-                { label: "Pending", value: formatCoins(pendingCoins), detail: "Under verification", icon: Activity },
-                { label: "Status", value: verificationState, detail: "Email verified", icon: BadgeCheck },
-                { label: "Cashout", value: "Ready", detail: "Open payout store", icon: ShieldCheck },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-500">{item.label}</p>
-                      <Icon className="h-4 w-4 text-[#8cf8e9]" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { label: "Balance", value: formatCoins(balanceCoins), detail: formatCadFromCoins(balanceCoins), icon: CircleGauge },
+                  { label: "Pending", value: formatCoins(pendingCoins), detail: "Under verification", icon: Wallet },
+                  { label: "Status", value: verificationState, detail: "Email verified", icon: BadgeCheck },
+                  { label: "Cashout", value: "Ready", detail: "Open payout store", icon: ShieldCheck },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-500">{item.label}</p>
+                        <Icon className="h-4 w-4 text-[#8cf8e9]" />
+                      </div>
+                      <p className="mt-3 text-2xl font-black text-white">{item.value}</p>
+                      <p className="mt-1 text-sm text-zinc-400">{item.detail}</p>
                     </div>
-                    <p className="mt-3 text-2xl font-black text-white">{item.value}</p>
-                    <p className="mt-1 text-sm text-zinc-400">{item.detail}</p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </motion.section>
+          </section>
+        </MotionWrap>
 
         {error && (
           <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
@@ -243,59 +235,55 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-4">
-              {offers.map((offer) => {
+              {offers.map((offer, index) => {
                 const classes = accentClass(offer.accent);
                 return (
-                  <div key={offer.id} className={`rounded-[1.75rem] border ${classes.ring} bg-white/[0.03] p-5 ${classes.glow}`}>
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-2">
-                        <div className="inline-flex rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                          {offer.provider} · {offer.category}
+                  <MotionWrap key={offer.id} delay={index * 0.04}>
+                    <div className={`rounded-[1.75rem] border ${classes.ring} bg-white/[0.03] p-5 ${classes.glow}`}>
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-2">
+                          <div className="inline-flex rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                            {offer.provider} · {offer.category}
+                          </div>
+                          <h3 className="text-2xl font-black tracking-tight text-white">{offer.title}</h3>
+                          <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">{offer.description}</p>
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight text-white">{offer.title}</h3>
-                        <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">{offer.description}</p>
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 md:text-right">
+                          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Payout</p>
+                          <p className="mt-1 text-2xl font-black text-white">+{offer.payoutCoins.toLocaleString()}</p>
+                          <p className="mt-1 text-xs text-zinc-500">{offer.estimateMinutes} min session</p>
+                        </div>
                       </div>
-                      <div className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3 md:text-right">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Payout</p>
-                        <p className="mt-1 text-2xl font-black text-white">+{offer.payoutCoins.toLocaleString()}</p>
-                        <p className="mt-1 text-xs text-zinc-500">{offer.estimateMinutes} min session</p>
+                      <div className="mt-5 flex items-center justify-between border-t border-white/6 pt-4">
+                        <p className="text-sm font-semibold text-zinc-400">{offer.cta}</p>
+                        <ArrowRight className="h-4 w-4 text-[#8cf8e9]" />
                       </div>
                     </div>
-
-                    <div className="mt-5 flex items-center justify-between border-t border-white/6 pt-4">
-                      <p className="text-sm font-semibold text-zinc-400">{offer.cta}</p>
-                      <ArrowRight className="h-4 w-4 text-[#8cf8e9]" />
-                    </div>
-                  </div>
+                  </MotionWrap>
                 );
               })}
             </div>
           </section>
 
           <section className="space-y-4">
-            <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#f5c842]">Leaderboard</p>
-              <div className="mt-2 flex items-end justify-between gap-4">
-                <h2 className="text-2xl font-black tracking-tight text-white">Top earners</h2>
-                <Trophy className="h-5 w-5 text-[#f5c842]" />
-              </div>
-              <div className="mt-5 space-y-3">
+            <PageShell eyebrow="Leaderboard" title="Top earners" description="Community proof without losing clarity." kicker={<Trophy className="h-6 w-6 text-[#f5c842]" />}>
+              <div className="space-y-3">
                 {leaderboard.map((row) => (
                   <div key={row.rank} className="flex items-center justify-between rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3">
                     <div>
-                      <p className="text-sm font-semibold text-white">#{row.rank} {row.displayName}</p>
+                      <p className="text-sm font-semibold text-white">
+                        #{row.rank} {row.displayName}
+                      </p>
                       <p className="text-xs text-zinc-500">Community proof</p>
                     </div>
                     <p className="text-sm font-black text-[#8cf8e9]">{formatCoins(row.coins)}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </PageShell>
 
-            <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#8cf8e9]">Recent activity</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">What people are doing now</h2>
-              <div className="mt-5 space-y-3">
+            <PageShell eyebrow="Recent activity" title="What people are doing now" description="Live scan of the product loop.">
+              <div className="space-y-3">
                 {tapCashActivity.map((item) => (
                   <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3">
                     <p className="text-sm font-semibold text-white">{item.label}</p>
@@ -304,8 +292,81 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </PageShell>
           </section>
+        </div>
+
+        <div className="mt-8 rounded-[2rem] border border-white/8 bg-white/[0.03]">
+          <div className="flex items-center gap-2 overflow-x-auto border-b border-white/6 px-4 py-4">
+            {(["all", "credits", "cashouts", "pending"] as FilterType[]).map((item) => (
+              <button
+                key={item}
+                onClick={() => setFilter(item)}
+                className={`whitespace-nowrap rounded-full px-4 py-2.5 text-xs font-black uppercase tracking-[0.22em] transition-colors ${
+                  filter === item ? "bg-[#00e6c3] text-[#04101d]" : "bg-white/[0.04] text-zinc-400 hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+            <span className="ml-auto text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">{filteredTransactions.length} entries</span>
+          </div>
+
+          {filteredTransactions.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <Loader2 className="mx-auto h-10 w-10 text-zinc-700" />
+              <p className="mt-4 text-sm font-semibold text-white">No matching transactions yet</p>
+              <p className="mt-2 text-sm text-zinc-500">Complete offers or request a payout to populate the ledger.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 p-4 sm:p-5">
+              {filteredTransactions.map((tx) => (
+                <div key={tx.id} className="rounded-[1.5rem] border border-white/6 bg-black/15 px-4 py-4 sm:px-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="inline-flex rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                        {tx.type.replaceAll("_", " ")}
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-white">{tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "Credit" : "Balance change"} logged</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {tx.status} {tx.method ? `• ${tx.method}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-black ${tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "text-[#8cf8e9]" : "text-[#f5c842]"}`}>
+                        {tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "+" : "-"}
+                        {Math.abs(tx.balanceEffectCoins ?? tx.amountCoins).toLocaleString()}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">coins</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#8cf8e9]">Next step</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Move from earned to payable with less friction.</h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              The dashboard works best when the next action is obvious. Jump from history to offers or cashout without re-learning the interface.
+            </p>
+          </div>
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#f5c842]">Quick links</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Keep the flow moving</h2>
+              </div>
+              <BadgeCheck className="h-6 w-6 text-[#8cf8e9]" />
+            </div>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <CTAButton href="/rapidoreach" label="Open offerwall" />
+              <CTAButton href="/cashout" label="Go to cashout" variant="secondary" />
+            </div>
+          </div>
         </div>
       </main>
     </div>
