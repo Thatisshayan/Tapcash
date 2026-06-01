@@ -3,7 +3,7 @@
 
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Shield, Lock, Eye, CheckCircle2, AlertTriangle, Scale, RefreshCw, FileText, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
+import { Shield, Lock, Eye, CheckCircle2, AlertTriangle, Scale, RefreshCw, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function PrivacyPolicyPage() {

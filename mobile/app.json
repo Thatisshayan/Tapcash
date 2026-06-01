@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "TapCash",
+    "slug": "tapcash-mobile",
+    "scheme": "tapcash",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "plugins": [
+      "expo-router"
+    ],
+    "android": {
+      "package": "com.tapcash.mobile"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1c561a9d-ac22-47db-b376-921c6e4b5086"
+      }
+    },
+    "owner": "obsidianmedia"
+  }
+}

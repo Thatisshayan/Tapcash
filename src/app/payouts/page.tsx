@@ -1,122 +1,122 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import { adminDb } from "@/lib/firebaseAdmin";
-import { Timestamp } from "firebase-admin/firestore";
-import { CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import Header from "@/components/Header";
+import { accentClass, formatCoins, tapCashPayoutMethods } from "@shared/tapcash-content";
+import { useMemo } from "react";
 
-interface Payout {
-  maskedUser: string;
-  method: string;
-  amountCad: number;
-  sentAt: Date;
-}
-
-async function getRecentPayouts(): Promise<Payout[]> {
-  const snap = await adminDb
-    .collection("payouts")
-    .where("status", "==", "sent")
-    .orderBy("updatedAt", "desc")
-    .limit(30)
-    .get();
-
-  return snap.docs.map((d) => {
-    const data = d.data();
-    const uid = (data.userId as string) || "";
-    const maskedUser = "User_***" + uid.slice(-3).toUpperCase();
-    const ts: Timestamp = data.updatedAt || data.createdAt;
-    return {
-      maskedUser,
-      method: data.method as string,
-      amountCad: data.amountCad ?? data.amountCoins / 1000,
-      sentAt: ts ? ts.toDate() : new Date(),
-    };
-  });
-}
-
-function methodLabel(m: string) {
-  const MAP: Record<string, string> = {
-    paypal: "PayPal", bitcoin: "Bitcoin", litecoin: "Litecoin", interac: "Interac e-Transfer",
-    visa: "Visa", steam: "Steam", roblox: "Roblox", tim_hortons: "Tim Hortons",
-    canadian_tire: "Canadian Tire", shoppers: "Shoppers Drug Mart",
-  };
-  return MAP[m] || m;
-}
-
-function relativeTime(d: Date) {
-  const diffMs = Date.now() - d.getTime();
-  const diffH = Math.floor(diffMs / 3_600_000);
-  const diffD = Math.floor(diffMs / 86_400_000);
-  if (diffH < 1) return "less than 1h ago";
-  if (diffH < 24) return `${diffH}h ago`;
-  return `${diffD}d ago`;
-}
-
-export const revalidate = 300;
-
-export default async function PayoutsProofPage() {
-  const payouts = await getRecentPayouts();
+export default function PayoutsPage() {
+  const reduceMotion = useReducedMotion();
+  const motionProps = useMemo(
+    () => ({
+      initial: reduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true, margin: "-10%" },
+      transition: reduceMotion ? { duration: 0 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    }),
+    [reduceMotion]
+  );
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white px-4 py-12">
-      <div className="max-w-2xl mx-auto space-y-8">
-
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <Link href="/" className="inline-flex items-center gap-2 text-[#00e6c3] mb-4">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-black">TapCash</span>
-          </Link>
-          <h1 className="text-4xl font-black text-white">Proof of Payouts</h1>
-          <p className="text-zinc-400 text-sm max-w-sm mx-auto">
-            Real payouts sent to real users. Anonymized for privacy. Updated every 5 minutes.
+    <div className="min-h-screen bg-[#040913] text-white">
+      <Header />
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <motion.section {...motionProps} className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(245,200,66,0.08),transparent_30%),linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#f5c842]/20 bg-[#f5c842]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#f5c842]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Payout guide
+          </div>
+          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white md:text-5xl">
+            The withdrawal options are presented like a storefront, not a hidden settings page.
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+            TapCash is intentionally explicit about minimums, timing, and audience fit so users can decide before they start earning.
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/5 text-[#00e6c3] text-xs font-black uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00e6c3] animate-pulse" />
-            Live data
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
+              Open cashout
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
+              Back to dashboard
+            </Link>
+          </div>
+        </motion.section>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {tapCashPayoutMethods.map((method) => {
+            const classes = accentClass(method.accent);
+            return (
+              <motion.article key={method.id} {...motionProps} className={`rounded-[1.75rem] border ${classes.ring} bg-white/[0.03] p-5 ${classes.glow}`}>
+                <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${classes.badge}`}>
+                  {method.audience}
+                </div>
+                <h2 className="mt-4 text-2xl font-black text-white">{method.label}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{method.subtitle}</p>
+                <div className="mt-5 space-y-3 border-t border-white/6 pt-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">Minimum</span>
+                    <span className="font-semibold text-white">{formatCoins(method.minCoins)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">Timing</span>
+                    <span className="font-semibold text-white">{method.eta}</span>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00e6c3]/10 text-[#8cf8e9]">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Trust rules</p>
+                <p className="text-xs text-zinc-500">Visible before withdrawal</p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[
+                "The backend decides when a payout can be created.",
+                "The UI never pretends a payout succeeded before verification.",
+                "The cashout store always shows the minimum threshold up front.",
+              ].map((point) => (
+                <div key={point} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3 text-sm text-zinc-300">
+                  {point}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f5c842]">Next action</p>
+                <h2 className="mt-2 text-2xl font-black text-white">Open the cashout store</h2>
+              </div>
+              <Wallet className="h-6 w-6 text-[#8cf8e9]" />
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              This route is informational. The actual withdrawal interaction stays in the cashout store where balance and status are already visible.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
+                Open cashout
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/transactions" className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
+                View ledger
+              </Link>
+            </div>
           </div>
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Total Paid Out", value: `$${payouts.reduce((s, p) => s + p.amountCad, 0).toFixed(0)}+`, color: "#f5c842" },
-            { label: "Recent Payouts", value: `${payouts.length}`, color: "#00e6c3" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-white/6 bg-[#080c1a] p-5 text-center">
-              <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Payout list */}
-        <div className="rounded-2xl border border-white/6 overflow-hidden">
-          {payouts.length === 0 && (
-            <div className="p-10 text-center text-zinc-500 text-sm">No payouts on record yet.</div>
-          )}
-          {payouts.map((p, idx) => (
-            <div
-              key={idx}
-              className={`flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition ${idx < payouts.length - 1 ? "border-b border-white/5" : ""}`}
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#00e6c3]/10 border border-[#00e6c3]/20 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4 text-[#00e6c3]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white">{p.maskedUser}</p>
-                <p className="text-xs text-zinc-500">{methodLabel(p.method)} · {relativeTime(p.sentAt)}</p>
-              </div>
-              <p className="font-black text-[#f5c842] text-sm shrink-0">+${p.amountCad.toFixed(2)} CAD</p>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-center text-xs text-zinc-700">
-          User IDs are anonymized. Amounts are real.{" "}
-          <Link href="/auth/signup" className="text-[#00e6c3] hover:underline font-bold">Join free →</Link>
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

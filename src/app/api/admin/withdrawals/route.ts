@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
       flagged: flagsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
       stats,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Admin withdrawal GET error:", error);
-    return NextResponse.json({ error: error.message || "Failed to load admin data" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to load admin data" }, { status: 500 });
   }
 }
 
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, action: "reject" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Admin withdrawal processing error:", error);
     const errorMessage = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: errorMessage }, { status: errorMessage.includes("not found") ? 404 : 500 });

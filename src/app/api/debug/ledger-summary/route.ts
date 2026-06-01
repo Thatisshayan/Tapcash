@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
       transactionCount: transactions.length,
       transactions,
     });
-  } catch (error: any) {
-    const message = error?.message || "Failed to load ledger summary";
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load ledger summary";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, streakSent, nudgeSent });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[DRIP]", err);
     return NextResponse.json({ error: "Drip run failed" }, { status: 500 });
   }

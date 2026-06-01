@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X, Sparkles, AlertTriangle, ArrowRight, ShieldCheck, Clock, Star, Play, CheckCircle2 } from "lucide-react";
+import { X, AlertTriangle, ArrowRight, Clock, Star, Play } from "lucide-react";
 import { Offer } from "@/types/offer";
 
 interface InstructionModalProps {
@@ -81,7 +81,7 @@ export default function InstructionModal({ offer, onClose, onLaunch, rating, dur
                 1
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">Click "Launch Offer"</h4>
+                <h4 className="text-sm font-bold text-white">Click &quot;Launch Offer&quot;</h4>
                 <p className="text-xs text-zinc-500 mt-0.5">You will be securely redirected to the {offer.provider} marketplace.</p>
               </div>
             </div>

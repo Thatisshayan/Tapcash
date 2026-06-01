@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Copy, Check, Users, Gift, ArrowUpRight, Loader2, AlertTriangle, Coins, Sparkles, ArrowRight, BadgeCheck } from "lucide-react";
+import { Copy, Check, Users, ArrowUpRight, Loader2, AlertTriangle, Coins, Sparkles, ArrowRight, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function ReferralsPage() {

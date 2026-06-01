@@ -80,7 +80,7 @@ export default function PushNotificationPrompt() {
             <div className="flex-1 min-w-0">
               <p className="font-black text-white text-sm">Get notified when you earn</p>
               <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                We'll ping you for bonus events, cashout updates, and daily streak reminders.
+                We&apos;ll ping you for bonus events, cashout updates, and daily streak reminders.
               </p>
             </div>
           </div>

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email');
     const limitCount = parseInt(searchParams.get('limit') || '20');
 
-    let q: any = adminDb.collection('users').orderBy('createdAt', 'desc').limit(limitCount);
+    let q = adminDb.collection('users').orderBy('createdAt', 'desc').limit(limitCount);
 
     if (email) {
       q = adminDb.collection('users')
@@ -35,16 +35,21 @@ export async function GET(request: NextRequest) {
     }
 
     const snapshot = await q.get();
-    const users = await Promise.all(snapshot.docs.map(async (doc: any) => ({
-      uid: doc.id,
-      ...doc.data(),
-      ledgerBalanceCoins: await computeLedgerBalance(doc.id),
-      createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : doc.data().createdAt,
-    })));
+    const users = await Promise.all(snapshot.docs.map(async (doc) => {
+      const data = doc.data();
+      const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
+
+      return {
+        uid: doc.id,
+        ...data,
+        ledgerBalanceCoins: await computeLedgerBalance(doc.id),
+        createdAt,
+      };
+    }));
 
     return NextResponse.json({ users });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -134,8 +139,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Admin User Action Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

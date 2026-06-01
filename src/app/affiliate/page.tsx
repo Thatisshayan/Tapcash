@@ -3,7 +3,7 @@
 
 import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, HelpCircle, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
+import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function AffiliatePolicyPage() {

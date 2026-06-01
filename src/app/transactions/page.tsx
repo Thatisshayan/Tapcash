@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ArrowUpRight, BadgeCheck, Clock, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import Header from "@/components/Header";
-import ConversionStrip from "@/components/ConversionStrip";
-import { ArrowUpRight, ArrowDownLeft, Loader2, CheckCircle, Clock, AlertTriangle, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
-import Link from "next/link";
 
 interface LedgerTx {
   id: string;
@@ -23,73 +23,87 @@ type FilterType = "all" | "credits" | "cashouts" | "pending";
 
 export default function TransactionsLedgerPage() {
   const { user, loading: authLoading } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [transactions, setTransactions] = useState<LedgerTx[]>([]);
-  const [loadingTxs, setLoadingTxs] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
-  const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+
+  const motionProps = useMemo(
+    () => ({
+      initial: reduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true, margin: "-10%" },
+      transition: reduceMotion ? { duration: 0 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    }),
+    [reduceMotion]
+  );
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
-    const q = query(
+    const currentUser = user;
+    const ledgerQuery = query(
       collection(db, "ledger_transactions"),
-      where("userId", "==", user.uid),
+      where("userId", "==", currentUser.uid),
       orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(
-      q,
+      ledgerQuery,
       (snapshot) => {
-        const txs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as LedgerTx[];
-        setTransactions(txs);
-        setLoadingTxs(false);
+        setTransactions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as LedgerTx[]);
+        setLoading(false);
       },
-      (err) => {
-        console.error("Firestore transactions subscription error:", err);
-        setLoadingTxs(false);
+      (error) => {
+        console.error("Ledger subscription error:", error);
+        setLoading(false);
       }
     );
 
     return () => unsubscribe();
   }, [user]);
 
-  if (authLoading) {
+  const filtered = transactions.filter((tx) => {
+    if (filter === "all") return true;
+    if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
+    if (filter === "cashouts") return tx.type?.includes("cashout");
+    if (filter === "pending") return tx.status === "pending";
+    return true;
+  });
+
+  if (authLoading || (user && loading)) {
     return (
-      <div className="min-h-screen bg-[#060606] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-[#040913] text-white">
+        <Header />
+        <div className="flex min-h-[70vh] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#060606] text-white flex flex-col">
+      <div className="min-h-screen bg-[#040913] text-white">
         <Header />
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-          <ConversionStrip
-            eyebrow="Track progress"
-            title="The ledger tells a better story when more offers are completed."
-            description="Open the dashboard to earn more, then review how each reward, reversal, and cashout maps into your transaction history."
-            primaryHref="/dashboard"
-            primaryLabel="Open dashboard"
-            secondaryHref="/auth/signin"
-            secondaryLabel="Sign in"
-            variant="private"
-            bullets={["Verified transaction log", "Offer and payout history", "Easy balance review"]}
-          />
-        </div>
-        <main className="flex-grow flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-zinc-950/40 border border-zinc-900 rounded-3xl p-8 text-center backdrop-blur-xl">
-            <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-black mb-2">Access Restricted</h1>
-            <p className="text-zinc-500 text-sm mb-6">Please log in to your account to view your transactions.</p>
-            <Link href="/auth/signin" className="inline-block px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-2xl transition w-full">
-              Sign In Now
-            </Link>
+        <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
+          <div className="w-full rounded-[2rem] border border-white/8 bg-white/[0.03] p-8 text-center">
+            <ShieldCheck className="mx-auto h-12 w-12 text-[#8cf8e9]" />
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-white">Sign in to review the ledger</h1>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              The transaction view is where TapCash shows the reward flow with real entries rather than guesses.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link href="/auth/signin" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3 text-sm font-black text-[#04101d]">
+                Sign in
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/dashboard" className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white">
+                Go to dashboard
+              </Link>
+            </div>
           </div>
         </main>
       </div>
@@ -97,235 +111,119 @@ export default function TransactionsLedgerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#040913] text-white">
       <Header />
-
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-        <ConversionStrip
-          eyebrow="Ledger clarity"
-          title="Use the transaction view to turn raw activity into trust."
-          description="A clear ledger helps users understand the reward flow and gives them confidence to complete more offers."
-          primaryHref="/rapidoreach"
-          primaryLabel="Open offers"
-          secondaryHref="/cashout"
-          secondaryLabel="Go to cashout"
-          variant="private"
-          bullets={["Chronological reward history", "Cashout and reversal status", "More reasons to keep earning"]}
-        />
-      </div>
-
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/10 blur-3xl" />
-            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/10 blur-3xl" />
-          </div>
-
-          <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Ledger view
-                </span>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
-                  <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
-                  Audit trail
-                </span>
-              </div>
-
-              <div className="max-w-2xl space-y-3">
-                <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                  Every reward, reversal, and cashout in one ledger-first timeline.
-                </h1>
-                <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
-                  The transaction view shows how TapCash actually moves value: verified credits, pending approvals, and payout events in chronological order.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/rapidoreach"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-                >
-                  Open offers
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/cashout"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
-                >
-                  Go to cashout
-                </Link>
-              </div>
-            </div>
-
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <motion.section {...motionProps} className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.12),transparent_32%),linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Visible history</p>
-                <p className="mt-2 text-3xl font-black text-white">Trust through receipts</p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  A clear transaction log helps users understand why their balance changed and what to do next.
-                </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#8cf8e9]">
+                <Sparkles className="h-3.5 w-3.5" />
+                Ledger clarity
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Status</p>
-                  <p className="mt-2 text-2xl font-black text-white">Live</p>
+              <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white md:text-5xl">
+                Every reward, reversal, and cashout in one cleaner timeline.
+              </h1>
+              <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+                The ledger is now presented like a product surface, not a raw database dump.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: "Filter", value: "Visible", detail: "Quick scan" },
+                { label: "State", value: "Tracked", detail: "Audit ready" },
+                { label: "Payout", value: "Clear", detail: "Queue aware" },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">{item.label}</p>
+                  <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{item.detail}</p>
                 </div>
-                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Controls</p>
-                  <p className="mt-2 text-2xl font-black text-white">Tracked</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <div className="bg-zinc-950/40 border border-zinc-900 rounded-3xl overflow-hidden backdrop-blur-xl">
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1 p-4 border-b border-zinc-900 overflow-x-auto">
-            {(["all", "credits", "cashouts", "pending"] as FilterType[]).map(f => (
+        <div className="mt-8 rounded-[2rem] border border-white/8 bg-white/[0.03]">
+          <div className="flex items-center gap-2 overflow-x-auto border-b border-white/6 px-4 py-4">
+            {(["all", "credits", "cashouts", "pending"] as FilterType[]).map((item) => (
               <button
-                key={f}
-                onClick={() => { setFilter(f); setPage(0); }}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
-                  filter === f
-                    ? "bg-[#00e6c3] text-black"
-                    : "text-zinc-500 hover:text-white bg-zinc-900/40"
+                key={item}
+                onClick={() => setFilter(item)}
+                className={`whitespace-nowrap rounded-full px-4 py-2.5 text-xs font-black uppercase tracking-[0.22em] transition-colors ${
+                  filter === item ? "bg-[#00e6c3] text-[#04101d]" : "bg-white/[0.04] text-zinc-400 hover:text-white"
                 }`}
               >
-                {f === "all" ? "All" : f === "credits" ? "Credits" : f === "cashouts" ? "Cashouts" : "Pending"}
+                {item}
               </button>
             ))}
-            <span className="ml-auto text-[10px] text-zinc-600 font-bold uppercase tracking-widest whitespace-nowrap">
-              {transactions.filter(tx => {
-                if (filter === "all") return true;
-                if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
-                if (filter === "cashouts") return tx.type?.includes("cashout");
-                if (filter === "pending") return tx.status === "pending";
-                return true;
-              }).length} entries
+            <span className="ml-auto text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">
+              {filtered.length} entries
             </span>
           </div>
 
-          {loadingTxs ? (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 text-[#00e6c3] animate-spin mx-auto mb-2" />
-              <p className="text-zinc-500 text-xs">Syncing ledger records...</p>
+          {filtered.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <Clock className="mx-auto h-10 w-10 text-zinc-700" />
+              <p className="mt-4 text-sm font-semibold text-white">No matching transactions yet</p>
+              <p className="mt-2 text-sm text-zinc-500">Complete offers or request a payout to populate the ledger.</p>
             </div>
-          ) : transactions.length === 0 ? (
-            <div className="p-12 text-center text-zinc-500 text-sm max-w-sm mx-auto">
-              <Clock className="w-10 h-10 text-zinc-700 mx-auto mb-4" />
-              <p className="font-bold text-zinc-400">No Transactions Yet</p>
-              <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">Your ledger is clean. Go complete high-paying offers to start stacking rewards!</p>
+          ) : (
+            <div className="grid gap-3 p-4 sm:p-5">
+              {filtered.map((tx) => (
+                <div key={tx.id} className="rounded-[1.5rem] border border-white/6 bg-black/15 px-4 py-4 sm:px-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="inline-flex rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                        {tx.type.replaceAll("_", " ")}
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-white">
+                        {tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "Credit" : "Balance change"} logged
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {tx.status} {tx.method ? `• ${tx.method}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-black ${tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "text-[#8cf8e9]" : "text-[#f5c842]"}`}>
+                        {tx.balanceEffectCoins && tx.balanceEffectCoins > 0 ? "+" : "-"}
+                        {Math.abs(tx.balanceEffectCoins ?? tx.amountCoins).toLocaleString()}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">coins</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (() => {
-            const filtered = transactions.filter(tx => {
-              if (filter === "all") return true;
-              if (filter === "credits") return (tx.balanceEffectCoins ?? 0) > 0 && tx.status !== "pending";
-              if (filter === "cashouts") return tx.type?.includes("cashout");
-              if (filter === "pending") return tx.status === "pending";
-              return true;
-            });
-            const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-            return (
-            <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-zinc-950/60 border-b border-zinc-900/80 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-4">Action Type</th>
-                    <th className="px-6 py-4">Channel</th>
-                    <th className="px-6 py-4">Flow Amount</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Registered Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-900/60">
-                  {paginated.map((tx) => {
-                    const amount = tx.balanceEffectCoins ?? tx.amountCoins ?? 0;
-                    const isAddition = amount > 0;
-                    const formattedDate = tx.createdAt?.toDate
-                      ? tx.createdAt.toDate().toLocaleString([], { dateStyle: "short", timeStyle: "short" })
-                      : "—";
+          )}
+        </div>
 
-                    return (
-                      <tr key={tx.id} className="hover:bg-zinc-900/20 transition-all duration-150">
-                        <td className="px-6 py-4.5 font-bold text-white">
-                          <span className="flex items-center gap-2">
-                            {isAddition ? (
-                              <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                                <ArrowDownLeft className="w-3.5 h-3.5" />
-                              </span>
-                            ) : (
-                              <span className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                                <ArrowUpRight className="w-3.5 h-3.5" />
-                              </span>
-                            )}
-                            <span className="capitalize">{tx.type}</span>
-                          </span>
-                        </td>
-                        <td className="px-6 py-4.5 font-semibold text-zinc-400">
-                          <span className="uppercase tracking-wider text-xs">{tx.method || "Offerwall"}</span>
-                        </td>
-                        <td className={`px-6 py-4.5 font-black ${isAddition ? "text-emerald-400" : "text-blue-400"}`}>
-                          {isAddition ? "+" : ""}
-                          {amount.toLocaleString()} Coins
-                        </td>
-                        <td className="px-6 py-4.5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize ${
-                              tx.status === "completed" || tx.status === "approved" || tx.status === "paid"
-                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                                : tx.status === "pending"
-                                ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
-                                : "bg-red-500/10 border-red-500/20 text-red-400"
-                            }`}
-                          >
-                            {tx.status === "completed" || tx.status === "approved" || tx.status === "paid" ? (
-                              <CheckCircle className="w-3 h-3" />
-                            ) : tx.status === "pending" ? (
-                              <Clock className="w-3 h-3" />
-                            ) : (
-                              <AlertTriangle className="w-3 h-3" />
-                            )}
-                            <span>{tx.status}</span>
-                          </span>
-                        </td>
-                        <td className="px-6 py-4.5 text-zinc-500 text-xs font-semibold text-right">{formattedDate}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-900">
-                <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl bg-zinc-900 text-zinc-400 hover:text-white disabled:opacity-30 transition"
-                >
-                  Previous
-                </button>
-                <span className="text-xs text-zinc-500 font-bold">
-                  Page {page + 1} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                  className="px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl bg-zinc-900 text-zinc-400 hover:text-white disabled:opacity-30 transition"
-                >
-                  Next
-                </button>
+        <div className="mt-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#8cf8e9]">Next step</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Move from earned to payable with less friction.</h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              The ledger works best when the next action is obvious. Users can jump from history to offers or cashout without re-learning the interface.
+            </p>
+          </div>
+          <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#f5c842]">Quick links</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Keep the flow moving</h2>
               </div>
-            )}
-            </>
-            );
-          })()}
+              <BadgeCheck className="h-6 w-6 text-[#8cf8e9]" />
+            </div>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link href="/rapidoreach" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
+                Open offerwall
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link href="/cashout" className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
+                Go to cashout
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
     </div>

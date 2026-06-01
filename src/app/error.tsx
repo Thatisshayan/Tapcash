@@ -20,7 +20,7 @@ export default function Error({
         Oops! Something went wrong
       </h1>
       <p className="text-gray-400 text-center max-w-md mb-8">
-        We've encountered an unexpected error. Our team has been notified.
+        We&apos;ve encountered an unexpected error. Our team has been notified.
       </p>
       <div className="flex gap-4">
         <button

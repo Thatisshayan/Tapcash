@@ -140,7 +140,7 @@ export default function CookiePolicyPage() {
       content: (
         <>
           <p>
-            You can control or delete browser cookies and clear your local storage at any time through your web browser's built-in preference menus.
+            You can control or delete browser cookies and clear your local storage at any time through your web browser&apos;s built-in preference menus.
           </p>
           <p className="mt-2 text-zinc-400">
             Please note that if you choose to fully block or delete all cookies and local storage tokens, your active session on TapCash will be invalidated. Additionally, **our postback link matching will fail to recognize task completions**, meaning you will not receive Coins for completing surveys or downloading applications.

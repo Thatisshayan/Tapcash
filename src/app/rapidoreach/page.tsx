@@ -2,305 +2,235 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import ConversionStrip from "@/components/ConversionStrip";
+import { motion, useReducedMotion } from "framer-motion";
+import { Activity, ArrowUpRight, Loader2, Lock, ShieldCheck, Sparkles, BadgeCheck } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
-import {
-  Activity,
-  ArrowUpRight,
-  BadgeCheck,
-  Loader2,
-  ShieldCheck,
-  Sparkles,
-  Lock,
-  CircleGauge,
-} from "lucide-react";
 
 export default function RapidoReachPage() {
   const { user, loading } = useAuth();
-  const isVerified = !!user?.emailVerified;
+  const reduceMotion = useReducedMotion();
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
+
+  const motionProps = useMemo(
+    () => ({
+      initial: reduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true, margin: "-10%" },
+      transition: reduceMotion ? { duration: 0 } : { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    }),
+    [reduceMotion]
+  );
+
+  const isVerified = !!user?.emailVerified;
 
   useEffect(() => {
     if (!user || !isVerified) {
       return;
     }
 
+    const currentUser = user;
     let cancelled = false;
 
-    const fetchIframeUrl = async () => {
+    async function loadIframe() {
       try {
         setFetching(true);
-        setLoadError(null);
+        setError(null);
 
-        const idToken = await user.getIdToken();
-        const res = await fetch(`/api/rapidoreach/iframe-url?userId=${user.uid}`, {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`/api/rapidoreach/iframe-url?userId=${currentUser.uid}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) {
-          throw new Error(`Failed to load RapidoReach iframe URL (${res.status})`);
+
+        if (!response.ok) {
+          throw new Error(`RapidoReach returned ${response.status}`);
         }
 
-        const data = await res.json();
+        const data = (await response.json()) as { iframeUrl?: string };
         if (!cancelled) {
-          if (data.iframeUrl) {
-            setIframeUrl(data.iframeUrl);
-          } else {
-            throw new Error("Missing iframe URL from provider response");
-          }
+          setIframeUrl(data.iframeUrl ?? null);
         }
-      } catch (error) {
-        console.error("Error fetching RapidoReach iframe URL", error);
+      } catch (loadError) {
+        console.error("RapidoReach load failed:", loadError);
         if (!cancelled) {
           setIframeUrl(null);
-          setLoadError("The RapidoReach offerwall could not be loaded right now.");
+          setError("The offerwall could not be loaded right now.");
         }
       } finally {
         if (!cancelled) {
           setFetching(false);
         }
       }
-    };
+    }
 
-    fetchIframeUrl();
+    loadIframe();
 
     return () => {
       cancelled = true;
     };
   }, [user, isVerified]);
 
-  const trustPoints = useMemo(
-    () => [
-      {
-        icon: ShieldCheck,
-        title: "Server-verified access",
-        text: "Only authenticated users get a signed provider URL.",
-      },
-      {
-        icon: BadgeCheck,
-        title: "Ledger-backed rewards",
-        text: "Credits are appended by backend postback only.",
-      },
-      {
-        icon: Activity,
-        title: "Fraud signals logged",
-        text: "Clicks, IPs, fingerprints, and timestamps stay auditable.",
-      },
-    ],
-    []
-  );
+  const trustPoints = [
+    {
+      title: "Signed session",
+      description: "Only authenticated users can request the provider URL.",
+      icon: Lock,
+    },
+    {
+      title: "Ledger-backed credits",
+      description: "Reward completion still resolves on the server side.",
+      icon: BadgeCheck,
+    },
+    {
+      title: "Fraud signals retained",
+      description: "Audit data stays visible for verification and review.",
+      icon: Activity,
+    },
+  ];
 
   return (
-    <div className="min-h-screen text-white tap-shell">
+    <div className="min-h-screen bg-[#040913] text-white">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr] items-start">
-          <section className="space-y-6">
-            <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full tap-badge text-[10px] font-black uppercase tracking-[0.28em] text-zinc-300">
-                <Sparkles className="w-3.5 h-3.5 text-[#00e6c3]" />
-                Premium offerwall
-              </span>
-              <div className="space-y-3">
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.92] tap-gradient-text font-display">
-                  Open the offerwall and start earning from a cleaner, trusted flow.
-                </h1>
-                <p className="text-zinc-400 max-w-xl text-sm md:text-base leading-relaxed">
-                  RapidoReach opens inside TapCash with a signed UID, server-side verification, and manual payout control. The UI stays calm, premium, and transparent.
-                </p>
-              </div>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <motion.section {...motionProps} className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.26em] text-[#8cf8e9]">
+              <Sparkles className="h-3.5 w-3.5" />
+              Offerwall access
+            </div>
+
+            <div>
+              <h1 className="max-w-2xl text-4xl font-black tracking-tight text-white md:text-6xl">
+                A cleaner way to open RapidoReach and keep the reward flow visible.
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+                The session is still verified server-side, but the shell is calmer, more intentional, and easier to scan on mobile.
+              </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="tap-card rounded-[1.5rem] p-4">
-                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#00e6c3]">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Signed session</p>
-                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">Only authenticated users load a provider URL.</p>
-              </div>
-              <div className="tap-card rounded-[1.5rem] p-4">
-                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#7aa7ff]">
-                  <CircleGauge className="w-5 h-5" />
-                </div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Fast session</p>
-                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">The offerwall loads inside a cleaner, quieter shell.</p>
-              </div>
-              <div className="tap-card rounded-[1.5rem] p-4">
-                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#8cf8e9]">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Auditable path</p>
-                <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">Clicks, callbacks, and credits are tracked server-side.</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-              >
-                Back to dashboard
-                <ArrowUpRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {trustPoints.map((item) => {
-                const Icon = item.icon;
+              {trustPoints.map((point) => {
+                const Icon = point.icon;
                 return (
-                  <div key={item.title} className="tap-card rounded-[1.5rem] p-4">
-                    <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-3 text-[#00e6c3]">
-                      <Icon className="w-5 h-5" />
+                  <div key={point.title} className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00e6c3]/10 text-[#8cf8e9]">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-zinc-500">{item.title}</p>
-                    <p className="mt-2 text-sm text-zinc-200 font-medium leading-relaxed">{item.text}</p>
+                    <p className="mt-3 text-sm font-semibold text-white">{point.title}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{point.description}</p>
                   </div>
                 );
               })}
             </div>
 
-            <div className="tap-card rounded-[1.75rem] p-5 md:p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]">
-                  <CircleGauge className="w-5 h-5" />
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
+                Back to dashboard
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
+                Review cashout
+              </Link>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/8 bg-white/[0.03] p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-black text-white">Session overview</p>
-                  <p className="text-xs text-zinc-500">UID signing, provider loading, and ledger-ready completion flow.</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Session model</p>
+                  <p className="mt-2 text-2xl font-black text-white">Open the wall with a signed UID.</p>
                 </div>
+                <ShieldCheck className="h-6 w-6 text-[#8cf8e9]" />
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white/4 border border-white/6 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">User experience</p>
-                  <p className="mt-2 text-sm text-zinc-200">A polished shell with visible loading and fallback states.</p>
-                </div>
-                <div className="rounded-2xl bg-white/4 border border-white/6 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Security model</p>
-                  <p className="mt-2 text-sm text-zinc-200">The backend verifies access before any reward is created.</p>
-                </div>
-              </div>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                If the URL cannot be signed, the page stays honest with an explicit fallback instead of pretending the wall is ready.
+              </p>
             </div>
-          </section>
+          </div>
 
-          <section id="wall" className="tap-card rounded-[2rem] overflow-hidden min-h-[72vh] flex flex-col shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-            <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-white/5 bg-white/3">
+          <div className="rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(8,14,24,0.96),rgba(5,8,16,0.98))] shadow-[0_30px_90px_rgba(0,0,0,0.38)] overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">RapidoReach</p>
-                <h2 className="text-lg md:text-xl font-black tracking-tight text-white">Survey wall</h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">RapidoReach</p>
+                <h2 className="text-lg font-black text-white">Survey wall</h2>
               </div>
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-full tap-badge text-xs font-bold text-zinc-300">
-                <Lock className="w-4 h-4 text-[#00e6c3]" />
-                Signed session
-              </div>
+              <span className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-300">
+                Server verified
+              </span>
             </div>
 
-            <div className="flex-grow">
+            <div className="min-h-[72vh]">
               {loading || fetching ? (
-                <div className="h-full min-h-[60vh] flex items-center justify-center px-8 text-center">
-                  <div className="space-y-4">
-                    <Loader2 className="w-10 h-10 text-[#00e6c3] animate-spin mx-auto" />
-                    <div>
-                      <p className="text-lg font-bold text-white">Preparing secure offerwall</p>
-                      <p className="text-sm text-zinc-500">Verifying your session and loading provider credentials.</p>
-                    </div>
+                <div className="flex min-h-[72vh] items-center justify-center px-6 text-center">
+                  <div>
+                    <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#00e6c3]" />
+                    <p className="mt-4 text-lg font-semibold text-white">Preparing the offerwall</p>
+                    <p className="mt-2 text-sm text-zinc-400">Checking auth, signing the session, and loading the provider shell.</p>
                   </div>
                 </div>
               ) : !user ? (
-                <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
-                  <div className="max-w-md space-y-4">
-                    <div className="mx-auto w-14 h-14 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6 text-amber-400" />
+                <div className="flex min-h-[72vh] items-center justify-center px-6 text-center">
+                  <div className="max-w-md">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.05] text-[#8cf8e9]">
+                      <ShieldCheck className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-black text-white">Sign in required</h3>
-                    <p className="text-zinc-500 text-sm">You must sign in before RapidoReach can open for your account.</p>
-                    <Link
-                      href="/auth/signin"
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-5 py-3 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-                    >
+                    <h3 className="mt-4 text-2xl font-black text-white">Sign in to continue</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                      The offerwall stays behind authentication so the backend can sign the user session correctly.
+                    </p>
+                    <Link href="/auth/signin" className="mt-6 inline-flex items-center justify-center rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
                       Sign in
-                      <ArrowUpRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
               ) : !isVerified ? (
-                <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
-                  <div className="max-w-md space-y-4">
-                    <div className="mx-auto w-14 h-14 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6 text-[#00e6c3]" />
+                <div className="flex min-h-[72vh] items-center justify-center px-6 text-center">
+                  <div className="max-w-md">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5c842]/10 text-[#f5c842]">
+                      <ShieldCheck className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-black text-white">Email verification required</h3>
-                    <p className="text-zinc-500 text-sm">The offerwall stays locked until your inbox is verified.</p>
-                    <Link
-                      href="/auth/verify-email?next=/rapidoreach"
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-5 py-3 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-                    >
-                      Verify email
-                      <ArrowUpRight className="w-4 h-4" />
+                    <h3 className="mt-4 text-2xl font-black text-white">Verify your email first</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                      The offerwall is intentionally locked until inbox verification is complete.
+                    </p>
+                    <Link href="/dashboard" className="mt-6 inline-flex items-center justify-center rounded-full bg-[#00e6c3] px-6 py-3.5 text-sm font-black text-[#04101d]">
+                      Return to dashboard
                     </Link>
                   </div>
                 </div>
-              ) : loadError ? (
-                <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
-                  <div className="max-w-md space-y-4">
-                    <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6 text-amber-400" />
+              ) : error ? (
+                <div className="flex min-h-[72vh] items-center justify-center px-6 text-center">
+                  <div className="max-w-md">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.05] text-[#8cf8e9]">
+                      <Sparkles className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-black text-white">Offerwall unavailable</h3>
-                    <p className="text-zinc-400 text-sm">{loadError}</p>
-                    <p className="text-zinc-600 text-xs leading-relaxed">
-                      If this continues, the provider may be rate limiting or there may be no active inventory for your profile.
-                    </p>
+                    <h3 className="mt-4 text-2xl font-black text-white">Offerwall unavailable</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{error}</p>
+                    <Link href="/dashboard" className="mt-6 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white">
+                      Back to dashboard
+                    </Link>
                   </div>
                 </div>
               ) : iframeUrl ? (
                 <iframe
+                  title="RapidoReach offerwall"
                   src={iframeUrl}
-                  className="w-full h-[78vh] min-h-[780px] border-0 bg-black"
-                  frameBorder="0"
-                  scrolling="yes"
-                  name="RewardsCenter"
-                  title="RapidoReach Rewards Center"
+                  className="h-[72vh] w-full border-0 bg-[#040913]"
+                  allow="clipboard-write; fullscreen"
                 />
               ) : (
-                <div className="h-full min-h-[60vh] flex items-center justify-center p-8 text-center">
-                  <div className="space-y-3">
-                    <Loader2 className="w-8 h-8 text-[#00e6c3] animate-spin mx-auto" />
-                    <p className="text-zinc-300 text-sm">Loading RapidoReach offerwall...</p>
+                <div className="flex min-h-[72vh] items-center justify-center px-6 text-center">
+                  <div>
+                    <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#00e6c3]" />
+                    <p className="mt-4 text-sm text-zinc-400">The wall is still warming up.</p>
                   </div>
                 </div>
               )}
             </div>
-          </section>
-        </div>
-
-        {!loading && user && iframeUrl && (
-          <div className="mt-5 space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs text-zinc-500">
-                Stay inside TapCash while the embedded wall loads. Completed offers are credited only after the backend verifies the callback and writes the ledger.
-              </p>
-            </div>
-
-            <ConversionStrip
-              eyebrow="Keep earning"
-              title="More offers live in the dashboard, where every click becomes a tracked ledger event."
-              description="Return to TapCash after completing surveys to keep your streak, referral, and payout flow moving forward."
-              primaryHref="/dashboard"
-              primaryLabel="Back to dashboard"
-              secondaryHref="/referrals"
-              secondaryLabel="Invite friends"
-              variant="private"
-              bullets={["Offerwall access", "Ledger-backed crediting", "Manual payout controls"]}
-            />
           </div>
-        )}
+        </motion.section>
       </main>
     </div>
   );

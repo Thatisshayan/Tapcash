@@ -5,6 +5,7 @@ import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/
 import { sendWelcomeEmail } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 import { promises as dnsPromises } from "dns";
+import { getErrorMessage } from "@/lib/error";
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,13 +144,14 @@ export async function POST(request: NextRequest) {
         password,
         displayName: name,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Firebase Admin Auth createUser error:", err);
       // Map common errors into elegant readable prompts
-      let friendlyMessage = err.message || "Registration failed.";
-      if (err.code === "auth/email-already-exists") {
+      const authError = err as Error & { code?: string };
+      let friendlyMessage = authError.message || "Registration failed.";
+      if (authError.code === "auth/email-already-exists") {
         friendlyMessage = "An account with this email address already exists.";
-      } else if (err.code === "auth/invalid-password") {
+      } else if (authError.code === "auth/invalid-password") {
         friendlyMessage = "Password must be at least 6 characters.";
       }
       return NextResponse.json({ error: friendlyMessage }, { status: 400 });
@@ -185,8 +187,8 @@ export async function POST(request: NextRequest) {
       uid: userRecord.uid,
     }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Signup API root handler crash:", error);
-    return NextResponse.json({ error: "Internal server registration failure." }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(error, "Internal server registration failure.") }, { status: 500 });
   }
 }

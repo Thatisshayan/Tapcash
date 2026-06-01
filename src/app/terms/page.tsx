@@ -104,7 +104,7 @@ export default function TermsOfServicePage() {
             Redemptions and payouts are subject to identity and eligibility verification. We reserve the absolute right to verify your identity to our complete satisfaction prior to allowing the withdrawal of any Rewards.
           </p>
           <p className="mt-2 text-zinc-400">
-            To satisfy our security procedures, we may require you (either directly or through a secure third-party provider) to undergo a Know Your Customer (KYC) check. This can involve uploading a clear, valid copy of your state-issued photo ID, passport, or driver's license, or verifying your physical mobile phone number.
+            To satisfy our security procedures, we may require you (either directly or through a secure third-party provider) to undergo a Know Your Customer (KYC) check. This can involve uploading a clear, valid copy of your state-issued photo ID, passport, or driver&apos;s license, or verifying your physical mobile phone number.
           </p>
           <p className="mt-2 text-zinc-400">
             Our minimum payout is **2,000 Coins ($2.00 USD equivalent)**. Additionally, we enforce an **Engagement Threshold Lock**, requiring a minimum of **2 completed offerwall tasks** before redemptions can be approved. Earned points from referrals or spin wheels alone are not redeemable without active task verification.
