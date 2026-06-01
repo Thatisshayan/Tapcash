@@ -20,6 +20,8 @@ Status: live, update after each meaningful batch of changes.
 - Android cloud build is linked but currently queued.
 - Local Android build is blocked by missing Java/JDK on this machine.
 - Four subagents are running in parallel for Android, web cleanup, mobile parity, and backend contract checks.
+- Android release subagent confirmed the repo already has an APK-capable EAS preview path.
+- Android release subagent confirmed local APK generation is blocked by missing `java`, Android SDK, and Android Studio tooling on this machine.
 
 ## Change Log
 
@@ -39,6 +41,7 @@ Status: live, update after each meaningful batch of changes.
 - Mobile parity fixes from the dedicated worker.
 - Any contract mismatches or follow-up risks.
 - Add concise batch updates after each worker returns or after each verified build change.
+- If local Android install is desired later, install JDK 17+ and Android SDK, then run `mobile/android/gradlew.bat assembleRelease`.
 
 ## Handoff Notes
 - Keep updates concise and factual.
