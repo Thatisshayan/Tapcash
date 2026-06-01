@@ -20,6 +20,7 @@ Status: live, update after each meaningful batch of changes.
 - Web redesign now uses a shared UI shell and Framer Motion-backed sections across the landing, dashboard, cashout, offerwall, transactions, and payouts pages.
 - Web lint is clean after the redesign.
 - Web production build is clean after the redesign.
+- Browser QA was attempted against the live local server, but the Playwright navigation timed out on `networkidle`, so runtime visual inspection is still pending.
 - Mobile Expo web runtime is working.
 - Android cloud build is linked but currently queued.
 - Local Android build is blocked by missing Java/JDK on this machine.
@@ -31,6 +32,7 @@ Status: live, update after each meaningful batch of changes.
 - Backend/contract subagent confirmed backend auth checks are enforced, but production readiness still depends on deployment secrets and environment validation.
 - The shared premium UI primitives live in `src/components/PremiumUi.tsx` and are now the basis for the web shell.
 - The current design direction emphasizes direct CTAs, readable sections, and lower decoration density.
+- Runtime inspection still needs a successful browser pass once the local server is responsive enough for Playwright.
 
 ## Change Log
 
@@ -55,6 +57,7 @@ Status: live, update after each meaningful batch of changes.
 - The next report update should include the APK link if Expo finishes the queued job.
 - If you want a visual QA pass next, the clean build is ready for browser inspection.
 - Next review should focus on whether the conversion-first version feels clean enough at runtime.
+- Browser QA is the next outstanding verification item.
 
 ## Handoff Notes
 - Keep updates concise and factual.
