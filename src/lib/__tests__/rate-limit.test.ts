@@ -1,4 +1,5 @@
 import { checkRateLimit } from '../rate-limit';
+jest.mock('../redis', () => ({ redis: null }));
 
 describe('Rate Limiter', () => {
   beforeEach(() => {

@@ -17,8 +17,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "User mismatch" }, { status: 403 });
   }
 
-  const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID || "parPnrD9RiU";
-  const appKey = process.env.RAPIDOREACH_APP_KEY || "3912bbe80f741af48d3624ce4a4d1b37";
+  const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID;
+  const appKey = process.env.RAPIDOREACH_APP_KEY;
+  if (!appId || !appKey) {
+    console.error("RapidoReach credentials are not configured");
+    return NextResponse.json({ error: "Offerwall is temporarily unavailable" }, { status: 503 });
+  }
 
   // RapidoReach expects a three-part UID:
   // internalUserId-appId-checksum

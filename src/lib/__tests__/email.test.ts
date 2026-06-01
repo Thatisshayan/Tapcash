@@ -17,7 +17,7 @@ describe('Email Utility', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
       to: 'test@example.com',
-      subject: expect.stringContaining('Payout is on the way'),
+      subject: expect.stringContaining('TapCash payout'),
       html: expect.stringContaining('$25.00 CAD'),
     }));
     // Check if notes are included
@@ -32,7 +32,7 @@ describe('Email Utility', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
       to: 'baduser@example.com',
-      subject: expect.stringContaining('TapCash Payout'),
+      subject: expect.stringContaining('TapCash payout request'),
       html: expect.stringContaining('$10.00 CAD'),
     }));
     
