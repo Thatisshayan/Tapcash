@@ -22,6 +22,9 @@ Status: live, update after each meaningful batch of changes.
 - Four subagents are running in parallel for Android, web cleanup, mobile parity, and backend contract checks.
 - Android release subagent confirmed the repo already has an APK-capable EAS preview path.
 - Android release subagent confirmed local APK generation is blocked by missing `java`, Android SDK, and Android Studio tooling on this machine.
+- Mobile parity subagent strengthened auth refresh and verification gating, and wired signup display name into Firebase profile data.
+- Web cleanup subagent reported `src` lint is clean with `0 warnings`.
+- Backend/contract subagent confirmed backend auth checks are enforced, but production readiness still depends on deployment secrets and environment validation.
 
 ## Change Log
 
@@ -42,8 +45,11 @@ Status: live, update after each meaningful batch of changes.
 - Any contract mismatches or follow-up risks.
 - Add concise batch updates after each worker returns or after each verified build change.
 - If local Android install is desired later, install JDK 17+ and Android SDK, then run `mobile/android/gradlew.bat assembleRelease`.
+- Remaining live task is the queued Android EAS build artifact.
+- The next report update should include the APK link if Expo finishes the queued job.
 
 ## Handoff Notes
 - Keep updates concise and factual.
 - Record only verified outcomes.
 - If a task is blocked, include the blocker and the smallest safe next step.
+- Commit and push after each meaningful batch so remote GitHub stays current.
