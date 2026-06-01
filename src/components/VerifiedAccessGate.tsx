@@ -14,49 +14,59 @@ type VerifiedAccessGateProps = {
   nextLabel: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function VerifiedAccessGate({ title, description, nextHref, nextLabel }: VerifiedAccessGateProps) {
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const userUid = user?.uid;
 
   useEffect(() => {
-    if (user) {
-      void user.reload().catch(() => {});
+    if (userUid) {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        void currentUser.reload().catch(() => {});
+      }
     }
-  }, [user?.uid]);
+  }, [userUid]);
 
   if (!user || user.emailVerified) {
     return null;
   }
 
   const handleResend = async () => {
-    if (!auth.currentUser) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     setSending(true);
     setMessage(null);
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(currentUser);
       setMessage("Verification email resent. Check your inbox and spam folder.");
-    } catch (error: any) {
-      setMessage(error?.message || "We could not resend the verification email right now.");
+    } catch (error: unknown) {
+      setMessage(getErrorMessage(error, "We could not resend the verification email right now."));
     } finally {
       setSending(false);
     }
   };
 
   const handleRefresh = async () => {
-    if (!auth.currentUser) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     setRefreshing(true);
     setMessage(null);
     try {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
+      await currentUser.reload();
+      if (currentUser.emailVerified) {
         window.location.href = nextHref;
       } else {
         setMessage("Your email still looks unverified. Click the link in your inbox, then try again.");
       }
-    } catch (error: any) {
-      setMessage(error?.message || "Unable to refresh your verification status.");
+    } catch (error: unknown) {
+      setMessage(getErrorMessage(error, "Unable to refresh your verification status."));
     } finally {
       setRefreshing(false);
     }

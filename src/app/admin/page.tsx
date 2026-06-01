@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
-import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, ArrowRight, BadgeCheck, Wallet } from "lucide-react";
+import { ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
+
+type TimestampLike = { toDate: () => Date } | string | number | Date | null | undefined;
+
+interface AdminUser {
+  uid: string;
+  email?: string;
+  ledgerBalanceCoins?: number;
+  status?: string;
+  createdAt?: TimestampLike;
+}
 
 interface Withdrawal {
   id: string;
@@ -13,17 +22,8 @@ interface Withdrawal {
   amountCoins: number;
   method: string;
   status: string;
-  createdAt: any;
-}
-
-interface Postback {
-  id: string;
-  userId: string;
-  amountCents: number;
-  offerId: string;
-  ipAddress: string;
-  status: string;
-  createdAt: any;
+  createdAt?: TimestampLike;
+  payoutEmail?: string;
 }
 
 interface FlaggedTx {
@@ -31,19 +31,18 @@ interface FlaggedTx {
   userId: string;
   type: string;
   status: string;
-  createdAt: any;
+  createdAt?: TimestampLike;
 }
 
 export default function AdminPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"withdrawals" | "users">("withdrawals");
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [postbacks, setPostbacks] = useState<Postback[]>([]);
   const [flagged, setFlagged] = useState<FlaggedTx[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [userSearch, setUserSearch] = useState("");
   const [stats, setStats] = useState({ users: 0, pending: 0, postbacks24h: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -53,15 +52,11 @@ export default function AdminPage() {
   const [adjReason, setAdjReason] = useState("");
   const [adjSubmitting, setAdjSubmitting] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!user) return;
-    loadData();
-  }, [user]);
-
-  async function loadData() {
     setLoading(true);
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const [adminDataRes, usersRes] = await Promise.all([
         fetch("/api/admin/withdrawals", { headers: { Authorization: `Bearer ${token}` } }),
         fetch("/api/admin/users?limit=10", { headers: { Authorization: `Bearer ${token}` } }),
@@ -71,7 +66,6 @@ export default function AdminPage() {
       const usersData = await usersRes.json();
 
       if (adminData.withdrawals) setWithdrawals(adminData.withdrawals);
-      if (adminData.postbacks) setPostbacks(adminData.postbacks);
       if (adminData.flagged) setFlagged(adminData.flagged);
       if (usersData.users) setUsers(usersData.users);
       if (adminData.stats) setStats(adminData.stats);
@@ -80,7 +74,49 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const token = await user.getIdToken();
+        const [adminDataRes, usersRes] = await Promise.all([
+          fetch("/api/admin/withdrawals", { headers: { Authorization: `Bearer ${token}` } }),
+          fetch("/api/admin/users?limit=10", { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+
+        const adminData = await adminDataRes.json();
+        const usersData = await usersRes.json();
+
+        if (cancelled) return;
+
+        if (adminData.withdrawals) setWithdrawals(adminData.withdrawals);
+        if (adminData.flagged) setFlagged(adminData.flagged);
+        if (usersData.users) setUsers(usersData.users);
+        if (adminData.stats) setStats(adminData.stats);
+      } catch (e) {
+        if (!cancelled) {
+          console.error("Admin load error:", e);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   async function handleSearch() {
     if (!userSearch) return;
@@ -96,7 +132,7 @@ export default function AdminPage() {
     }
   }
 
-  async function handleUserAction(targetUid: string, action: string, value?: any) {
+  async function handleUserAction(targetUid: string, action: string, value?: unknown) {
     setActionLoading(targetUid + action);
     try {
       const token = await user!.getIdToken();
@@ -108,7 +144,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setMessage({ text: `User ${action} success`, type: "success" });
-        loadData(); // Refresh
+        void loadData(); // Refresh
       } else {
         setMessage({ text: data.error || "Action failed", type: "error" });
       }
@@ -170,9 +206,9 @@ export default function AdminPage() {
     }
   }
 
-  function fmt(ts: any) {
+  function fmt(ts: TimestampLike) {
     if (!ts) return "—";
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const d = typeof ts === "object" && "toDate" in ts ? ts.toDate() : new Date(ts);
     return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
@@ -328,7 +364,7 @@ export default function AdminPage() {
                     <tr key={w.id} className="hover:bg-zinc-900/40 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-mono text-zinc-400">{(w as any).payoutEmail || w.userId.slice(0, 15) + "..."}</span>
+                          <span className="text-xs font-mono text-zinc-400">{w.payoutEmail || w.userId.slice(0, 15) + "..."}</span>
                           <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-tighter">UID: {w.userId.slice(0, 8)}</span>
                         </div>
                       </td>

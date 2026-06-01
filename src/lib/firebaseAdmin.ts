@@ -2,6 +2,10 @@ import * as admin from "firebase-admin";
 
 type FirebaseAdminMode = "real" | "fallback";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export let firebaseAdminReady = false;
 export let firebaseAdminMode: FirebaseAdminMode = "fallback";
 export let firebaseAdminError: string | null = null;
@@ -13,16 +17,21 @@ if (!admin.apps.length) {
   if (privateKey) {
     try {
       if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        privateKey = JSON.parse(privateKey);
+        const parsedPrivateKey: unknown = JSON.parse(privateKey);
+        if (typeof parsedPrivateKey === "string") {
+          privateKey = parsedPrivateKey;
+        }
       }
-    } catch (e) {}
-    
-    if (typeof privateKey === 'string') {
-      privateKey = privateKey.replace(/^['"]|['"]$/g, '');
-      privateKey = privateKey.replace(/\\\\n/g, '\n').replace(/\\n/g, '\n');
+    } catch {
+      // Keep the original environment value if it cannot be parsed as JSON.
+    }
+
+    if (typeof privateKey === "string") {
+      privateKey = privateKey.replace(/^['"]|['"]$/g, "");
+      privateKey = privateKey.replace(/\\\\n/g, "\n").replace(/\\n/g, "\n");
       privateKey = privateKey.trim();
-      
-      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+
+      if (!privateKey.includes("-----BEGIN PRIVATE KEY-----")) {
         const cleanKey = privateKey.replace(/\s+/g, '');
         const formattedKey = cleanKey.match(/.{1,64}/g)?.join('\n') || cleanKey;
         privateKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----\n`;
@@ -39,8 +48,8 @@ if (!admin.apps.length) {
       });
       firebaseAdminReady = true;
       firebaseAdminMode = "real";
-    } catch (error: any) {
-      firebaseAdminError = error?.message || "Firebase Admin Initialization Error";
+    } catch (error: unknown) {
+      firebaseAdminError = getErrorMessage(error, "Firebase Admin Initialization Error");
       if (isProduction && !isBuildPhase) {
         console.error("Firebase Admin Initialization Error:", firebaseAdminError);
       } else if (!isBuildPhase) {

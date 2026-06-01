@@ -1,17 +1,24 @@
-import { adminDb } from "./firebaseAdmin";
-import * as admin from "firebase-admin";
-
 /**
  * PayPal REST API Utility for TapCash Payouts
  */
 
-const PAYPAL_API_BASE = process.env.PAYPAL_MODE === "live" 
-  ? "https://api-m.paypal.com" 
+const PAYPAL_API_BASE = process.env.PAYPAL_MODE === "live"
+  ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
 
 interface PayPalToken {
   access_token: string;
   expires_in: number;
+}
+
+type PayPalErrorResponse = {
+  error_description?: string;
+  message?: string;
+};
+
+interface PayPalApiResponse {
+  message?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -26,7 +33,7 @@ async function getAccessToken(): Promise<string> {
   }
 
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-  
+
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: "POST",
     headers: {
@@ -37,7 +44,7 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = (await response.json()) as PayPalErrorResponse;
     throw new Error(`PayPal Auth Error: ${error.error_description || response.statusText}`);
   }
 
@@ -86,7 +93,7 @@ export async function createPayPalPayout(params: {
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as PayPalApiResponse;
 
   if (!response.ok) {
     console.error("PayPal Payout Request Failed:", data);
@@ -111,9 +118,9 @@ export async function getPayoutStatus(payoutBatchId: string) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = (await response.json()) as PayPalErrorResponse;
     throw new Error(error.message || "Failed to fetch payout status");
   }
 
-  return await response.json();
+  return (await response.json()) as PayPalApiResponse;
 }
