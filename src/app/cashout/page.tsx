@@ -228,7 +228,6 @@ export default function CashoutStorePage() {
   // Subscribe to real-time balance
   useEffect(() => {
     if (!user) {
-      setBalance(0);
       return;
     }
 
@@ -529,7 +528,6 @@ export default function CashoutStorePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {REWARD_METHODS.map((method) => {
-              const meetsMin = balance >= method.minCoins;
               return (
                 <div
                   key={method.id}

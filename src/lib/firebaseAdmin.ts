@@ -1,7 +1,14 @@
 import * as admin from "firebase-admin";
 
+type FirebaseAdminMode = "real" | "fallback";
+
+export let firebaseAdminReady = false;
+export let firebaseAdminMode: FirebaseAdminMode = "fallback";
+export let firebaseAdminError: string | null = null;
+
 if (!admin.apps.length) {
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
+  const isProduction = process.env.NODE_ENV === "production";
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
   if (privateKey) {
     try {
@@ -30,23 +37,33 @@ if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
       });
+      firebaseAdminReady = true;
+      firebaseAdminMode = "real";
     } catch (error: any) {
-      if (!isBuildPhase) {
-        console.error("Firebase Admin Initialization Error:", error.message);
+      firebaseAdminError = error?.message || "Firebase Admin Initialization Error";
+      if (isProduction && !isBuildPhase) {
+        console.error("Firebase Admin Initialization Error:", firebaseAdminError);
+      } else if (!isBuildPhase) {
+        console.warn("Firebase Admin Initialization Error:", firebaseAdminError);
       }
     }
   } else {
-    if (!isBuildPhase) {
-      console.warn("Firebase Admin: No credentials provided via env variables. Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.");
+    firebaseAdminError = "Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.";
+    if (isProduction && !isBuildPhase) {
+      console.error("Firebase Admin unavailable:", firebaseAdminError);
+    } else if (!isBuildPhase) {
+      console.warn("Firebase Admin unavailable:", firebaseAdminError);
     }
   }
 
-  // Fallback to prevent Next.js build crash from `admin.firestore()` when credentials fail or are missing
+  // Fallback keeps the module importable during builds and local work, but the
+  // exported status flag makes the misconfiguration visible to callers.
   if (!admin.apps.length) {
     if (!isBuildPhase) {
-      console.warn("Initializing dummy Firebase app for build process.");
+      console.warn("Initializing fallback Firebase app. Firebase-dependent routes should check firebaseAdminReady before using live data.");
     }
     admin.initializeApp({ projectId: projectId || "demo-project" });
+    firebaseAdminMode = "fallback";
   }
 }
 

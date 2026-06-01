@@ -31,25 +31,22 @@ export default function Header() {
   const [balance, setBalance] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lang, setLang] = useState<"en" | "fr">("en");
-  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("COIN");
+  const [lang, setLang] = useState<"en" | "fr">(() => {
+    if (typeof window === "undefined") return "en";
+    const saved = localStorage.getItem("tapcash_preferred_lang");
+    return saved === "fr" ? "fr" : "en";
+  });
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>(() => {
+    if (typeof window === "undefined") return "COIN";
+    const saved = localStorage.getItem("tapcash_display_currency");
+    return saved === "CAD" ? "CAD" : "COIN";
+  });
 
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const savedLang = localStorage.getItem("tapcash_preferred_lang") as "en" | "fr" | null;
-    const savedCurrency = localStorage.getItem("tapcash_display_currency") as DisplayCurrency | null;
-
-    if (savedLang) setLang(savedLang);
-    if (savedCurrency) setDisplayCurrency(savedCurrency);
-  }, []);
-
-  useEffect(() => {
     if (!user) {
-      setIsAdmin(false);
       return;
     }
 
@@ -72,7 +69,6 @@ export default function Header() {
 
   useEffect(() => {
     if (!user) {
-      setBalance(0);
       return;
     }
 

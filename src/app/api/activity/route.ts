@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { adminDb, firebaseAdminError, firebaseAdminReady } from "@/lib/firebaseAdmin";
 import { Timestamp } from "firebase-admin/firestore";
 
 // 2-min cache
@@ -15,11 +15,22 @@ const METHOD_LABELS: Record<string, string> = {
   daily_streak: "a Login Streak Bonus",
 };
 
+const FALLBACK_ITEMS = [
+  "Live activity will appear here once Firebase credentials are connected.",
+];
+
 function maskedUid(uid: string) {
   return "User_***" + uid.slice(-3).toUpperCase();
 }
 
 export async function GET() {
+  if (!firebaseAdminReady) {
+    console.error("[ACTIVITY] Firebase Admin unavailable:", firebaseAdminError || "Unknown configuration error");
+    return NextResponse.json({ items: FALLBACK_ITEMS }, {
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=60" },
+    });
+  }
+
   try {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const snap = await adminDb
@@ -81,6 +92,8 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[ACTIVITY]", err);
-    return NextResponse.json({ items: [] }, { status: 500 });
+    return NextResponse.json({ items: FALLBACK_ITEMS }, {
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=60" },
+    });
   }
 }

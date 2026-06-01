@@ -25,7 +25,6 @@ export default function RapidoReachPage() {
 
   useEffect(() => {
     if (!user || !isVerified) {
-      setIframeUrl(null);
       return;
     }
 

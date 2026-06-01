@@ -26,17 +26,28 @@ export async function GET(request: NextRequest) {
     const auth = await requireAdmin(request);
     if ("error" in auth) return auth.error;
 
-    const [withdrawalsSnap, postbacksSnap, flagsSnap, usersSnap] = await Promise.all([
+    const oneDayAgo = admin.firestore.Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+
+    const [
+      withdrawalsSnap,
+      postbacksSnap,
+      flagsSnap,
+      usersCountSnap,
+      pendingCountSnap,
+      postbacks24hCountSnap,
+    ] = await Promise.all([
       adminDb.collection("cashout_requests").where("status", "==", "pending_review").orderBy("createdAt", "desc").limit(20).get(),
       adminDb.collection("offer_postbacks").orderBy("createdAt", "desc").limit(20).get(),
       adminDb.collection("fraud_flags").orderBy("createdAt", "desc").limit(10).get(),
-      adminDb.collection("users").limit(10).get(),
+      adminDb.collection("users").count().get(),
+      adminDb.collection("cashout_requests").where("status", "==", "pending_review").count().get(),
+      adminDb.collection("offer_postbacks").where("createdAt", ">=", oneDayAgo).count().get(),
     ]);
 
     const stats = {
-      users: usersSnap.size,
-      pending: withdrawalsSnap.size,
-      postbacks24h: postbacksSnap.size,
+      users: Number(usersCountSnap.data().count || 0),
+      pending: Number(pendingCountSnap.data().count || 0),
+      postbacks24h: Number(postbacks24hCountSnap.data().count || 0),
     };
 
     return NextResponse.json({

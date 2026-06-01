@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
+const resendApiKey = process.env.RESEND_API_KEY?.trim() || "";
+const resend =
+  resendApiKey
+    ? new Resend(resendApiKey)
+    : process.env.NODE_ENV === "test"
+      ? new Resend("test-key")
+      : null;
 const FROM_EMAIL = 'TapCash <hello@tapcash.online>';
 const BASE = `font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#050816;color:#fff;border-radius:16px;border:1px solid #1e2d4f;`;
 const BTN = (href: string, text: string, color = '#00e6c3') =>
@@ -10,9 +16,19 @@ function wrap(body: string) {
   return `<div style="${BASE}">${body}<p style="font-size:11px;color:#334155;text-align:center;margin-top:28px;">TapCash | hello@tapcash.online | <a href="https://tapcash.online" style="color:#334155;">tapcash.online</a></p></div>`;
 }
 
+function getEmailClient(context: string) {
+  if (resend) return resend;
+
+  console.error(`[EMAIL] ${context}: RESEND_API_KEY is missing. Skipping send to avoid masking misconfiguration.`);
+  return null;
+}
+
 export async function sendWelcomeEmail(to: string, name: string) {
+  const client = getEmailClient("sendWelcomeEmail");
+  if (!client) return;
+
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject: 'Welcome to TapCash - Start Earning Now',
@@ -38,8 +54,11 @@ export async function sendWelcomeEmail(to: string, name: string) {
 }
 
 export async function sendStreakReminderEmail(to: string, name: string, streakDay: number) {
+  const client = getEmailClient("sendStreakReminderEmail");
+  if (!client) return;
+
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject: `Day ${streakDay} streak - log in before midnight!`,
@@ -64,8 +83,11 @@ export async function sendStreakReminderEmail(to: string, name: string, streakDa
 
 export async function sendCashoutNudgeEmail(to: string, name: string, coinBalance: number) {
   const cadValue = (coinBalance / 1000).toFixed(2);
+  const client = getEmailClient("sendCashoutNudgeEmail");
+  if (!client) return;
+
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject: `You have $${cadValue} CAD ready to cash out`,
@@ -90,8 +112,11 @@ export async function sendCashoutNudgeEmail(to: string, name: string, coinBalanc
 }
 
 export async function sendPayoutApprovedEmail(to: string, amountCad: number, method: string, notes?: string) {
+  const client = getEmailClient("sendPayoutApprovedEmail");
+  if (!client) return;
+
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject: 'Your TapCash payout is on its way!',
@@ -117,8 +142,11 @@ export async function sendPayoutApprovedEmail(to: string, amountCad: number, met
 }
 
 export async function sendPayoutRejectedEmail(to: string, amountCad: number, notes?: string) {
+  const client = getEmailClient("sendPayoutRejectedEmail");
+  if (!client) return;
+
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to,
       subject: 'Update on your TapCash payout request',
