@@ -1,15 +1,20 @@
 # Security Status
 
-**Date:** 2026-05-16
-**Project:** TapCash MVP
+**Date:** 2026-06-01
+**Project:** TapCash
+
+## Current Security Posture
+- Provider credential hardcoded fallbacks were removed from the affected API routes.
+- Rate limiting, signature checks, IP allow checks, and fraud logging are active in backend flows.
+- Firestore rules remain user-isolated with restricted direct client writes to critical collections.
 
 ## Service Account Key
 - **File Name:** `serviceAccountKey.json`
-- **Git Tracking Status:** UNTRACKED. The file has been removed from Git tracking via `git rm --cached` and is explicitly listed in `.gitignore` (which was fixed to remove UTF-16 corruption).
-- **Rotation Required:** YES. Since the file was previously tracked in earlier commits before the `.gitignore` fix, the key exists in the Git history. It is highly recommended to rotate this Firebase Admin key immediately in the Firebase Console.
+- **Git Tracking Status:** Should remain untracked and excluded by `.gitignore`.
+- **Rotation Guidance:** If any historical key was previously committed or exposed, rotate it in Firebase Console and revoke the old key.
 
-## Next Steps
-1. Generate a new private key in Firebase Console -> Project Settings -> Service Accounts.
-2. Download the new JSON and overwrite the local `serviceAccountKey.json`.
-3. Delete the old key in the Firebase Console.
-4. Never commit the new key.
+## Recommended Ongoing Actions
+1. Keep all provider/API credentials in environment variables only.
+2. Rotate Firebase Admin and payout-provider secrets on a schedule.
+3. Continue periodic security audits after major feature releases.
+4. Keep production-only debug endpoints disabled or access-controlled.

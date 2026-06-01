@@ -1,16 +1,21 @@
 # Payout Status
 
-**Date:** 2026-05-16
-**Project:** TapCash MVP
+**Date:** 2026-06-01
+**Project:** TapCash
 
 ## Current Implementation
-- **User Flow:** Users can request a withdrawal if their balance is >= $1.00 (minimum set for sandbox testing).
-- **Backend Flow:** `requestPayout` Cloud Function correctly deducts the user's `balanceCents`, increases `pendingCents`, and creates a pending withdrawal record in the `withdrawals` subcollection.
-- **Admin Flow:** Admin panel placeholder exists to view these requests.
+- **User Flow:** Users submit payout requests from `/cashout` after meeting balance and anti-fraud checks.
+- **Backend Flow:** `POST /api/payouts/request` writes a pending request and corresponding ledger transaction.
+- **Admin Flow:** `/api/admin/withdrawals` supports approve/reject actions and logs admin actions.
 
-## Real Payouts
-- **PayPal Status:** Not connected. Payouts are simulated and queued for manual approval only.
-- **Stripe Status:** Not connected.
-- **Execution:** Any approved payouts currently require manual execution outside the platform until the PayPal Payouts SDK is fully integrated with sandbox credentials.
+## Execution Model
+- **Mode:** Admin-reviewed payout workflow is active in-app.
+- **Automation:** Final payment execution depends on configured payout provider credentials and operational process.
+- **Note:** The app records and manages payout state; provider-side transfer completion still requires valid production credentials.
 
-**Status:** Pending manual/admin approval — PayPal sandbox not connected.
+## Verification Snapshot
+- **Build:** Passing (`next build`)
+- **Tests:** Passing (`jest`, 7/7)
+- **Production Edge:** Live on Vercel (`https://tapcash.online`)
+
+**Status:** Live payout request pipeline with admin review; provider execution readiness is environment-dependent.

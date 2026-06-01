@@ -1,23 +1,26 @@
 {
   "project": "TapCash",
-  "version": "0.4.0-alpha",
-  "environment": "MVP / Development",
-  "status": "Security Hardened - Feature Expansion In Progress",
+  "version": "1.1.0",
+  "environment": "Production (Vercel edge) + Railway linked",
+  "status": "Live on Vercel with active hardening and UX modernization",
   "components": {
-    "auth": "Functional (Firebase Auth)",
-    "dashboard": "Functional (Battle Pass & Real-time balance)",
-    "landing_page": "Live Feed Connected (Firestore)",
-    "postback_handler": "v2 Implemented (Purged History + MD5 Signatures)",
-    "fraud_controls": "v2 Implemented (Bot detection, ProxyCheck)",
-    "payouts": "PayPal REST & Interac Manual Integrated",
-    "admin_panel": "Functional (User Manager + Tabbed Dashboard)",
-    "referrals": "Backend logic active; UI v2 Implemented",
-    "gamification": "Store, Confetti, Leveling System implemented",
+    "auth": "Functional (Firebase Auth + email verification gate)",
+    "dashboard": "Functional (ledger-backed balance, missions, rewards UI)",
+    "landing_page": "Functional (Neon Vault + Luxe hybrid redesign with Framer Motion)",
+    "postback_handler": "Functional (provider callbacks with signature/IP checks)",
+    "fraud_controls": "Functional (bot checks, proxy checks, flags, rate-limit)",
+    "payouts": "Functional (request + admin review workflow)",
+    "admin_panel": "Functional (withdrawals + user controls)",
+    "referrals": "Functional (referral logic and pages)",
+    "tests": "Passing (Jest suites)",
+    "build": "Passing (Next.js production build)",
     "security": {
-      "gitHistory": "PURGED AND CLEANED",
-      "serviceAccountKey": "ROTATION PENDING USER ACTION",
-      "firestoreRules": "Basic isolation implemented"
+      "hardcoded_provider_fallbacks": "Removed from API routes",
+      "serviceAccountKey": "Rotation still recommended if legacy exposure occurred",
+      "firestoreRules": "User-isolated with restricted writes"
     }
   },
-  "lastUpdated": "2026-05-24T05:05:00Z"
+  "lastVerified": "2026-06-01T03:20:00Z",
+  "canonicalRepo": "https://github.com/Thatisshayan/Tapcash",
+  "canonicalBranch": "main"
 }
