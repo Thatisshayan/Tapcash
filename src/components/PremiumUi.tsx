@@ -39,12 +39,12 @@ export function PageShell({
   kicker?: ReactNode;
 }>) {
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:p-8">
+    <section className="rounded-[1.75rem] border border-white/8 bg-white/[0.035] p-6 sm:p-7">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl space-y-3">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#8cf8e9]">{eyebrow}</p>
-          <h2 className="text-3xl font-black tracking-tight text-white md:text-5xl">{title}</h2>
-          <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">{description}</p>
+          <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">{title}</h2>
+          <p className="max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-[15px]">{description}</p>
         </div>
         {kicker}
       </div>
@@ -55,9 +55,9 @@ export function PageShell({
 
 export function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
+    <div className="rounded-[1.5rem] border border-white/8 bg-white/[0.035] p-5">
       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">{label}</p>
-      <p className="mt-3 font-display text-4xl font-black text-white">{value}</p>
+      <p className="mt-3 font-display text-3xl font-black text-white">{value}</p>
       <p className="mt-2 text-sm text-zinc-400">{detail}</p>
     </div>
   );
@@ -72,10 +72,10 @@ export function CTAButton({
   label: string;
   variant?: "primary" | "secondary";
 }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-transform";
+  const base = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-colors";
   if (variant === "secondary") {
     return (
-      <Link href={href} className={`${base} border border-white/10 bg-white/5 text-white hover:bg-white/8`}>
+      <Link href={href} className={`${base} border border-white/10 bg-white/5 text-white hover:bg-white/10`}>
         {label}
         <ArrowRight className="h-4 w-4" />
       </Link>
@@ -83,7 +83,7 @@ export function CTAButton({
   }
 
   return (
-    <Link href={href} className={`${base} bg-[#00e6c3] text-[#04101d] shadow-[0_16px_40px_rgba(0,230,195,0.18)]`}>
+    <Link href={href} className={`${base} bg-[#00e6c3] text-[#04101d] hover:bg-[#26edd1]`}>
       {label}
       <ArrowRight className="h-4 w-4" />
     </Link>

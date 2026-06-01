@@ -15,8 +15,9 @@ Status: live, update after each meaningful batch of changes.
 - Backend/contract audit
 
 ## Current Truth
+- Web direction has shifted to conversion-first with flatter surfaces, simpler hierarchy, and less visual noise.
 - Web build is working.
-- Web redesign now uses a shared premium UI shell and Framer Motion-backed sections across the landing, dashboard, cashout, offerwall, transactions, and payouts pages.
+- Web redesign now uses a shared UI shell and Framer Motion-backed sections across the landing, dashboard, cashout, offerwall, transactions, and payouts pages.
 - Web lint is clean after the redesign.
 - Web production build is clean after the redesign.
 - Mobile Expo web runtime is working.
@@ -29,6 +30,7 @@ Status: live, update after each meaningful batch of changes.
 - Web cleanup subagent reported `src` lint is clean with `0 warnings`.
 - Backend/contract subagent confirmed backend auth checks are enforced, but production readiness still depends on deployment secrets and environment validation.
 - The shared premium UI primitives live in `src/components/PremiumUi.tsx` and are now the basis for the web shell.
+- The current design direction emphasizes direct CTAs, readable sections, and lower decoration density.
 
 ## Change Log
 
@@ -52,6 +54,7 @@ Status: live, update after each meaningful batch of changes.
 - Remaining live task is the queued Android EAS build artifact.
 - The next report update should include the APK link if Expo finishes the queued job.
 - If you want a visual QA pass next, the clean build is ready for browser inspection.
+- Next review should focus on whether the conversion-first version feels clean enough at runtime.
 
 ## Handoff Notes
 - Keep updates concise and factual.

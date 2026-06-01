@@ -150,8 +150,7 @@ export default function LandingPage() {
             </MotionWrap>
 
             <MotionWrap delay={0.08} className="relative">
-              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#00e6c3]/10 via-transparent to-[#3a7bff]/15 blur-2xl" />
-              <div className="relative rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(9,16,29,0.96),rgba(5,8,16,0.98))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] sm:p-7">
+              <div className="relative rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6 sm:p-7">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Live snapshot</p>
@@ -191,7 +190,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-white/6 bg-[#06101a] px-4 py-12 sm:px-6 lg:px-8">
+        <section className="border-y border-white/6 bg-[#050b13] px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-2 xl:grid-cols-4">
             {proofCards.map((stat, index) => (
               <MotionWrap key={stat.label} delay={index * 0.04}>
@@ -201,7 +200,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <section className="px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <MotionWrap className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -227,7 +226,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <section className="px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <MotionWrap>
               <PageShell
@@ -358,7 +357,7 @@ export default function LandingPage() {
             </MotionWrap>
 
             <MotionWrap>
-              <section className="rounded-[2rem] border border-[#00e6c3]/18 bg-gradient-to-br from-[#071722] via-[#06101a] to-[#0a1625] p-6 sm:p-8">
+              <section className="rounded-[1.75rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
                 <div className="inline-flex rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#8cf8e9]">
                   Final CTA
                 </div>

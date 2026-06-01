@@ -171,7 +171,7 @@ export default function DashboardPage() {
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
-          <section className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_28%),linear-gradient(180deg,rgba(7,15,24,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
+          <section className="rounded-[1.75rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-5">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#8cf8e9]">
@@ -296,7 +296,7 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        <div className="mt-8 rounded-[2rem] border border-white/8 bg-white/[0.03]">
+        <div className="mt-8 rounded-[1.75rem] border border-white/8 bg-white/[0.03]">
           <div className="flex items-center gap-2 overflow-x-auto border-b border-white/6 px-4 py-4">
             {(["all", "credits", "cashouts", "pending"] as FilterType[]).map((item) => (
               <button
