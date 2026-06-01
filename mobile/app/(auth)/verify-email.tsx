@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { tapCashTheme } from "../../src/theme";
 import { useAuth } from "../../src/auth/AuthContext";
@@ -43,9 +43,12 @@ export default function VerifyEmailScreen() {
     setMessage(null);
     try {
       const refreshedUser = await refreshSession();
-      if (!refreshedUser?.emailVerified) {
-        setMessage("Your inbox still looks unverified. Try the link in your email again.");
+      if (refreshedUser?.emailVerified) {
+        router.replace("/(tabs)");
+        return;
       }
+
+      setMessage("Your inbox still looks unverified. Try the link in your email again.");
     } catch (authError) {
       console.error("Mobile verification refresh error:", authError);
       setMessage("We could not refresh your verification status.");

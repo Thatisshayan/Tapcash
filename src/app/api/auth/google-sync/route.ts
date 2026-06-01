@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, isNew: !userSnap.exists });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[GOOGLE SYNC]", err);
     return NextResponse.json({ error: "Sync failed" }, { status: 500 });
   }

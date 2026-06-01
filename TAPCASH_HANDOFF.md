@@ -64,3 +64,4 @@ Status: live, update after each meaningful batch of changes.
 - Record only verified outcomes.
 - If a task is blocked, include the blocker and the smallest safe next step.
 - Commit and push after each meaningful batch so remote GitHub stays current.
+- Before closing a session, create a full-tree checkpoint commit so no partial work is lost.

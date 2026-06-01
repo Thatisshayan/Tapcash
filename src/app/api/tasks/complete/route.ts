@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, rewardCents });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("API Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to complete task" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to complete task" }, { status: 500 });
   }
 }

@@ -21,12 +21,12 @@ export interface LedgerTransactionInput {
   referenceId?: string;
   createdBy?: string | null;
   id?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LedgerTransactionRecord extends LedgerTransactionInput {
-  createdAt: any;
-  updatedAt: any;
+  createdAt: unknown;
+  updatedAt: unknown;
 }
 
 export function normalizedLedgerType(type: string): LedgerTransactionType {

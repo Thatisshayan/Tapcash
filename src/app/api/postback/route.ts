@@ -186,11 +186,12 @@ export async function GET(request: NextRequest) {
     });
 
     return new NextResponse("1", { status: 200 });
-  } catch (error: any) {
-    if (error.message === "DUPLICATE") {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message === "DUPLICATE") {
       return new NextResponse("1", { status: 200 });
     }
-    if (error.message === "USER_NOT_FOUND") {
+    if (message === "USER_NOT_FOUND") {
       return new NextResponse("User not found", { status: 404 });
     }
 

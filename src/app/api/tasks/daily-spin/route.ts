@@ -144,10 +144,10 @@ export async function POST(request: NextRequest) {
       sectorIndex: result.sectorIndex,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Daily Spin API transaction error:", error);
     return NextResponse.json(
-      { error: error.message || "Daily Spin failed" },
+      { error: error instanceof Error ? error.message : "Daily Spin failed" },
       { status: 400 }
     );
   }

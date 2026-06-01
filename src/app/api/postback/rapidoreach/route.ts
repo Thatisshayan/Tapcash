@@ -216,9 +216,10 @@ export async function GET(request: NextRequest) {
 
     await handlePostback(endUserId, providerUserId || endUserId, txId, offerId, amountCoins, ip, userAgent, callbackStatus);
     return new NextResponse("1", { status: 200 });
-  } catch (error: any) {
-    if (error.message === "DUPLICATE") return new NextResponse("1", { status: 200 });
-    if (error.message === "USER_NOT_FOUND") return new NextResponse("User not found", { status: 404 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message === "DUPLICATE") return new NextResponse("1", { status: 200 });
+    if (message === "USER_NOT_FOUND") return new NextResponse("User not found", { status: 404 });
     console.error("[RapidoReach Postback] Error processing request:", error);
     return new NextResponse("Internal server error", { status: 500 });
   }
@@ -262,8 +263,9 @@ export async function POST(request: NextRequest) {
     });
 
     return new NextResponse("1", { status: 200 });
-  } catch (error: any) {
-    if (error.message === "DUPLICATE") return new NextResponse("1", { status: 200 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    if (message === "DUPLICATE") return new NextResponse("1", { status: 200 });
     console.error("[RapidoReach Postback] Error processing POST:", error);
     return new NextResponse("Internal server error", { status: 500 });
   }

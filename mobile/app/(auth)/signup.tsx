@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter, Link } from "expo-router";
 import { updateProfile } from "firebase/auth";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { auth } from "../../src/lib/firebase";
 import { tapCashTheme } from "../../src/theme";

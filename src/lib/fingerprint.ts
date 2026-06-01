@@ -15,7 +15,8 @@ export async function getDeviceFingerprint(): Promise<string> {
     
     // Estimate RAM (non-standard but highly useful in Chromium browsers)
     if ("deviceMemory" in navigator) {
-      components.push(String((navigator as any).deviceMemory || 0));
+      const navigatorWithMemory = navigator as Navigator & { deviceMemory?: number };
+      components.push(String(navigatorWithMemory.deviceMemory || 0));
     }
 
     // Timezone
@@ -56,10 +57,11 @@ export async function getDeviceFingerprint(): Promise<string> {
 
     // 3. Audio Fingerprinting (AudioContext synth signature)
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const windowWithWebkitAudioContext = window as Window & { webkitAudioContext?: typeof AudioContext };
+      const AudioContextClass = window.AudioContext || windowWithWebkitAudioContext.webkitAudioContext;
       if (AudioContextClass) {
         const audioCtx = new AudioContextClass();
-        const oscillator = audioCtx.createOscillator();
+        audioCtx.createOscillator();
         const analyser = audioCtx.createAnalyser();
         components.push(String(audioCtx.sampleRate || 44100));
         components.push(String(analyser.fftSize || 2048));

@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
+export interface VerifiedUserData {
+  status?: string;
+  isFlagged?: boolean;
+  email?: string;
+  claimedMissions?: Record<string, Record<string, boolean>>;
+  lastDailySpin?: { toDate?: () => Date } | Date | string | null;
+  [key: string]: unknown;
+}
+
 type VerifiedUserResult =
   | {
       uid: string;
       email: string | null;
-      userData: any;
+      userData: VerifiedUserData;
     }
   | {
       response: NextResponse;

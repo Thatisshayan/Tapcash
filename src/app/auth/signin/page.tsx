@@ -7,6 +7,7 @@ import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPasswo
 import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { getErrorMessage } from "@/lib/error";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -27,8 +28,8 @@ export default function SignInPage() {
     try {
       await sendPasswordResetEmail(auth, email.trim());
       setResetSent(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset email.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to send reset email."));
     } finally {
       setResetLoading(false);
     }
@@ -50,9 +51,9 @@ export default function SignInPage() {
       }
 
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Sign in error:", err);
-      setError(err.message || "Failed to sign in. Please check your credentials.");
+      setError(getErrorMessage(err, "Failed to sign in. Please check your credentials."));
     } finally {
       setLoading(false);
     }

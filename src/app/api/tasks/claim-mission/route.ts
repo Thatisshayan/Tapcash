@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
-import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
+import { getClientIp, isBotAgent, isIpSuspicious } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";
 
@@ -163,10 +163,10 @@ export async function POST(request: NextRequest) {
       message: `🎉 Success! +${rewardCoins} Coins claimed for ${missionName}!`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Daily Mission claiming route error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to claim daily mission." },
+      { error: error instanceof Error ? error.message : "Failed to claim daily mission." },
       { status: 400 }
     );
   }

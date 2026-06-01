@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter, Link } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { tapCashTheme } from "../../src/theme";
 import { useAuth } from "../../src/auth/AuthContext";

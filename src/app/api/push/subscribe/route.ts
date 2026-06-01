@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[PUSH SUBSCRIBE]", err);
     return NextResponse.json({ error: "Failed to save subscription" }, { status: 500 });
   }
@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest) {
 
     await adminDb.collection("push_subscriptions").doc(decoded.uid).delete();
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[PUSH UNSUBSCRIBE]", err);
     return NextResponse.json({ error: "Failed to remove subscription" }, { status: 500 });
   }

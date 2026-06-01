@@ -8,6 +8,7 @@ import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, Us
 import { auth } from "@/lib/firebase";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { getErrorMessage } from "@/lib/error";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -54,9 +55,9 @@ export default function SignUpPage() {
       await sendEmailVerification(userCredential.user);
 
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}&next=/dashboard`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Sign up error:", err);
-      setError(err.message || "Failed to create account. Please try again.");
+      setError(getErrorMessage(err, "Failed to create account. Please try again."));
     } finally {
       setLoading(false);
     }

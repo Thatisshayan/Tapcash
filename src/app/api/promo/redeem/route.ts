@@ -132,10 +132,10 @@ export async function POST(request: NextRequest) {
       rewardCoins: promo.coins,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Promo code claim error:", error);
     return NextResponse.json(
-      { error: error.message || "Promo redemption failed." },
+      { error: error instanceof Error ? error.message : "Promo redemption failed." },
       { status: 400 }
     );
   }

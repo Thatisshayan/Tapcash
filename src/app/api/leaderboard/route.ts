@@ -3,8 +3,15 @@ import { adminDb } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
 
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  coins: number;
+}
+
 // Cache for 5 minutes — leaderboard doesn't need to be real-time
-let cache: { data: any[]; ts: number } | null = null;
+let cache: { data: LeaderboardEntry[]; ts: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
 
 export async function GET() {

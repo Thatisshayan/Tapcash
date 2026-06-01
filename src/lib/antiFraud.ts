@@ -9,8 +9,8 @@ export interface FraudLog {
   action: string;
   reason: string;
   userAgent: string;
-  details?: Record<string, any>;
-  createdAt: any;
+  details?: Record<string, unknown>;
+  createdAt: Date;
 }
 
 // Subnets/IP patterns to bypass in development environments
@@ -102,7 +102,7 @@ export async function isIpSuspicious(ip: string, action: string, userId?: string
     }
 
     return { suspicious: false };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("ProxyCheck request error:", error);
     // Fail closed for non-local IPs — a timed-out check should not let proxies through
     if (LOCAL_IPS.includes(ip) || LOCAL_SUBNETS.some(subnet => ip.startsWith(subnet))) {

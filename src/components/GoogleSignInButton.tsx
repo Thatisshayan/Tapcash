@@ -5,6 +5,7 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { getErrorMessage } from "@/lib/error";
 
 interface Props {
   redirectTo?: string;
@@ -39,9 +40,10 @@ export default function GoogleSignInButton({ redirectTo = "/dashboard", label = 
       });
 
       router.push(redirectTo);
-    } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        setError(err.message || "Google sign-in failed.");
+    } catch (err: unknown) {
+      const authError = err as Error & { code?: string };
+      if (authError.code !== "auth/popup-closed-by-user") {
+        setError(getErrorMessage(err, "Google sign-in failed."));
       }
     } finally {
       setLoading(false);
