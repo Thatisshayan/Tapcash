@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
 
 export default function AffiliatePolicyPage() {
   const lastUpdated = "May 22, 2026";
@@ -106,76 +107,35 @@ export default function AffiliatePolicyPage() {
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[120px] pointer-events-none" />
 
       <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10 mb-12">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-10 right-0 h-56 w-56 rounded-full bg-[#3a7bff]/10 blur-3xl" />
-            <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-[#00e6c3]/10 blur-3xl" />
-          </div>
-
-          <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+        <MotionWrap>
+          <PageShell
+            eyebrow="Referral policy"
+            title="Affiliate policy that protects growth and keeps the program sustainable."
+            description="TapCash’s referral engine is designed to drive growth without compromising fairness. This page explains how commissions, audits, and limits work."
+            kicker={
+              <>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-[#8cf8e9]">
                   <Sparkles className="w-3.5 h-3.5" />
                   Referral policy
-                </span>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-300">
                   <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
                   Commission rules
-                </span>
-              </div>
-
-              <div className="max-w-2xl space-y-3">
-                <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                  Affiliate policy that protects growth and keeps the program sustainable.
-                </h1>
-                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-                  TapCash’s referral engine is designed to drive growth without compromising fairness. This page explains how commissions, audits, and limits work.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/auth/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-                >
-                  Join TapCash
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
-                >
-                  Open dashboard
-                </Link>
-              </div>
+                </div>
+              </>
+            }
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              <StatCard label="Policy date" value="Updated" detail={lastUpdated} />
+              <StatCard label="Referral bonus" value="5%" detail="Lifetime per referee" />
+              <StatCard label="Enforcement" value="Audited" detail="Real-time + manual" />
             </div>
-
-            <div className="space-y-4">
-              <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Policy date</p>
-                <div className="mt-2 flex items-end justify-between gap-4">
-                  <div>
-                    <p className="text-xl font-black text-white">{lastUpdated}</p>
-                    <p className="text-sm text-zinc-400">Current program terms</p>
-                  </div>
-                  <RefreshCw className="w-5 h-5 text-[#00e6c3] animate-spin-slow" />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Referral bonus</p>
-                  <p className="mt-2 text-2xl font-black text-white">5%</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Enforcement</p>
-                  <p className="mt-2 text-2xl font-black text-white">Audited</p>
-                </div>
-              </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <CTAButton href="/auth/signup" label="Join TapCash" variant="gradient" />
+              <CTAButton href="/dashboard" label="Open dashboard" variant="secondary" />
             </div>
-          </div>
-        </section>
+          </PageShell>
+        </MotionWrap>
 
         <div className="space-y-4 text-center mb-16">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase rounded-full tracking-widest leading-none">
@@ -191,27 +151,16 @@ export default function AffiliatePolicyPage() {
           </p>
         </div>
 
-        {/* Informative notice banner */}
-        <div className="bg-emerald-950/10 border border-emerald-500/10 rounded-3xl p-6 sm:p-8 mb-12 relative overflow-hidden">
-          <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none" />
-          <h2 className="text-lg font-bold text-emerald-400 mb-2">Build Your Passive Stream</h2>
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            We highly value active creators and promoters. When you build an audience and share TapCash ethically, you help us grow. This Affiliate Policy ensures that everyone plays by the same fair rules, keeping our rewards pool sustainable and safe for everyone.
-          </p>
-        </div>
-
-        <div className="mb-12">
-          <ConversionStrip
-            eyebrow="Grow earnings"
-            title="Use your affiliate link to turn traffic into recurring rewards."
-            description="TapCash lets referrals generate passive commission while still keeping the product clean, transparent, and compliant."
-            primaryHref="/auth/signup"
-            primaryLabel="Join TapCash"
-            secondaryHref="/dashboard"
-            secondaryLabel="Open dashboard"
-            bullets={["Fast signup flow", "Referral tracking built in", "Passive earning through offers"]}
-          />
-        </div>
+        <ConversionStrip
+          eyebrow="Grow earnings"
+          title="Use your affiliate link to turn traffic into recurring rewards."
+          description="TapCash lets referrals generate passive commission while still keeping the product clean, transparent, and compliant."
+          primaryHref="/auth/signup"
+          primaryLabel="Join TapCash"
+          secondaryHref="/dashboard"
+          secondaryLabel="Open dashboard"
+          bullets={["Fast signup flow", "Referral tracking built in", "Passive earning through offers"]}
+        />
 
         {/* Dynamic Legal sections list */}
         <div className="space-y-12">

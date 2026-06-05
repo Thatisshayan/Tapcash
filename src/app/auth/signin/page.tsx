@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
+import { MotionWrap } from "@/components/PremiumUi";
 import { auth } from "@/lib/firebase";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { getErrorMessage } from "@/lib/error";
@@ -66,6 +67,7 @@ export default function SignInPage() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] items-center">
           <section className="space-y-8 max-w-2xl">
+            <MotionWrap delay={0}>
             <Link href="/" className="inline-flex items-center gap-3 group">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shadow-[0_12px_40px_rgba(58,123,255,0.22)] group-hover:scale-105 transition-transform">
                 <CircleGauge className="w-5.5 h-5.5" />
@@ -100,9 +102,11 @@ export default function SignInPage() {
                 </div>
               ))}
             </div>
+            </MotionWrap>
           </section>
 
           <section className="relative">
+            <MotionWrap delay={0.12}>
             <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-[#00e6c3]/10 via-transparent to-[#3a7bff]/12 blur-3xl" />
             <div className="tap-card rounded-[2rem] p-6 md:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
               <div className="flex items-center gap-3 mb-6">
@@ -195,6 +199,7 @@ export default function SignInPage() {
                 </Link>
               </p>
             </div>
+            </MotionWrap>
           </section>
         </div>
       </div>
