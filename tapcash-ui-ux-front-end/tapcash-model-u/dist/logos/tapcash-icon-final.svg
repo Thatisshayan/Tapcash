@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<title>TapCash Icon</title><desc>Rounded wallet with tap ripple and cash edge</desc>
+<defs>
+  <linearGradient id="g" x1="92" y1="95" x2="420" y2="410" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#7C3DFF"/>
+    <stop offset="0.45" stop-color="#16D7FF"/>
+    <stop offset="1" stop-color="#30F06E"/>
+  </linearGradient>
+  <linearGradient id="cash" x1="227" y1="88" x2="414" y2="176" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#77FF2E"/><stop offset="1" stop-color="#00D483"/>
+  </linearGradient>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0AF0FF" flood-opacity="0.18"/></filter>
+</defs>
+<rect width="512" height="512" rx="116" fill="#070B16"/>
+<path d="M170 124h226c30 0 54 24 54 54v188c0 30-24 54-54 54H116c-30 0-54-24-54-54V203c0-44 35-79 79-79h29Z" fill="url(#g)" filter="url(#soft)"/>
+<path d="M201 101h164c13 0 23 10 23 23v35H176v-33c0-14 11-25 25-25Z" fill="url(#cash)" opacity=".95"/>
+<path d="M418 239h-88c-24 0-43 19-43 43s19 43 43 43h88v-86Z" fill="#08101F" fill-opacity=".62" stroke="#8AF7FF" stroke-opacity=".25" stroke-width="3"/>
+<circle cx="337" cy="282" r="13" fill="#060A14"/>
+<circle cx="203" cy="286" r="18" fill="#07101D" fill-opacity=".88"/>
+<path d="M203 231c-30 0-55 25-55 55m55-92c-51 0-92 41-92 92m92-128c-71 0-128 57-128 128" stroke="white" stroke-opacity=".82" stroke-width="22" stroke-linecap="round"/>
+<path d="M203 231c-30 0-55 25-55 55m55-92c-51 0-92 41-92 92m92-128c-71 0-128 57-128 128" stroke="#07101D" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"/>
+</svg>
