@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import ConversionStrip from "@/components/ConversionStrip";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
+import { ShieldCheck, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { MotionWrap, PageShell, StatCard, CTAButton } from "@/components/PremiumUi";
+import { tapCashAdminStats } from "@shared/tapcash-content";
 
 type TimestampLike = { toDate: () => Date } | string | number | Date | null | undefined;
 
@@ -214,73 +216,77 @@ export default function AdminPage() {
 
   if (loading && withdrawals.length === 0) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#050813] text-white flex items-center justify-center">
+        <div className="flex items-center justify-center gap-3 text-[#8cf8e9]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-xs font-black uppercase tracking-[0.28em] text-zinc-400">Loading admin queue</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6">
-      <section className="mb-8 rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-start">
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
-                <Sparkles className="w-3.5 h-3.5" />
-                Admin control
-              </span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
-                Manual approvals
-              </span>
-            </div>
-            <div className="max-w-2xl space-y-3">
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white">
-                TapCash Command Center for payouts, users, and fraud control.
-              </h1>
-              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-                Admin decisions drive the ledger. This surface keeps withdrawals, user actions, and security alerts easy to review and hard to abuse.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={loadData}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
-              >
-                Refresh queue
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
-              >
-                Back to dashboard
-              </Link>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-white/6 bg-[#07101b]/90 p-5 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Admin email</p>
-              <p className="mt-2 text-lg font-black text-white break-all">{user?.email}</p>
-              <p className="mt-2 text-sm text-zinc-400">This view is locked behind auth and noindex.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Withdrawals</p>
-                <p className="mt-2 text-2xl font-black text-white">{stats.pending}</p>
+    <div className="min-h-screen bg-[#050813] text-white">
+      <MotionWrap>
+        <section className="rounded-[2rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8 lg:p-10">
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-start">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Admin control
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
+                  Manual approvals
+                </span>
               </div>
-              <div className="rounded-[1.25rem] border border-white/6 bg-white/[0.04] p-4">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500 font-black">Alerts</p>
-                <p className="mt-2 text-2xl font-black text-white">{flagged.length}</p>
+              <div className="max-w-2xl space-y-3">
+                <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white">
+                  TapCash Command Center for payouts, users, and fraud control.
+                </h1>
+                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+                  Admin decisions drive the ledger. This surface keeps withdrawals, user actions, and security alerts easy to review and hard to abuse.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={loadData}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]"
+                >
+                  Refresh queue
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors"
+                >
+                  Back to dashboard
+                </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <div className="mb-8">
+            <div className="space-y-4">
+              <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Admin email</p>
+                <p className="mt-2 text-lg font-black text-white break-all">{user?.email}</p>
+                <p className="mt-2 text-sm text-zinc-400">This view is locked behind auth and noindex.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {tapCashAdminStats.map((item) => (
+                  <div key={item.label} className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">{item.label}</p>
+                    <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
+                    <p className="mt-1 text-xs text-zinc-400">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </MotionWrap>
+
+      <div className="mt-8">
         <ConversionStrip
           eyebrow="Admin operations"
           title="Keep the payout queue clean and the ledger honest."
@@ -294,238 +300,283 @@ export default function AdminPage() {
         />
       </div>
 
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-emerald-400 font-display">TapCash Command Center</h1>
-          <p className="text-zinc-500 text-xs mt-1 uppercase tracking-widest font-bold">Administrator: {user?.email}</p>
-        </div>
-        <div className="flex bg-zinc-950 border border-zinc-900 rounded-xl p-1">
-          <button 
-            onClick={() => setTab("withdrawals")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${tab === "withdrawals" ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20" : "text-zinc-500 hover:text-white"}`}
-          >
-            Withdrawals
-          </button>
-          <button 
-            onClick={() => setTab("users")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${tab === "users" ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20" : "text-zinc-500 hover:text-white"}`}
-          >
-            User Manager
-          </button>
-        </div>
-      </div>
-
-      {message && (
-        <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl border shadow-2xl animate-in slide-in-from-top-4 duration-300 ${message.type === "success" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-red-500/10 border-red-500/30 text-red-400"}`}>
-          <p className="text-sm font-bold flex items-center gap-2">
-            {message.type === "success" ? "✓" : "⚠"} {message.text}
-          </p>
-        </div>
-      )}
-
-      {tab === "withdrawals" ? (
-        <div className="space-y-8 animate-in fade-in duration-500">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Pending Payouts", value: stats.pending, color: "text-amber-400" },
-              { label: "Revenue Ledger", value: stats.postbacks24h, color: "text-emerald-400" },
-              { label: "Security Alerts", value: flagged.length, color: "text-red-400" },
-              { label: "Registered Users", value: stats.users, color: "text-zinc-400" },
-            ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-white/5 bg-zinc-950/50 p-5 backdrop-blur-sm">
-                <div className={`text-2xl font-black font-display ${s.color}`}>{s.value}</div>
-                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mt-1">{s.label}</div>
-              </div>
-            ))}
+      <MotionWrap>
+        <div className="mt-10 rounded-[2rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#8cf8e9]">Operator cockpit</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-white">TapCash Command Center</h2>
+              <p className="mt-2 text-xs text-zinc-500 font-bold uppercase tracking-widest">Administrator: {user?.email}</p>
+            </div>
+            <div className="flex bg-[#050816] border border-white/6 rounded-xl p-1">
+              <button
+                onClick={() => setTab("withdrawals")}
+                className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.24em] transition-all ${
+                  tab === "withdrawals"
+                    ? "bg-[#00e6c3] text-[#050816] shadow-[0_10px_30px_rgba(0,230,195,0.18)]"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Withdrawals
+              </button>
+              <button
+                onClick={() => setTab("users")}
+                className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.24em] transition-all ${
+                  tab === "users"
+                    ? "bg-[#00e6c3] text-[#050816] shadow-[0_10px_30px_rgba(0,230,195,0.18)]"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                User Manager
+              </button>
+            </div>
           </div>
 
-          {/* Pending Withdrawals */}
-          <section className="bg-zinc-950/30 border border-zinc-900 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-900 flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Queued Withdrawals</h2>
-              <button onClick={loadData} className="text-[10px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase">Refresh Feed</button>
-            </div>
-            {withdrawals.length === 0 ? (
-              <div className="p-12 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">Clear Ledger. No Pending Actions.</div>
-            ) : (
-              <table className="w-full text-left">
-                <thead className="bg-zinc-950/50 text-[10px] uppercase font-bold text-zinc-600">
-                  <tr>
-                    <th className="px-6 py-4">Beneficiary</th>
-                    <th className="px-6 py-4">Amount (CAD)</th>
-                    <th className="px-6 py-4">Method</th>
-                    <th className="px-6 py-4">Created</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-900">
-                  {withdrawals.map(w => (
-                    <tr key={w.id} className="hover:bg-zinc-900/40 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-mono text-zinc-400">{w.payoutEmail || w.userId.slice(0, 15) + "..."}</span>
-                          <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-tighter">UID: {w.userId.slice(0, 8)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-emerald-400 font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${w.method?.toLowerCase() === 'paypal' ? 'border-blue-500/20 text-blue-400 bg-blue-500/5' : 'border-amber-500/20 text-amber-400 bg-amber-500/5'}`}>
-                          {w.method || 'Unknown'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-[10px] font-bold text-zinc-600">{fmt(w.createdAt)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => handleWithdrawal(w.id, "approve")}
-                            disabled={!!actionLoading}
-                            className="px-4 py-1.5 rounded-lg bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50"
-                          >
-                            {actionLoading === w.id + "approve" ? "..." : "Approve"}
-                          </button>
-                          <button
-                            onClick={() => handleWithdrawal(w.id, "reject")}
-                            disabled={!!actionLoading}
-                            className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        </div>
-      ) : (
-        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-          {/* User Search Bar */}
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <input 
-                type="text" 
-                placeholder="Search user by email prefix..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-              />
-            </div>
-            <button 
-              onClick={handleSearch}
-              className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors"
+          {message && (
+            <div
+              className={`mt-6 rounded-2xl border px-4 py-3 text-sm font-bold flex items-center gap-2 ${
+                message.type === "success"
+                  ? "bg-[#00e6c3]/10 border-[#00e6c3]/30 text-[#8cf8e9]"
+                  : "bg-red-500/10 border-red-500/30 text-red-400"
+              }`}
             >
-              Execute Search
-            </button>
-          </div>
+              <span>{message.type === "success" ? "✓" : "⚠"}</span>
+              <span>{message.text}</span>
+            </div>
+          )}
 
-          {/* User List Table */}
-          <div className="bg-zinc-950/30 border border-zinc-900 rounded-2xl overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-950/50 text-[10px] uppercase font-bold text-zinc-600">
-                <tr>
-                  <th className="px-6 py-4">User Identity</th>
-                  <th className="px-6 py-4">Wallet Balance</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Joined</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-900">
-                {users.map(u => (
-                  <tr key={u.uid} className="hover:bg-zinc-900/40 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 flex items-center justify-center font-black text-[10px]">
-                          {u.email?.[0]?.toUpperCase() || 'U'}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-zinc-200">{u.email}</span>
-                          <span className="text-[9px] text-zinc-600 font-mono tracking-tighter">UID: {u.uid}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-emerald-400 font-black">{(u.ledgerBalanceCoins || 0).toLocaleString()} Coins</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${u.status === 'banned' ? 'border-red-500/20 text-red-500 bg-red-500/5' : 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5'}`}>
-                        {u.status || 'Active'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-[10px] font-bold text-zinc-600">{fmt(u.createdAt)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <button 
-                          onClick={() => handleUserAction(u.uid, u.status === 'banned' ? 'unban' : 'ban')}
-                          disabled={!!actionLoading}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${u.status === 'banned' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}
-                        >
-                          {u.status === 'banned' ? 'Unban' : 'Ban'}
-                        </button>
-                        <button
-                          onClick={() => setAdjModal({ uid: u.uid, email: u.email || u.uid })}
-                          className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 text-[9px] font-black uppercase tracking-widest hover:text-white transition-all active:scale-95"
-                        >
-                          Adjust
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+          {tab === "withdrawals" ? (
+            <div className="mt-8 space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Pending Payouts", value: stats.pending, color: "text-[#ffc442]" },
+                  { label: "Revenue Ledger", value: stats.postbacks24h, color: "text-[#00e6c3]" },
+                  { label: "Security Alerts", value: flagged.length, color: "text-red-400" },
+                  { label: "Registered Users", value: stats.users, color: "text-zinc-300" },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-[1.75rem] border border-white/6 bg-white/[0.03] p-5">
+                    <div className={`text-2xl font-black font-display ${s.color}`}>{s.value}</div>
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">{s.label}</div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+
+              <section className="rounded-[1.5rem] border border-white/6 bg-white/[0.03] overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/6">
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.26em] text-zinc-300">Queued Withdrawals</h2>
+                  <button
+                    onClick={loadData}
+                    className="px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#00e6c3] rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 hover:bg-[#00e6c3]/20 transition-colors"
+                  >
+                    Refresh Feed
+                  </button>
+                </div>
+                {withdrawals.length === 0 ? (
+                  <div className="p-14 text-center text-zinc-500 text-xs font-bold uppercase tracking-widest">
+                    Clear Ledger. No Pending Actions.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-white/[0.02] text-[10px] uppercase font-black text-zinc-500">
+                        <tr>
+                          <th className="px-6 py-4">Beneficiary</th>
+                          <th className="px-6 py-4">Amount (CAD)</th>
+                          <th className="px-6 py-4">Method</th>
+                          <th className="px-6 py-4">Created</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/6">
+                        {withdrawals.map((w) => (
+                          <tr key={w.id} className="hover:bg-white/[0.02] transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-mono text-zinc-300">{w.payoutEmail || w.userId.slice(0, 15) + "..."}</span>
+                                <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-tighter">UID: {w.userId.slice(0, 8)}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[#8cf8e9] font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                  w.method?.toLowerCase() === "paypal"
+                                    ? "border-[#2f4f8f]/60 text-[#9ec1ff] bg-[#0f1728]"
+                                    : "border-[#5d4a15]/60 text-[#f5c842] bg-[#1a1608]"
+                                }`}
+                              >
+                                {w.method || "Unknown"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-[10px] font-bold text-zinc-500">{fmt(w.createdAt)}</td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => handleWithdrawal(w.id, "approve")}
+                                  disabled={!!actionLoading}
+                                  className="px-4 py-2 rounded-xl bg-[#00e6c3] text-[#050816] text-[10px] font-black uppercase tracking-widest hover:bg-[#26edd1] transition-all active:scale-95 disabled:opacity-40"
+                                >
+                                  {actionLoading === w.id + "approve" ? "..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleWithdrawal(w.id, "reject")}
+                                  disabled={!!actionLoading}
+                                  className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-40"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </div>
+          ) : (
+            <div className="mt-8 space-y-6">
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search user by email prefix..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={handleSearch}
+                  className="px-6 py-3 bg-white/[0.04] border border-white/6 rounded-2xl text-xs font-black uppercase tracking-[0.2em] text-zinc-200 hover:text-white hover:bg-white/[0.07] transition-colors"
+                >
+                  Execute Search
+                </button>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-white/6 bg-white/[0.03] overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-white/[0.02] text-[10px] uppercase font-black text-zinc-500">
+                    <tr>
+                      <th className="px-6 py-4">User Identity</th>
+                      <th className="px-6 py-4">Wallet Balance</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Joined</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/6">
+                    {users.map((u) => (
+                      <tr key={u.uid} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 flex items-center justify-center font-black text-[10px] text-white">
+                              {u.email?.[0]?.toUpperCase() || "U"}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-zinc-200">{u.email}</span>
+                              <span className="text-[9px] text-zinc-500 font-mono tracking-tighter">UID: {u.uid}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[#8cf8e9] font-black">{(u.ledgerBalanceCoins || 0).toLocaleString()} Coins</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                              u.status === "banned"
+                                ? "border-red-500/20 text-red-400 bg-red-500/5"
+                                : "border-[#14403d]/60 text-[#8cf8e9] bg-[#081716]"
+                            }`}
+                          >
+                            {u.status || "Active"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-[10px] font-bold text-zinc-500">{fmt(u.createdAt)}</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => handleUserAction(u.uid, u.status === "banned" ? "unban" : "ban")}
+                              disabled={!!actionLoading}
+                              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                                u.status === "banned"
+                                  ? "bg-[#081716] text-[#8cf8e9] border border-[#14403d]/60 hover:bg-[#14403d]/60"
+                                  : "bg-red-500/5 text-red-400 border border-red-500/20 hover:bg-red-500/10"
+                              }`}
+                            >
+                              {u.status === "banned" ? "Unban" : "Ban"}
+                            </button>
+                            <button
+                              onClick={() => setAdjModal({ uid: u.uid, email: u.email || u.uid })}
+                              className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/6 text-zinc-300 text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-white/[0.06] transition-all active:scale-95"
+                            >
+                              Adjust
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </MotionWrap>
 
       {/* Balance Adjustment Modal */}
       {adjModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5">
+          <div className="w-full max-w-md rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6 shadow-2xl space-y-5">
             <div>
               <h3 className="text-lg font-black text-white">Adjust Balance</h3>
-              <p className="text-xs text-zinc-500 mt-1 font-mono">{adjModal.email}</p>
+              <p className="text-xs text-zinc-400 mt-1 font-mono">{adjModal.email}</p>
             </div>
 
-            <label className="block space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Amount (coins, use negative to deduct)</span>
-              <input
-                type="number"
-                value={adjAmount}
-                onChange={e => setAdjAmount(e.target.value)}
-                placeholder="e.g. 500 or -200"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40"
-              />
-            </label>
+            <div className="space-y-4">
+              <label className="block space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount (coins, use negative to deduct)</span>
+                <input
+                  type="number"
+                  value={adjAmount}
+                  onChange={(e) => setAdjAmount(e.target.value)}
+                  placeholder="e.g. 500 or -200"
+                  className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                />
+              </label>
 
-            <label className="block space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Reason (required for audit log)</span>
-              <input
-                type="text"
-                value={adjReason}
-                onChange={e => setAdjReason(e.target.value)}
-                placeholder="e.g. Bonus for support ticket #123"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40"
-              />
-            </label>
+              <label className="block space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Reason (required for audit log)</span>
+                <input
+                  type="text"
+                  value={adjReason}
+                  onChange={(e) => setAdjReason(e.target.value)}
+                  placeholder="e.g. Bonus for support ticket #123"
+                  className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                />
+              </label>
+            </div>
 
             <div className="flex gap-3 pt-1">
               <button
-                onClick={() => { setAdjModal(null); setAdjAmount(""); setAdjReason(""); }}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-400 text-xs font-black uppercase hover:text-white transition"
+                onClick={() => {
+                  setAdjModal(null);
+                  setAdjAmount("");
+                  setAdjReason("");
+                }}
+                className="flex-1 py-2.5 rounded-2xl border border-white/6 text-zinc-300 text-xs font-black uppercase hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdjustSubmit}
                 disabled={adjSubmitting || !adjAmount.trim() || !adjReason.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-[#00e6c3] text-black text-xs font-black uppercase disabled:opacity-40 hover:bg-[#00ffda] transition"
+                className="flex-1 py-2.5 rounded-2xl bg-[#00e6c3] text-[#050816] text-xs font-black uppercase disabled:opacity-40 hover:bg-[#26edd1] transition-colors"
               >
                 {adjSubmitting ? "Saving..." : "Confirm Adjustment"}
               </button>

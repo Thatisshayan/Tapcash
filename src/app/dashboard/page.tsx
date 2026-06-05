@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { accentClass, formatCadFromCoins, formatCoins, tapCashActivity, tapCashLeaderboardSeed, tapCashOffers } from "@shared/tapcash-content";
-import { CTAButton, MotionWrap, PageShell } from "@/components/PremiumUi";
+import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
 
 type LedgerTx = {
   id: string;
@@ -139,17 +139,14 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#040913] text-white">
         <Header />
         <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
-          <div className="w-full rounded-[2rem] border border-white/8 bg-white/[0.03] p-8 text-center">
-            <ShieldCheck className="mx-auto h-12 w-12 text-[#8cf8e9]" />
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-white">Sign in to open your dashboard</h1>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              The full ledger and offer data open after authentication.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <CTAButton href="/auth/signin" label="Sign in" />
-              <CTAButton href="/" label="Back to home" variant="secondary" />
-            </div>
-          </div>
+          <MotionWrap>
+            <PageShell eyebrow="Authentication" title="Sign in to open your dashboard" description="The full ledger, offer data, and cashout queue open after authentication.">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <CTAButton href="/auth/signin" label="Sign in" />
+                <CTAButton href="/" label="Back to home" variant="secondary" />
+              </div>
+            </PageShell>
+          </MotionWrap>
         </main>
       </div>
     );
@@ -167,58 +164,22 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white">
+    <div className="min-h-screen bg-[#040913] text-white">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
-          <section className="rounded-[2rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
-            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="space-y-5">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#18d9ff]/20 bg-[#18d9ff]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#18d9ff]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Dashboard shell
-                </div>
-                <div>
-                  <h1 className="max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
-                    A cleaner place to scan rewards, balance, and next actions.
-                  </h1>
-                  <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#9aa8c6] md:text-base">
-                    TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Link href="/rapidoreach" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#18d9ff] px-6 py-3.5 text-sm font-black text-[#050813] shadow-[0_18px_50px_rgba(24,217,255,0.25)] transition-transform hover:-translate-y-0.5">
-                    Open offerwall
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/[0.07]">
-                    Review cashout
-                  </Link>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  { label: "Balance", value: formatCoins(balanceCoins), detail: formatCadFromCoins(balanceCoins), icon: CircleGauge },
-                  { label: "Pending", value: formatCoins(pendingCoins), detail: "Under verification", icon: Wallet },
-                  { label: "Status", value: verificationState, detail: "Email verified", icon: BadgeCheck },
-                  { label: "Cashout", value: "Ready", detail: "Open payout store", icon: ShieldCheck },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.label} className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9aa8c6]">{item.label}</p>
-                        <Icon className="h-4 w-4 text-[#18d9ff]" />
-                      </div>
-                      <p className="mt-3 text-2xl font-black text-white">{item.value}</p>
-                      <p className="mt-1 text-sm text-[#9aa8c6]">{item.detail}</p>
-                    </div>
-                  );
-                })}
-              </div>
+          <PageShell eyebrow="Dashboard" title="A cleaner place to scan rewards, balance, and next actions." description="TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Balance" value={formatCoins(balanceCoins)} detail={formatCadFromCoins(balanceCoins)} />
+              <StatCard label="Pending" value={formatCoins(pendingCoins)} detail="Under verification" />
+              <StatCard label="Status" value={verificationState} detail="Email verified" />
+              <StatCard label="Cashout" value="Ready" detail="Open payout store" />
             </div>
-          </section>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link href="/rapidoreach" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#18d9ff] px-6 py-3.5 text-sm font-black text-[#050813] shadow-[0_18px_50px_rgba(24,217,255,0.25)] transition-transform hover:-translate-y-0.5">Open offerwall<ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/[0.07]">Review cashout</Link>
+            </div>
+          </PageShell>
         </MotionWrap>
 
         {error && (
