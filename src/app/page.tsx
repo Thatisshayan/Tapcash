@@ -86,6 +86,8 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
+              <Link href="/cashPath" className="rounded-full px-4 py-2.5 text-sm font-semibold text-zinc-400 transition-colors hover:text-white">CashPath</Link>
+              <Link href="/tapScore" className="rounded-full px-4 py-2.5 text-sm font-semibold text-zinc-400 transition-colors hover:text-white">TapScore</Link>
             <Link href="/rapidoreach" className="rounded-full px-4 py-2.5 text-sm font-semibold text-zinc-400 transition-colors hover:text-white">
               Offerwall
             </Link>

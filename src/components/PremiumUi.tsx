@@ -5,14 +5,8 @@ import { PropsWithChildren, ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-type MotionWrapProps = PropsWithChildren<{
-  delay?: number;
-  className?: string;
-}>;
-
-export function MotionWrap({ children, delay = 0, className }: MotionWrapProps) {
+export function MotionWrap({ children, delay = 0, className = "" }: PropsWithChildren<{ delay?: number; className?: string }>) {
   const reduceMotion = useReducedMotion();
-
   return (
     <motion.div
       initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 18 }}
@@ -26,18 +20,7 @@ export function MotionWrap({ children, delay = 0, className }: MotionWrapProps) 
   );
 }
 
-export function PageShell({
-  children,
-  eyebrow,
-  title,
-  description,
-  kicker,
-}: PropsWithChildren<{
-  eyebrow: string;
-  title: string;
-  description: string;
-  kicker?: ReactNode;
-}>) {
+export function PageShell({ children, eyebrow, title, description, kicker }: PropsWithChildren<{ eyebrow: string; title: string; description: string; kicker?: ReactNode }>) {
   return (
     <section className="rounded-[1.75rem] border border-white/8 bg-white/[0.035] p-6 sm:p-7">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -63,15 +46,7 @@ export function StatCard({ label, value, detail }: { label: string; value: strin
   );
 }
 
-export function CTAButton({
-  href,
-  label,
-  variant = "primary",
-}: {
-  href: string;
-  label: string;
-  variant?: "primary" | "secondary";
-}) {
+export function CTAButton({ href, label, variant = "primary" }: { href: string; label: string; variant?: "primary" | "secondary" }) {
   const base = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-colors";
   if (variant === "secondary") {
     return (
@@ -81,7 +56,6 @@ export function CTAButton({
       </Link>
     );
   }
-
   return (
     <Link href={href} className={`${base} bg-[#00e6c3] text-[#04101d] hover:bg-[#26edd1]`}>
       {label}
