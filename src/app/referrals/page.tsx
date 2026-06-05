@@ -188,7 +188,7 @@ export default function ReferralsPage() {
               label="Friends Invited"
               value={loading ? "..." : String(stats.invited)}
               detail="Total referrals"
-              className="h-full"
+              
             />
           </MotionWrap>
           <MotionWrap delay={0.04}>
@@ -196,7 +196,7 @@ export default function ReferralsPage() {
               label="Passive Coins Earned"
               value={loading ? "..." : `+${stats.earned.toLocaleString()}`}
               detail="Referral commissions"
-              className="h-full"
+              
             />
           </MotionWrap>
         </div>
