@@ -142,12 +142,12 @@ export default function CashoutPage() {
                       <BadgeCheck className="h-5 w-5 text-[#8cf8e9]" />
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-zinc-400">{method.subtitle}</p>
-                    <div className="mt-5 space-y-3 border-t border-white/6 pt-4">
-                      <div className="flex items-center justify-between text-sm">
+                    <div className="mt-5 space-y-3 border-t border-white/6 pt-4 text-sm">
+                      <div className="flex items-center justify-between">
                         <span className="text-zinc-500">Minimum</span>
                         <span className="font-semibold text-white">{formatCoins(method.minCoins)}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between">
                         <span className="text-zinc-500">Timing</span>
                         <span className="font-semibold text-white">{method.eta}</span>
                       </div>

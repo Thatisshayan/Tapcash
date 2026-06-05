@@ -167,14 +167,14 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#040913] text-white">
+    <div className="min-h-screen bg-[#050813] text-white">
       <Header />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
-          <section className="rounded-[1.75rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
+          <section className="rounded-[2rem] border border-white/8 bg-white/[0.035] p-6 sm:p-8">
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-5">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#8cf8e9]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#18d9ff]/20 bg-[#18d9ff]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[#18d9ff]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Dashboard shell
                 </div>
@@ -182,13 +182,18 @@ export default function DashboardPage() {
                   <h1 className="max-w-2xl text-4xl font-black tracking-tight text-white md:text-5xl">
                     A cleaner place to scan rewards, balance, and next actions.
                   </h1>
-                  <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+                  <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#9aa8c6] md:text-base">
                     TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <CTAButton href="/rapidoreach" label="Open offerwall" />
-                  <CTAButton href="/cashout" label="Review cashout" variant="secondary" />
+                  <Link href="/rapidoreach" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#18d9ff] px-6 py-3.5 text-sm font-black text-[#050813] shadow-[0_18px_50px_rgba(24,217,255,0.25)] transition-transform hover:-translate-y-0.5">
+                    Open offerwall
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/cashout" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/[0.07]">
+                    Review cashout
+                  </Link>
                 </div>
               </div>
 
@@ -201,13 +206,13 @@ export default function DashboardPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.label} className="rounded-[1.5rem] border border-white/8 bg-white/[0.03] p-5">
+                    <div key={item.label} className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
                       <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-500">{item.label}</p>
-                        <Icon className="h-4 w-4 text-[#8cf8e9]" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9aa8c6]">{item.label}</p>
+                        <Icon className="h-4 w-4 text-[#18d9ff]" />
                       </div>
                       <p className="mt-3 text-2xl font-black text-white">{item.value}</p>
-                      <p className="mt-1 text-sm text-zinc-400">{item.detail}</p>
+                      <p className="mt-1 text-sm text-[#9aa8c6]">{item.detail}</p>
                     </div>
                   );
                 })}

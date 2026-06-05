@@ -46,11 +46,19 @@ export function StatCard({ label, value, detail }: { label: string; value: strin
   );
 }
 
-export function CTAButton({ href, label, variant = "primary" }: { href: string; label: string; variant?: "primary" | "secondary" }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-colors";
+export function CTAButton({ href, label, variant = "primary", className = "" }: { href: string; label: string; variant?: "primary" | "secondary" | "gradient"; className?: string }) {
+  const base = `inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-colors ${className}`;
   if (variant === "secondary") {
     return (
       <Link href={href} className={`${base} border border-white/10 bg-white/5 text-white hover:bg-white/10`}>
+        {label}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    );
+  }
+  if (variant === "gradient") {
+    return (
+      <Link href={href} className={`${base} bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050813] hover:shadow-[0_20px_60px_rgba(58,123,255,0.28)]`}>
         {label}
         <ArrowRight className="h-4 w-4" />
       </Link>

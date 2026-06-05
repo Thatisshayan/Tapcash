@@ -234,6 +234,68 @@ export const tapCashLedgerSummary: TapCashLedgerSummary = {
   verifiedState: "Verified",
 };
 
+export const rapidoReachTrustPoints: TapCashTrustPoint[] = [
+  { title: "Real-time session telemetry", description: "Data from every offer is available within the session view instead of batch dumps." },
+  { title: "Multi-provider normalization", description: "Looks and behaves consistently even when providers use different payload shapes." },
+  { title: "Local preview before network", description: "The shell can preview routing without waiting on remote provider handshakes." },
+];
+
+export const payoutStatusMeta: Record<string, { label: string; color: string; description: string }> = {
+  pending: {
+    label: "Pending review",
+    color: "text-[#ffc442]",
+    description: "Your withdrawal is queued and will move through manual review next.",
+  },
+  processing: {
+    label: "Processing",
+    color: "text-[#18d9ff]",
+    description: "The payout is being released and should appear in your provider shortly.",
+  },
+  paid: {
+    label: "Paid",
+    color: "text-[#31f06f]",
+    description: "Funds have been sent. Verify receipt in the linked provider account.",
+  },
+  failed: {
+    label: "Failed",
+    color: "text-red-400",
+    description: "This payout did not clear. Update the payout method and retry if needed.",
+  },
+};
+
+export const tapCashAdminStats: TapCashStat[] = [
+  { value: "1.2K", label: "Queued payouts", detail: "Awaiting verification window or funds release." },
+  { value: "98.4%", label: "Offer approval", detail: "Provider integrations that passed review this week." },
+  { value: "24m", label: "Median queue age", detail: "Time between request creation and first human review." },
+];
+
+export function vipTierColor(tier: string) {
+  if (tier === "diamond") {
+    return {
+      gradient: "from-cyan-300 via-[#18d9ff] to-[#31f06f]",
+      glow: "shadow-[0_24px_80px_rgba(24,217,255,0.28)]",
+      ring: "border-cyan-200/40",
+      badge: "bg-cyan-500/15 text-cyan-100 border-cyan-200/30",
+    };
+  }
+  if (tier === "gold") {
+    return {
+      gradient: "from-[#ffc442] to-[#ff9d00]",
+      glow: "shadow-[0_24px_80px_rgba(245,200,66,0.24)]",
+      ring: "border-[#ffc442]/40",
+      badge: "bg-[#ffc442]/15 text-[#ffc442] border-[#ffc442]/30",
+    };
+  }
+  return {
+    gradient: "from-zinc-200 to-zinc-400",
+    glow: "shadow-[0_24px_80px_rgba(148,163,184,0.18)]",
+    ring: "border-zinc-300/30",
+    badge: "bg-zinc-200/10 text-zinc-200 border-zinc-200/20",
+  };
+}
+
+export const legalLastUpdated = "May 22, 2026";
+
 export function formatCoins(value: number) {
   return `${value.toLocaleString()} coins`;
 }
