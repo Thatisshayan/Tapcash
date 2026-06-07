@@ -1,24 +1,47 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
-import { Menu, X, Sparkles, ArrowRight, LogOut, ShieldCheck } from "lucide-react";
+import { Menu, X, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
-import { tapCashNavItems } from "@shared/tapcash-content";
 
 export default function Header() {
   const { user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userCount, setUserCount] = useState<number>(0);
 
-  const navItems = useMemo(
-    () => tapCashNavItems.filter((item) => item.href !== "/"),
-    []
-  );
+  // Fetch real user count
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const response = await fetch('/api/users/count');
+        const data = await response.json();
+        setUserCount(data.cashedOut24h || 0);
+      } catch (error) {
+        console.error('Error fetching user count:', error);
+        setUserCount(0);
+      }
+    };
+
+    fetchUserCount();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchUserCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const navItems = [
+    { href: "/games", label: "Games" },
+    { href: "/how-it-works", label: "How It Works" },
+    { href: "/cashpath", label: "CashPath" },
+    { href: "/rewards", label: "Rewards" },
+    { href: "/blog", label: "Blog" }
+  ];
 
   const handleSignOut = async () => {
     try {
@@ -30,47 +53,33 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/6 bg-[#04101d]/82 backdrop-blur-2xl">
-      <div className="border-b border-white/6 bg-gradient-to-r from-[#00e6c3]/14 via-[#3a7bff]/8 to-[#f5c842]/10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-zinc-200 sm:px-6 lg:px-8">
-          <span className="inline-flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-[#00e6c3]" />
-            Premium rewards shell
-          </span>
-          <span className="hidden md:inline text-zinc-400 tracking-normal normal-case font-semibold">
-            Web and mobile now share the same trust-first content model.
-          </span>
-          <span className="tracking-normal normal-case font-semibold text-[#00e6c3]">
-            TapCash
-          </span>
-        </div>
-      </div>
-
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-white/6 bg-[#0A0E1A]/95 backdrop-blur-2xl">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="group flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00e6c3] via-[#3a7bff] to-[#f5c842] shadow-[0_18px_50px_rgba(58,123,255,0.2)] transition-transform duration-200 group-hover:scale-[1.03]">
-            <ShieldCheck className="h-5 w-5 text-[#04101d]" />
-          </div>
+          <img
+            src="/tapcash-icon.svg"
+            alt="TapCash"
+            className="h-10 w-10 transition-transform duration-200 group-hover:scale-[1.03]"
+          />
           <div className="hidden sm:block">
             <p className="font-display text-xl font-black tracking-tight tap-gradient-text">TapCash</p>
             <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500">
-              Reward scanning, cashout clarity
+              Play. Earn. Cash Out.
             </p>
           </div>
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-2">
+        <nav className="hidden items-center gap-1 lg:flex">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={`rounded-full px-4 py-2.5 text-sm font-semibold transition-all ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   active
-                    ? "border border-white/10 bg-white/8 text-white"
-                    : "border border-transparent text-zinc-400 hover:bg-white/5 hover:text-white"
+                    ? "text-white"
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
                 {item.label}
@@ -79,39 +88,66 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-4">
+          {/* User Activity Badge */}
+          <div className="hidden items-center gap-2 lg:flex">
+            <div className="flex -space-x-2">
+              <Image
+                src="/images/avatars/user-1.svg"
+                alt="User avatar"
+                width={32}
+                height={32}
+                className="rounded-full border-2 border-[#0A0E1A]"
+              />
+              <Image
+                src="/images/avatars/user-2.svg"
+                alt="User avatar"
+                width={32}
+                height={32}
+                className="rounded-full border-2 border-[#0A0E1A]"
+              />
+              <Image
+                src="/images/avatars/user-3.svg"
+                alt="User avatar"
+                width={32}
+                height={32}
+                className="rounded-full border-2 border-[#0A0E1A]"
+              />
+            </div>
+            <p className="text-sm font-semibold text-zinc-400">
+              {userCount > 0 ? (
+                <>
+                  <span className="text-white">{userCount.toLocaleString()}+</span> users cashed out in last 24h
+                </>
+              ) : (
+                <>
+                  <span className="text-white">Join</span> thousands earning daily
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Auth Buttons */}
           {user ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/8"
-              >
-                Open dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="hidden md:inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/8 hover:text-white"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/8"
+            >
+              Dashboard
+            </Link>
           ) : (
             <>
               <Link
                 href="/auth/signin"
-                className="hidden sm:inline-flex rounded-full px-4 py-2.5 text-sm font-semibold text-zinc-400 transition-colors hover:text-white"
+                className="hidden rounded-full px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:text-white sm:inline-block"
               >
-                Sign in
+                Log In
               </Link>
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center gap-2 rounded-full bg-[#00e6c3] px-4 py-2.5 text-sm font-black text-[#04101d] shadow-[0_18px_40px_rgba(0,230,195,0.18)] transition-transform hover:-translate-y-0.5"
+                className="rounded-full bg-gradient-to-r from-[#18D9FF] to-[#7C3DFF] px-5 py-2.5 text-sm font-bold text-white shadow-[0_8px_32px_rgba(124,61,255,0.3)] transition-transform hover:-translate-y-0.5"
               >
-                Join free
-                <ArrowRight className="h-4 w-4" />
+                Sign Up Free
               </Link>
             </>
           )}
@@ -119,7 +155,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileOpen((value) => !value)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-200 xl:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-200 lg:hidden"
             aria-label="Toggle navigation"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -128,43 +164,18 @@ export default function Header() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-white/6 bg-[#04101d]/96 px-4 py-4 backdrop-blur-2xl xl:hidden sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl space-y-2">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold ${
-                    active
-                      ? "bg-white/8 text-white"
-                      : "bg-white/[0.03] text-zinc-300"
-                  }`}
-                >
-                  <span>{item.label}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              );
-            })}
-            {user ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="flex w-full items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3 text-sm font-semibold text-zinc-300"
-              >
-                <span>Sign out</span>
-                <LogOut className="h-4 w-4" />
-              </button>
-            ) : (
+        <div className="border-t border-white/6 bg-[#0A0E1A]/96 px-4 py-4 backdrop-blur-2xl lg:hidden sm:px-6">
+          <div className="space-y-2">
+            {navItems.map((item) => (
               <Link
-                href="/auth/signin"
-                className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3 text-sm font-semibold text-zinc-300"
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-xl px-4 py-3 text-sm font-semibold text-zinc-300 hover:bg-white/5 hover:text-white"
               >
-                <span>Sign in</span>
-                <ArrowRight className="h-4 w-4" />
+                {item.label}
               </Link>
-            )}
+            ))}
           </div>
         </div>
       )}

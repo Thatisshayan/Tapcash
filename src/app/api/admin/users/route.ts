@@ -1,146 +1,189 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
-import * as admin from 'firebase-admin';
-import { appendLedgerTransaction, computeLedgerBalance } from '@/lib/ledger';
-import { logAdminAction } from '@/lib/audit';
+import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
-/**
- * GET /api/admin/users
- * List and search users
- */
+// GET - Fetch all users
 export async function GET(request: NextRequest) {
   try {
-    // 1. Admin Verification
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const adminSnap = await adminDb.collection('users').doc(decodedToken.uid).get();
-    if (!adminSnap.exists || !adminSnap.data()?.admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    // 2. Query Params
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
-    const limitCount = parseInt(searchParams.get('limit') || '20');
-
-    let q = adminDb.collection('users').orderBy('createdAt', 'desc').limit(limitCount);
-
-    if (email) {
-      q = adminDb.collection('users')
-        .orderBy('email')
-        .startAt(email)
-        .endAt(email + '\uf8ff')
-        .limit(limitCount);
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const snapshot = await q.get();
-    const users = await Promise.all(snapshot.docs.map(async (doc) => {
-      const data = doc.data();
-      const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
+    const token = authHeader.substring(7);
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    
+    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
+    const userData = userDoc.data();
+    
+    if (!userData?.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
 
+    // Log admin action
+    await adminDb.collection('admin_logs').add({
+      adminId: decodedToken.uid,
+      adminEmail: decodedToken.email,
+      action: 'view_users',
+      timestamp: new Date(),
+      ip: request.headers.get('x-forwarded-for') || 'unknown'
+    });
+
+    // Fetch all users
+    const usersSnapshot = await adminDb.collection('users').get();
+    const users = usersSnapshot.docs.map(doc => {
+      const data = doc.data();
       return {
-        uid: doc.id,
-        ...data,
-        ledgerBalanceCoins: await computeLedgerBalance(doc.id),
-        createdAt,
+        id: doc.id,
+        email: data.email,
+        displayName: data.displayName || 'Unknown',
+        balance: data.balance || 0,
+        totalEarned: data.totalEarned || 0,
+        totalWithdrawn: data.totalWithdrawn || 0,
+        status: data.status || 'active',
+        createdAt: data.createdAt?.toDate() || new Date(),
+        lastActive: data.lastActive?.toDate() || new Date(),
+        fraudFlags: data.fraudFlags || 0,
+        tapScore: data.tapScore || 0
       };
-    }));
+    });
 
     return NextResponse.json({ users });
-  } catch (error: unknown) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
+
+  } catch (error) {
+    console.error('Admin users GET error:', error);
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
   }
 }
 
-/**
- * POST /api/admin/users
- * Perform administrative actions
- */
-export async function POST(request: NextRequest) {
+// PATCH - Update user status
+export async function PATCH(request: NextRequest) {
   try {
-    // 1. Admin Verification (Strict)
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const adminDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    if (!adminDoc.exists || !adminDoc.data()?.admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    const body = await request.json();
-    const { targetUid, action, value } = body;
-
-    if (!targetUid || !action) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-
-    const userRef = adminDb.collection('users').doc(targetUid);
-    const adminEmail = decodedToken.email;
-
-    switch (action) {
-      case 'ban':
-        await userRef.update({ 
-          status: 'banned', 
-          bannedAt: admin.firestore.FieldValue.serverTimestamp(),
-          bannedBy: adminEmail 
-        });
-        // Optionally disable account in Firebase Auth
-        await admin.auth().updateUser(targetUid, { disabled: true });
-        break;
-
-      case 'unban':
-        await userRef.update({ 
-          status: 'active', 
-          bannedAt: admin.firestore.FieldValue.delete(),
-          bannedBy: admin.firestore.FieldValue.delete()
-        });
-        await admin.auth().updateUser(targetUid, { disabled: false });
-        break;
-
-      case 'adjust_balance':
-        const amountCents = parseInt(value);
-        if (isNaN(amountCents)) throw new Error('Invalid amount');
-        await appendLedgerTransaction({
-          userId: targetUid,
-          type: amountCents >= 0 ? 'approved_credit' : 'reversed_credit',
-          amountCoins: Math.abs(amountCents),
-          balanceEffectCoins: amountCents,
-          status: amountCents >= 0 ? 'approved' : 'reversed',
-          source: 'admin_adjustment',
-          referenceId: decodedToken.uid,
-          metadata: { amountCents, note: 'Admin adjustment' },
-        });
-        break;
-
-      case 'toggle_admin':
-        const isAdmin = !!value;
-        await userRef.update({ admin: isAdmin });
-        break;
-
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Log the action
-    await adminDb.collection('adminLogs').add({
-      type: `user_${action}`,
-      targetUid,
-      adminEmail,
-      value: value || null,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    const token = authHeader.substring(7);
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    
+    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
+    const userData = userDoc.data();
+    
+    if (!userData?.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+
+    const { userId, status } = await request.json();
+
+    if (!userId || !status) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Update user status
+    await adminDb.collection('users').doc(userId).update({
+      status,
+      updatedAt: new Date()
     });
 
-    await logAdminAction({
-      action: `user_${action}`,
-      actorUserId: decodedToken.uid,
-      actorEmail: adminEmail,
-      targetType: "user",
-      targetId: targetUid,
-      metadata: { value: value || null },
+    // Log admin action
+    await adminDb.collection('admin_logs').add({
+      adminId: decodedToken.uid,
+      adminEmail: decodedToken.email,
+      action: 'update_user_status',
+      targetUserId: userId,
+      details: { newStatus: status },
+      timestamp: new Date(),
+      ip: request.headers.get('x-forwarded-for') || 'unknown'
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    console.error('Admin User Action Error:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
+
+  } catch (error) {
+    console.error('Admin users PATCH error:', error);
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
   }
 }
+
+// POST - Adjust user balance or perform actions
+export async function POST(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    
+    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
+    const userData = userDoc.data();
+    
+    if (!userData?.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+
+    const { userId, action, amount, reason } = await request.json();
+
+    if (!userId || !action) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (action === 'adjust_balance') {
+      if (amount === undefined || !reason) {
+        return NextResponse.json({ error: 'Amount and reason required for balance adjustment' }, { status: 400 });
+      }
+
+      const targetUserDoc = await adminDb.collection('users').doc(userId).get();
+      const targetUserData = targetUserDoc.data();
+      
+      if (!targetUserData) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      const currentBalance = targetUserData.balance || 0;
+      const newBalance = currentBalance + amount;
+
+      if (newBalance < 0) {
+        return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+      }
+
+      // Update user balance
+      await adminDb.collection('users').doc(userId).update({
+        balance: newBalance,
+        updatedAt: new Date()
+      });
+
+      // Create transaction record
+      await adminDb.collection('transactions').add({
+        userId,
+        type: 'adjustment',
+        amount: Math.abs(amount),
+        status: 'completed',
+        notes: reason,
+        adjustedBy: decodedToken.uid,
+        timestamp: new Date()
+      });
+
+      // Log admin action
+      await adminDb.collection('admin_logs').add({
+        adminId: decodedToken.uid,
+        adminEmail: decodedToken.email,
+        action: 'adjust_balance',
+        targetUserId: userId,
+        details: { amount, reason, oldBalance: currentBalance, newBalance },
+        timestamp: new Date(),
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      });
+
+      return NextResponse.json({ success: true, newBalance });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+
+  } catch (error) {
+    console.error('Admin users POST error:', error);
+    return NextResponse.json({ error: 'Failed to perform action' }, { status: 500 });
+  }
+}
+
+// Made with Bob

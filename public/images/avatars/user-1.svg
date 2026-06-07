@@ -1,0 +1,25 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="40" cy="40" r="40" fill="#6366F1"/>
+  
+  <!-- Face -->
+  <circle cx="40" cy="35" r="15" fill="#FCD34D"/>
+  
+  <!-- Hair -->
+  <path d="M25 30 Q40 20 55 30 L55 35 Q40 25 25 35 Z" fill="#1F2937"/>
+  
+  <!-- Eyes -->
+  <circle cx="35" cy="33" r="2" fill="#1F2937"/>
+  <circle cx="45" cy="33" r="2" fill="#1F2937"/>
+  
+  <!-- Smile -->
+  <path d="M33 40 Q40 43 47 40" stroke="#1F2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <ellipse cx="40" cy="65" rx="20" ry="18" fill="#4F46E5"/>
+  
+  <!-- Border -->
+  <circle cx="40" cy="40" r="38" fill="none" stroke="white" stroke-width="3"/>
+</svg>
+
+<!-- Made with Bob -->

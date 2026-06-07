@@ -6,30 +6,46 @@ import { sendWelcomeEmail } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 import { promises as dnsPromises } from "dns";
 import { getErrorMessage } from "@/lib/error";
+import { securityMiddleware, responseMiddleware } from "@/middleware";
+import { signupSchema } from "@/lib/validation/signupSchema";
+import type { ZodIssue } from "zod";
 
 export async function POST(request: NextRequest) {
+  const securityResponse = await securityMiddleware(request);
+  if (securityResponse) return securityResponse;
+
   try {
     const body = await request.json();
-    const { email, password, name, deviceFingerprint } = body;
+    const validationResult = signupSchema.safeParse(body);
 
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Missing required fields: email, password, name" }, { status: 400 });
+    if (!validationResult.success) {
+      const zodError = validationResult.error;
+      const rawResponse = NextResponse.json(
+        {
+          error: "Validation failed",
+          details: zodError.issues.map((err: ZodIssue) => `${err.path.join(".")}: ${err.message}`),
+        },
+        { status: 400 }
+      );
+      return responseMiddleware(rawResponse);
     }
+
+    const { email, password, displayName } = validationResult.data;
+    const deviceFingerprint = body.deviceFingerprint;
 
     const ip = getClientIp(request);
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    // Anti-Sybil: Check for duplicate device fingerprint across accounts
     if (deviceFingerprint && typeof deviceFingerprint === "string" && deviceFingerprint.trim().length > 0) {
-      const dupeQuery = await adminDb.collection("users")
+      const dupeQuery = await adminDb
+        .collection("users")
         .where("deviceFingerprint", "==", deviceFingerprint)
         .limit(1)
         .get();
 
       if (!dupeQuery.empty) {
         const existingUser = dupeQuery.docs[0].data();
-        
-        // Flag the existing user's account immediately
+
         const existingUserRef = adminDb.collection("users").doc(existingUser.uid);
         await existingUserRef.update({
           status: "flagged",
@@ -38,7 +54,6 @@ export async function POST(request: NextRequest) {
           updatedAt: FieldValue.serverTimestamp(),
         });
 
-        // Log critical fraud attempt
         await logFraudAttempt({
           ip,
           email,
@@ -46,16 +61,20 @@ export async function POST(request: NextRequest) {
           reason: `Device fingerprint duplicate detected. Collided with user ID: ${existingUser.uid}`,
           userAgent,
           createdAt: new Date(),
-          details: { deviceFingerprint, collidedWith: existingUser.uid }
+          details: { deviceFingerprint, collidedWith: existingUser.uid },
         });
 
-        return NextResponse.json({ 
-          error: "Registration denied. Multiple accounts detected on this device. TapCash operates a strict one-account-per-device policy." 
-        }, { status: 403 });
+        const rawResponse = NextResponse.json(
+          {
+            error:
+              "Registration denied. Multiple accounts detected on this device. TapCash operates a strict one-account-per-device policy.",
+          },
+          { status: 403 }
+        );
+        return responseMiddleware(rawResponse);
       }
     }
 
-    // 1. Sniff out Headless Automation Tools/Scrapers
     const botCheck = isBotAgent(userAgent);
     if (botCheck.isBot) {
       await logFraudAttempt({
@@ -66,30 +85,50 @@ export async function POST(request: NextRequest) {
         userAgent,
         createdAt: new Date(),
       });
-      return NextResponse.json({ error: "Access denied. Automation/Headless browsers are strictly prohibited." }, { status: 403 });
+
+      const rawResponse = NextResponse.json(
+        { error: "Access denied. Automation/Headless browsers are strictly prohibited." },
+        { status: 403 }
+      );
+      return responseMiddleware(rawResponse);
     }
 
-    // 2. Perform ProxyCheck.io validation
     const ipCheck = await isIpSuspicious(ip, "SIGNUP_BLOCKED_VPN", undefined, email, userAgent);
     if (ipCheck.suspicious) {
-      return NextResponse.json({ 
-        error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on registration to prevent multiple accounts farming." 
-      }, { status: 403 });
+      const rawResponse = NextResponse.json(
+        {
+          error:
+            "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on registration to prevent multiple accounts farming.",
+        },
+        { status: 403 }
+      );
+      return responseMiddleware(rawResponse);
     }
 
-    // 2.5. Prevent fake-email signup vulnerabilities (DNS MX-record check + disposable list)
     const emailParts = email.split("@");
     if (emailParts.length !== 2) {
-      return NextResponse.json({ error: "Invalid email format." }, { status: 400 });
+      const rawResponse = NextResponse.json({ error: "Invalid email format." }, { status: 400 });
+      return responseMiddleware(rawResponse);
     }
+
     const domain = emailParts[1].toLowerCase().trim();
 
-    // Block Disposable domains
     const DISPOSABLE_DOMAINS = [
-      "yopmail.com", "tempmail.com", "mailinator.com", "guerrillamail.com", 
-      "sharklasers.com", "dispostable.com", "10minutemail.com", "trashmail.com", 
-      "getairmail.com", "temp-mail.org", "guerrillamail.de", "guerrillamailblock.com",
-      "guerrillamail.net", "guerrillamail.org", "pokemail.net"
+      "yopmail.com",
+      "tempmail.com",
+      "mailinator.com",
+      "guerrillamail.com",
+      "sharklasers.com",
+      "dispostable.com",
+      "10minutemail.com",
+      "trashmail.com",
+      "getairmail.com",
+      "temp-mail.org",
+      "guerrillamail.de",
+      "guerrillamailblock.com",
+      "guerrillamail.net",
+      "guerrillamail.org",
+      "pokemail.net",
     ];
 
     if (DISPOSABLE_DOMAINS.includes(domain)) {
@@ -101,16 +140,34 @@ export async function POST(request: NextRequest) {
         userAgent,
         createdAt: new Date(),
       });
-      return NextResponse.json({ 
-        error: "Registration failed. Disposable or temporary email addresses are strictly prohibited. Please use a legitimate personal email provider." 
-      }, { status: 400 });
+
+      const rawResponse = NextResponse.json(
+        {
+          error:
+            "Registration failed. Disposable or temporary email addresses are strictly prohibited. Please use a legitimate personal email provider.",
+        },
+        { status: 400 }
+      );
+      return responseMiddleware(rawResponse);
     }
 
-    // Check MX Records for non-trusted domains
     const TRUSTED_DOMAINS = [
-      "gmail.com", "yahoo.com", "ymail.com", "outlook.com", "hotmail.com", 
-      "live.com", "msn.com", "icloud.com", "me.com", "mac.com", "aol.com", 
-      "protonmail.com", "proton.me", "zoho.com", "gmx.com", "mail.com"
+      "gmail.com",
+      "yahoo.com",
+      "ymail.com",
+      "outlook.com",
+      "hotmail.com",
+      "live.com",
+      "msn.com",
+      "icloud.com",
+      "me.com",
+      "mac.com",
+      "aol.com",
+      "protonmail.com",
+      "proton.me",
+      "zoho.com",
+      "gmx.com",
+      "mail.com",
     ];
 
     if (!TRUSTED_DOMAINS.includes(domain)) {
@@ -121,6 +178,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (dnsErr) {
         console.warn(`DNS MX lookup failed for domain: ${domain}`, dnsErr);
+
         await logFraudAttempt({
           ip,
           email,
@@ -129,66 +187,80 @@ export async function POST(request: NextRequest) {
           userAgent,
           createdAt: new Date(),
         });
-        return NextResponse.json({ 
-          error: "Registration failed. The email domain provided does not have any active mail servers (invalid MX records). Please register with a real email address." 
-        }, { status: 400 });
+
+        const rawResponse = NextResponse.json(
+          {
+            error:
+              "Registration failed. The email domain provided does not have any active mail servers (invalid MX records). Please register with a real email address.",
+          },
+          { status: 400 }
+        );
+        return responseMiddleware(rawResponse);
       }
     }
 
-
-    // 3. Create user securely in Firebase Auth
     let userRecord;
     try {
       userRecord = await adminAuth.createUser({
         email,
         password,
-        displayName: name,
+        displayName: displayName,
       });
     } catch (err: unknown) {
       console.error("Firebase Admin Auth createUser error:", err);
-      // Map common errors into elegant readable prompts
+
       const authError = err as Error & { code?: string };
       let friendlyMessage = authError.message || "Registration failed.";
+
       if (authError.code === "auth/email-already-exists") {
         friendlyMessage = "An account with this email address already exists.";
       } else if (authError.code === "auth/invalid-password") {
         friendlyMessage = "Password must be at least 6 characters.";
       }
-      return NextResponse.json({ error: friendlyMessage }, { status: 400 });
+
+      const rawResponse = NextResponse.json({ error: friendlyMessage }, { status: 400 });
+      return responseMiddleware(rawResponse);
     }
 
-    // Read the referral cookie
     const refCookie = request.cookies.get("tapcash_ref");
     const referredBy = refCookie?.value || null;
 
-    // 4. Initialize Profile entry in Firestore
     const userRef = adminDb.collection("users").doc(userRecord.uid);
     await userRef.set({
       uid: userRecord.uid,
       email: userRecord.email,
-      displayName: name,
-      status: "active", // Possible: active, flagged, banned
+      displayName: displayName,
+      status: "active",
       isFlagged: false,
       authProvider: "email",
       emailVerified: false,
       registrationIp: ip,
       userAgent,
       deviceFingerprint: deviceFingerprint || "",
-      referredBy: referredBy,
+      referredBy,
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // 5. Send Welcome Email
-    await sendWelcomeEmail(email, name);
+    await sendWelcomeEmail(email, displayName || email);
 
-    return NextResponse.json({
-      success: true,
-      message: "Account created successfully.",
-      uid: userRecord.uid,
-    }, { status: 200 });
+    const rawResponse = NextResponse.json(
+      {
+        success: true,
+        message: "Account created successfully.",
+        uid: userRecord.uid,
+      },
+      { status: 200 }
+    );
 
+    return responseMiddleware(rawResponse);
   } catch (error: unknown) {
     console.error("Signup API root handler crash:", error);
-    return NextResponse.json({ error: getErrorMessage(error, "Internal server registration failure.") }, { status: 500 });
+
+    const rawResponse = NextResponse.json(
+      { error: getErrorMessage(error, "Internal server registration failure.") },
+      { status: 500 }
+    );
+
+    return responseMiddleware(rawResponse);
   }
 }

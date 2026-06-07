@@ -1,9 +1,26 @@
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
+import { Space_Grotesk, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import GlobalNotificationListener from "@/components/GlobalNotificationListener";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+
+// Optimize fonts with next/font
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+  preload: true,
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
+  display: "swap",
+  preload: true,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tapcash.online"),
@@ -44,13 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      style={
-        {
-          "--font-space-grotesk": '"Space Grotesk", "Segoe UI", sans-serif',
-          "--font-manrope": '"Manrope", "Segoe UI", sans-serif',
-        } as CSSProperties
-      }
-      className="h-full antialiased dark"
+      className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
         <AuthProvider>

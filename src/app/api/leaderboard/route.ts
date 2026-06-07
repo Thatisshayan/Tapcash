@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
+export const revalidate = 300; // Cache for 5 minutes
 
 interface LeaderboardEntry {
   rank: number;
@@ -17,7 +18,14 @@ const CACHE_TTL = 5 * 60 * 1000;
 export async function GET() {
   try {
     if (cache && Date.now() - cache.ts < CACHE_TTL) {
-      return NextResponse.json({ leaderboard: cache.data });
+      return NextResponse.json(
+        { leaderboard: cache.data },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          },
+        }
+      );
     }
 
     // Aggregate balances from ledger_transactions per user
@@ -52,7 +60,14 @@ export async function GET() {
     );
 
     cache = { data: leaderboard, ts: Date.now() };
-    return NextResponse.json({ leaderboard });
+    return NextResponse.json(
+      { leaderboard },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (err) {
     console.error("Leaderboard error:", err);
     return NextResponse.json({ leaderboard: [] }, { status: 200 });

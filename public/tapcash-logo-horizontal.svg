@@ -1,0 +1,17 @@
+<svg width="1040" height="240" viewBox="0 0 1040 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<title>TapCash Logo Horizontal</title><desc>TapCash wordmark with wallet tap icon</desc>
+<defs>
+  <linearGradient id="g" x1="20" y1="42" x2="200" y2="210" gradientUnits="userSpaceOnUse"><stop stop-color="#7C3DFF"/><stop offset="0.45" stop-color="#16D7FF"/><stop offset="1" stop-color="#30F06E"/></linearGradient>
+  <linearGradient id="cash" x1="94" y1="18" x2="192" y2="76" gradientUnits="userSpaceOnUse"><stop stop-color="#77FF2E"/><stop offset="1" stop-color="#00D483"/></linearGradient>
+  <linearGradient id="text" x1="292" y1="68" x2="740" y2="185" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="0.5" stop-color="#F6F8FF"/><stop offset="1" stop-color="#2FF07B"/></linearGradient>
+</defs>
+<g transform="translate(8 20)">
+<path d="M71 56h98c17 0 31 14 31 31v82c0 17-14 31-31 31H40c-17 0-31-14-31-31v-75c0-21 17-38 38-38h24Z" fill="url(#g)"/>
+<path d="M86 28h75c8 0 14 6 14 14v18H73V41c0-7 6-13 13-13Z" fill="url(#cash)"/>
+<path d="M185 107h-42c-12 0-22 10-22 22s10 22 22 22h42v-44Z" fill="#07101D" fill-opacity=".62" stroke="#A9FEFF" stroke-opacity=".25" stroke-width="2"/>
+<circle cx="147" cy="129" r="6" fill="#050814"/>
+<circle cx="91" cy="131" r="8" fill="#07101D" fill-opacity=".9"/>
+<path d="M91 105c-14 0-26 12-26 26m26-43c-24 0-43 19-43 43m43-60c-33 0-60 27-60 60" stroke="white" stroke-opacity=".9" stroke-width="11" stroke-linecap="round"/>
+</g>
+<text x="260" y="152" font-family="Inter, Poppins, Arial, sans-serif" font-weight="850" font-style="italic" font-size="92" letter-spacing="-4" fill="url(#text)">TapCash</text>
+</svg>

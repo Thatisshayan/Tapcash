@@ -1,0 +1,46 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monopoly man character -->
+  <g id="monopoly-man">
+    <!-- Body/Suit -->
+    <ellipse cx="60" cy="75" rx="25" ry="30" fill="#1F2937"/>
+    
+    <!-- Head -->
+    <circle cx="60" cy="45" r="18" fill="#FCD34D"/>
+    
+    <!-- Top hat -->
+    <rect x="48" y="20" width="24" height="12" rx="2" fill="#1F2937"/>
+    <rect x="52" y="15" width="16" height="8" rx="1" fill="#1F2937"/>
+    
+    <!-- Mustache -->
+    <path d="M45 48 Q52 52 60 50 Q68 52 75 48" stroke="#1F2937" stroke-width="3" fill="none" stroke-linecap="round"/>
+    
+    <!-- Monocle -->
+    <circle cx="52" cy="42" r="6" fill="none" stroke="#1F2937" stroke-width="2"/>
+    
+    <!-- Cane -->
+    <line x1="75" y1="70" x2="75" y2="95" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>
+    <path d="M75 70 Q80 65 82 70" stroke="#B45309" stroke-width="3" fill="none" stroke-linecap="round"/>
+    
+    <!-- Money bag -->
+    <ellipse cx="40" cy="85" rx="12" ry="15" fill="#10B981"/>
+    <path d="M35 75 Q40 72 45 75" stroke="#059669" stroke-width="2" fill="none"/>
+    <text x="40" y="90" font-size="14" font-weight="bold" fill="white" text-anchor="middle">$</text>
+    
+    <!-- Dice -->
+    <rect x="75" y="95" width="15" height="15" rx="2" fill="#EF4444"/>
+    <circle cx="78" cy="98" r="1.5" fill="white"/>
+    <circle cx="87" cy="98" r="1.5" fill="white"/>
+    <circle cx="78" cy="107" r="1.5" fill="white"/>
+    <circle cx="87" cy="107" r="1.5" fill="white"/>
+    <circle cx="82.5" cy="102.5" r="1.5" fill="white"/>
+  </g>
+  
+  <!-- GO arrow -->
+  <g transform="translate(85, 25)">
+    <circle cx="15" cy="15" r="15" fill="#10B981"/>
+    <text x="15" y="20" font-size="12" font-weight="bold" fill="white" text-anchor="middle">GO</text>
+    <path d="M15 5 L20 10 L15 10 Z" fill="white"/>
+  </g>
+</svg>
+
+<!-- Made with Bob -->

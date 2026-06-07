@@ -1,0 +1,59 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Soldier character -->
+  <g id="soldier">
+    <!-- Helmet -->
+    <ellipse cx="60" cy="35" rx="22" ry="20" fill="#374151"/>
+    <path d="M40 35 Q60 30 80 35" stroke="#1F2937" stroke-width="2" fill="none"/>
+    
+    <!-- Visor/Goggles -->
+    <rect x="45" y="32" width="30" height="12" rx="6" fill="#10B981" opacity="0.7"/>
+    <line x1="60" y1="32" x2="60" y2="44" stroke="#1F2937" stroke-width="1"/>
+    
+    <!-- Face/Mask -->
+    <path d="M48 45 L48 52 Q60 55 72 52 L72 45" fill="#6B7280"/>
+    
+    <!-- Body/Vest -->
+    <rect x="40" y="55" width="40" height="35" rx="4" fill="#1F2937"/>
+    <rect x="45" y="60" width="30" height="25" rx="2" fill="#374151"/>
+    
+    <!-- Tactical straps -->
+    <line x1="50" y1="55" x2="50" y2="90" stroke="#6B7280" stroke-width="2"/>
+    <line x1="70" y1="55" x2="70" y2="90" stroke="#6B7280" stroke-width="2"/>
+    
+    <!-- Arms -->
+    <rect x="25" y="60" width="12" height="30" rx="6" fill="#374151"/>
+    <rect x="83" y="60" width="12" height="30" rx="6" fill="#374151"/>
+    
+    <!-- Weapon -->
+    <g transform="translate(85, 70)">
+      <rect x="0" y="0" width="25" height="6" rx="2" fill="#1F2937"/>
+      <rect x="20" y="-3" width="8" height="12" rx="1" fill="#374151"/>
+      <circle cx="5" cy="3" r="2" fill="#6B7280"/>
+    </g>
+    
+    <!-- Legs -->
+    <rect x="48" y="90" width="10" height="20" rx="5" fill="#374151"/>
+    <rect x="62" y="90" width="10" height="20" rx="5" fill="#374151"/>
+    
+    <!-- Boots -->
+    <rect x="46" y="108" width="14" height="8" rx="2" fill="#1F2937"/>
+    <rect x="60" y="108" width="14" height="8" rx="2" fill="#1F2937"/>
+  </g>
+  
+  <!-- Crosshair -->
+  <g transform="translate(15, 15)" opacity="0.8">
+    <circle cx="15" cy="15" r="12" fill="none" stroke="#EF4444" stroke-width="2"/>
+    <line x1="15" y1="5" x2="15" y2="10" stroke="#EF4444" stroke-width="2"/>
+    <line x1="15" y1="20" x2="15" y2="25" stroke="#EF4444" stroke-width="2"/>
+    <line x1="5" y1="15" x2="10" y2="15" stroke="#EF4444" stroke-width="2"/>
+    <line x1="20" y1="15" x2="25" y2="15" stroke="#EF4444" stroke-width="2"/>
+  </g>
+  
+  <!-- Ammo indicator -->
+  <g transform="translate(90, 15)">
+    <rect x="0" y="0" width="20" height="8" rx="2" fill="#FBBF24"/>
+    <text x="10" y="6.5" font-size="6" font-weight="bold" fill="#1F2937" text-anchor="middle">100</text>
+  </g>
+</svg>
+
+<!-- Made with Bob -->

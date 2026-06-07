@@ -1,24 +1,71 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: var(--font-manrope), "Manrope", sans-serif;
   --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
 
-  --color-background: #050816;
-  --color-foreground: #ffffff;
-  --color-emerald: #00e6c3;
-  --color-emerald-light: #3a7bff;
-  --color-gold: #f5c842;
+  /* TapCash Screenshot-Exact Color System */
+  /* Primary Colors */
+  --color-cyan: #18D9FF;
+  --color-purple: #7C3DFF;
+  --color-green: #31F06F;
+  --color-lime: #8CF8E9;
+  
+  /* Backgrounds */
+  --color-bg-darkest: #0A0E1A;
+  --color-bg-dark: #0F1419;
+  --color-bg-card: #1A1F2E;
+  
+  /* Text */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A0AEC0;
+  --color-text-muted: #718096;
+  
+  /* Accents */
+  --color-hot-red: #FF3B3B;
+  --color-warning-yellow: #FFC442;
+  
+  /* Legacy support */
+  --color-background: #0A0E1A;
+  --color-background-darker: #0F1419;
+  --color-panel: rgba(26, 31, 46, 0.74);
+  --color-foreground: #FFFFFF;
+  --color-muted: #A0AEC0;
+  --color-teal: #18D9FF;
+  --color-emerald: #18D9FF;
+  --color-emerald-light: #8CF8E9;
+  --color-gold: #FFC442;
   --color-gold-dim: #c9a02a;
+  --color-yellow: #FFC442;
 }
 
 body {
-  background-color: #050816;
+  background-color: #0A0E1A;
   color: #ffffff;
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SCREENSHOT-EXACT GRADIENTS ===== */
+
+.gradient-cyan-purple {
+  background: linear-gradient(135deg, #18D9FF 0%, #7C3DFF 100%);
+}
+
+.gradient-blue-green {
+  background: linear-gradient(135deg, #18D9FF 0%, #31F06F 100%);
+}
+
+.gradient-purple-green {
+  background: linear-gradient(135deg, #7C3DFF 0%, #31F06F 100%);
+}
+
+.text-gradient-play-earn-cash {
+  background: linear-gradient(90deg, #FFFFFF 0%, #31F06F 33%, #18D9FF 66%, #7C3DFF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* ===== KEYFRAME ANIMATIONS ===== */
