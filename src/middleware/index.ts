@@ -38,7 +38,7 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; remaining
  * Validates request headers and implements rate limiting
  */
 export async function securityMiddleware(request: NextRequest): Promise<NextResponse | null> {
-  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || "unknown";
   const { allowed, remaining, resetTime } = checkRateLimit(ip, request.nextUrl.pathname);
 
   // Rate limit exceeded
