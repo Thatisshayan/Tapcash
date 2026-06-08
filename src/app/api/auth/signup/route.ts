@@ -11,8 +11,8 @@ import type { ZodIssue } from "zod";
 import type { FraudScore } from "@/lib/antiFraud";
 
 export async function POST(request: NextRequest) {
-  const securityResponse = await securityMiddleware(request);
-  if (securityResponse) return securityResponse;
+  const { response: securityResponse, rateLimit } = await securityMiddleware(request);
+  if (securityResponse) return responseMiddleware(securityResponse, rateLimit);
 
   try {
     const body = await request.json();
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const { email, password, displayName } = validationResult.data;
@@ -66,12 +66,11 @@ export async function POST(request: NextRequest) {
 
         const rawResponse = NextResponse.json(
           {
-            error:
-              "Registration denied. Multiple accounts detected on this device. TapCash operates a strict one-account-per-device policy.",
+            error: "Registration denied. Multiple accounts detected on this device. TapCash operates a strict one-account-per-device policy.",
           },
           { status: 403 }
         );
-        return responseMiddleware(rawResponse);
+        return responseMiddleware(rawResponse, rateLimit);
       }
     }
 
@@ -90,45 +89,33 @@ export async function POST(request: NextRequest) {
         { error: "Access denied. Automation/Headless browsers are strictly prohibited." },
         { status: 403 }
       );
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const ipCheck = await isIpSuspicious(ip, "SIGNUP_BLOCKED_VPN", undefined, email, userAgent);
     if (ipCheck.suspicious) {
       const rawResponse = NextResponse.json(
         {
-          error:
-            "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on registration to prevent multiple accounts farming.",
+          error: "Access denied. VPN, Proxy, or Tor connections are strictly prohibited on registration to prevent multiple accounts farming.",
         },
         { status: 403 }
       );
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const emailParts = email.split("@");
     if (emailParts.length !== 2) {
       const rawResponse = NextResponse.json({ error: "Invalid email format." }, { status: 400 });
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const domain = emailParts[1].toLowerCase().trim();
 
     const DISPOSABLE_DOMAINS = [
-      "yopmail.com",
-      "tempmail.com",
-      "mailinator.com",
-      "guerrillamail.com",
-      "sharklasers.com",
-      "dispostable.com",
-      "10minutemail.com",
-      "trashmail.com",
-      "getairmail.com",
-      "temp-mail.org",
-      "guerrillamail.de",
-      "guerrillamailblock.com",
-      "guerrillamail.net",
-      "guerrillamail.org",
-      "pokemail.net",
+      "yopmail.com", "tempmail.com", "mailinator.com", "guerrillamail.com",
+      "sharklasers.com", "dispostable.com", "10minutemail.com", "trashmail.com",
+      "getairmail.com", "temp-mail.org", "guerrillamail.de",
+      "guerrillamailblock.com", "guerrillamail.net", "guerrillamail.org", "pokemail.net",
     ];
 
     if (DISPOSABLE_DOMAINS.includes(domain)) {
@@ -143,31 +130,17 @@ export async function POST(request: NextRequest) {
 
       const rawResponse = NextResponse.json(
         {
-          error:
-            "Registration failed. Disposable or temporary email addresses are strictly prohibited. Please use a legitimate personal email provider.",
+          error: "Registration failed. Disposable or temporary email addresses are strictly prohibited.",
         },
         { status: 400 }
       );
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const TRUSTED_DOMAINS = [
-      "gmail.com",
-      "yahoo.com",
-      "ymail.com",
-      "outlook.com",
-      "hotmail.com",
-      "live.com",
-      "msn.com",
-      "icloud.com",
-      "me.com",
-      "mac.com",
-      "aol.com",
-      "protonmail.com",
-      "proton.me",
-      "zoho.com",
-      "gmx.com",
-      "mail.com",
+      "gmail.com", "yahoo.com", "ymail.com", "outlook.com", "hotmail.com",
+      "live.com", "msn.com", "icloud.com", "me.com", "mac.com",
+      "aol.com", "protonmail.com", "proton.me", "zoho.com", "gmx.com", "mail.com",
     ];
 
     if (!TRUSTED_DOMAINS.includes(domain)) {
@@ -190,12 +163,11 @@ export async function POST(request: NextRequest) {
 
         const rawResponse = NextResponse.json(
           {
-            error:
-              "Registration failed. The email domain provided does not have any active mail servers (invalid MX records). Please register with a real email address.",
+            error: "Registration failed. The email domain provided does not have any active mail servers.",
           },
           { status: 400 }
         );
-        return responseMiddleware(rawResponse);
+        return responseMiddleware(rawResponse, rateLimit);
       }
     }
 
@@ -219,36 +191,36 @@ export async function POST(request: NextRequest) {
       }
 
       const rawResponse = NextResponse.json({ error: friendlyMessage }, { status: 400 });
-      return responseMiddleware(rawResponse);
+      return responseMiddleware(rawResponse, rateLimit);
     }
 
     const refCookie = request.cookies.get("tapcash_ref");
     const referredBy = refCookie?.value || null;
 
-const userRef = adminDb.collection("users").doc(userRecord.uid);
-     const fraudScore: FraudScore = calculateFraudScore({
-       userAgent,
-       deviceFingerprint: body.deviceFingerprint,
-       emailDomain: domain,
-       ip,
-     });
-     
-     await userRef.set({
-       uid: userRecord.uid,
-       email: userRecord.email,
-       displayName: displayName,
-       status: "active",
-       isFlagged: fraudScore.score > 25, // Flag if high risk
-       fraudScore: fraudScore.score,
-       fraudFlags: fraudScore.riskFactors,
-       authProvider: "email",
-       emailVerified: false,
-       registrationIp: ip,
-       userAgent,
-       deviceFingerprint: deviceFingerprint || "",
-       referredBy,
-       createdAt: FieldValue.serverTimestamp(),
-     });
+    const userRef = adminDb.collection("users").doc(userRecord.uid);
+    const fraudScore: FraudScore = calculateFraudScore({
+      userAgent,
+      deviceFingerprint: body.deviceFingerprint,
+      emailDomain: domain,
+      ip,
+    });
+    
+    await userRef.set({
+      uid: userRecord.uid,
+      email: userRecord.email,
+      displayName: displayName,
+      status: "active",
+      isFlagged: fraudScore.score > 25,
+      fraudScore: fraudScore.score,
+      fraudFlags: fraudScore.riskFactors,
+      authProvider: "email",
+      emailVerified: false,
+      registrationIp: ip,
+      userAgent,
+      deviceFingerprint: deviceFingerprint || "",
+      referredBy,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     await sendWelcomeEmail(email, displayName || email);
 
@@ -257,11 +229,12 @@ const userRef = adminDb.collection("users").doc(userRecord.uid);
         success: true,
         message: "Account created successfully.",
         uid: userRecord.uid,
+        fraudScore: fraudScore.score,
       },
       { status: 200 }
     );
 
-    return responseMiddleware(rawResponse);
+    return responseMiddleware(rawResponse, rateLimit);
   } catch (error: unknown) {
     console.error("Signup API root handler crash:", error);
 
@@ -270,6 +243,6 @@ const userRef = adminDb.collection("users").doc(userRecord.uid);
       { status: 500 }
     );
 
-    return responseMiddleware(rawResponse);
+    return responseMiddleware(rawResponse, { remaining: 60, resetTime: 0, limit: 60 });
   }
 }
