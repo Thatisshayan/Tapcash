@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
-import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
+import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, KeyRound, MailCheck } from "lucide-react";
 import { MotionWrap } from "@/components/PremiumUi";
 import { auth } from "@/lib/firebase";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
@@ -119,11 +119,14 @@ export default function SignInPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
-                  {error}
-                </div>
-              )}
+{error && (
+                 <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 flex items-start gap-3">
+                   <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                   </svg>
+                   <p className="text-sm text-red-300">{error}</p>
+                 </div>
+               )}
 
               <form onSubmit={handleSignIn} className="space-y-4">
                 <label className="block">
@@ -176,11 +179,12 @@ export default function SignInPage() {
                 </button>
               </form>
 
-              {resetSent && (
-                <div className="mt-4 rounded-2xl border border-[#00e6c3]/20 bg-[#00e6c3]/8 px-4 py-4 text-sm text-[#8cf8e9]">
-                  Reset email sent to <strong>{email}</strong>. Check your inbox.
-                </div>
-              )}
+{resetSent && (
+                 <div className="mt-4 rounded-2xl border border-[#00e6c3]/20 bg-[#00e6c3]/8 px-4 py-4 flex items-center gap-3 text-sm text-[#8cf8e9]">
+                   <MailCheck className="w-5 h-5 flex-shrink-0" />
+                   <span>Reset email sent to <strong>{email}</strong>. Check your inbox.</span>
+                 </div>
+               )}
 
               <div className="mt-5 flex items-center gap-3">
                 <div className="flex-1 h-px bg-white/8" />

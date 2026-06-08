@@ -123,11 +123,14 @@ export default function SignUpPage() {
                   </div>
                 </div>
 
-                {error && (
-                  <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
-                    {error}
-                  </div>
-                )}
+{error && (
+                   <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 flex items-start gap-3">
+                     <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                     <p className="text-sm text-red-300">{error}</p>
+                   </div>
+                 )}
 
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <label className="block">

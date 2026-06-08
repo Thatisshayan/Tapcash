@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { sendEmailVerification } from "firebase/auth";
-import { MailCheck, RefreshCcw, ShieldAlert } from "lucide-react";
+import { MailCheck, RefreshCcw, ShieldAlert, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 
@@ -14,6 +14,8 @@ type VerifiedAccessGateProps = {
   nextLabel: string;
 };
 
+type MessageType = "success" | "error" | null;
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -23,6 +25,7 @@ export default function VerifiedAccessGate({ title, description, nextHref, nextL
   const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<MessageType>(null);
   const userUid = user?.uid;
 
   useEffect(() => {
@@ -46,8 +49,10 @@ export default function VerifiedAccessGate({ title, description, nextHref, nextL
     try {
       await sendEmailVerification(currentUser);
       setMessage("Verification email resent. Check your inbox and spam folder.");
+      setMessageType("success");
     } catch (error: unknown) {
       setMessage(getErrorMessage(error, "We could not resend the verification email right now."));
+      setMessageType("error");
     } finally {
       setSending(false);
     }
@@ -64,9 +69,11 @@ export default function VerifiedAccessGate({ title, description, nextHref, nextL
         window.location.href = nextHref;
       } else {
         setMessage("Your email still looks unverified. Click the link in your inbox, then try again.");
+        setMessageType("error");
       }
     } catch (error: unknown) {
       setMessage(getErrorMessage(error, "Unable to refresh your verification status."));
+      setMessageType("error");
     } finally {
       setRefreshing(false);
     }
@@ -98,8 +105,18 @@ export default function VerifiedAccessGate({ title, description, nextHref, nextL
       </div>
 
       {message && (
-        <div className="mt-5 rounded-2xl border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-4 py-3 text-sm text-[#b9fff3]">
-          {message}
+        <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm flex items-start gap-2 ${
+          messageType === "success"
+            ? "border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#b9fff3]"
+            : "border-red-500/20 bg-red-500/10 text-red-300"
+        }`}>
+          {messageType === "error" && (
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          )}
+          {messageType === "success" && (
+            <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          )}
+          <span>{message}</span>
         </div>
       )}
 
