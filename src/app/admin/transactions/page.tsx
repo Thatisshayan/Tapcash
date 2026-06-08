@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -33,18 +33,7 @@ export default function TransactionManagement() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-
-    if (user) {
-      loadTransactions();
-    }
-  }, [user, loading, router]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     try {
       const token = await user?.getIdToken();
       const response = await fetch('/api/admin/transactions', {
@@ -69,7 +58,18 @@ export default function TransactionManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      loadTransactions();
+    }
+  }, [user, loading, loadTransactions]);
 
   const handleApproveTransaction = async (transactionId: string) => {
     if (!confirm('Are you sure you want to approve this transaction?')) return;

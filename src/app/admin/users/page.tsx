@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -29,18 +29,7 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-
-    if (user) {
-      loadUsers();
-    }
-  }, [user, loading, router]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const token = await user?.getIdToken();
       const response = await fetch('/api/admin/users', {
@@ -65,7 +54,18 @@ export default function UserManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      loadUsers();
+    }
+  }, [user, loading, loadUsers]);
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
     try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -33,18 +33,7 @@ export default function OfferManagement() {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-
-    if (user) {
-      loadOffers();
-    }
-  }, [user, loading, router]);
-
-  const loadOffers = async () => {
+  const loadOffers = useCallback(async () => {
     try {
       const token = await user?.getIdToken();
       const response = await fetch('/api/admin/offers', {
@@ -69,7 +58,18 @@ export default function OfferManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      loadOffers();
+    }
+  }, [user, loading, loadOffers]);
 
   const handleCreateOffer = () => {
     setSelectedOffer({

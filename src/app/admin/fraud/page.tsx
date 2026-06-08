@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -42,18 +42,7 @@ export default function FraudDetection() {
   const [selectedAlert, setSelectedAlert] = useState<FraudAlert | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-
-    if (user) {
-      loadFraudData();
-    }
-  }, [user, loading, router]);
-
-  const loadFraudData = async () => {
+  const loadFraudData = useCallback(async () => {
     try {
       const token = await user?.getIdToken();
       const response = await fetch('/api/admin/fraud', {
@@ -79,7 +68,18 @@ export default function FraudDetection() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      loadFraudData();
+    }
+  }, [user, loading, loadFraudData]);
 
   const handleReviewAlert = async (alertId: string, status: string, notes: string, action?: 'ban' | 'suspend') => {
     try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -33,18 +33,7 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
-      return;
-    }
-
-    if (user) {
-      checkAdminAccess();
-    }
-  }, [user, loading, router]);
-
-  const checkAdminAccess = async () => {
+  const checkAdminAccess = useCallback(async () => {
     try {
       const token = await user?.getIdToken();
       const response = await fetch('/api/admin/stats', {
@@ -70,7 +59,18 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      checkAdminAccess();
+    }
+  }, [user, loading, checkAdminAccess]);
 
   if (loading || isLoading) {
     return (
