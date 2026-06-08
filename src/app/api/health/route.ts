@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { adminDb, firebaseAdminReady, firebaseAdminMode } from "@/lib/firebaseAdmin";
 
 async function checkFirestore(): Promise<{ status: string; latencyMs: number }> {
+  if (!firebaseAdminReady) {
+    return { status: "unavailable", latencyMs: 0 };
+  }
   const start = Date.now();
   try {
     await adminDb.collection("_healthcheck").limit(1).get();
@@ -31,9 +34,10 @@ export async function GET() {
 
   const isHealthy = firestore.status === "healthy" && env.status === "healthy";
   const isDegraded = firestore.status === "healthy" && env.status === "degraded";
+  const isAdminFallback = firebaseAdminMode === "fallback";
 
-  const status = isHealthy ? "healthy" : isDegraded ? "degraded" : "unhealthy";
-  const httpStatus = isHealthy ? 200 : isDegraded ? 200 : 503;
+  const status = isAdminFallback ? "degraded" : isHealthy ? "healthy" : isDegraded ? "degraded" : "unhealthy";
+  const httpStatus = isAdminFallback || isDegraded ? 200 : isHealthy ? 200 : 503;
 
   return NextResponse.json(
     {
@@ -41,6 +45,7 @@ export async function GET() {
       service: "TapCash",
       version: process.env.npm_package_version || "1.0.0",
       timestamp: new Date().toISOString(),
+      mode: firebaseAdminMode,
       checks: {
         firestore,
         environment: env,
