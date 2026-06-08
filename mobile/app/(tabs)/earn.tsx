@@ -13,7 +13,7 @@ export default function EarnScreen() {
     loadOffers().then((items) => {
       if (mounted && Array.isArray(items) && items.length > 0) {
         setOffers(
-          items.slice(0, 4).map((offer) => ({
+          (items as TapCashOffer[]).slice(0, 4).map((offer) => ({
             id: offer.id,
             title: offer.title,
             provider: offer.provider,
