@@ -12,6 +12,28 @@ cp .env.example .env.local  # Fill in your Firebase + API keys
 npm run dev                  # http://localhost:3000
 ```
 
+## GitHub Secrets Required
+
+For CI/CD to work, set these in **Settings > Secrets and variables > Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Web API Key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase Project ID |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase Sender ID |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase App ID |
+| `FIREBASE_PROJECT_ID` | Firebase Admin Project ID |
+| `FIREBASE_CLIENT_EMAIL` | Firebase Admin Client Email |
+| `FIREBASE_PRIVATE_KEY` | Firebase Admin Private Key |
+| `VERCEL_TOKEN` | Vercel API Token |
+| `FIREBASE_TOKEN` | Firebase CLI Token |
+| `SNYK_TOKEN` | Snyk Security Token |
+| `SLACK_WEBHOOK` | Slack webhook for notifications |
+| `EMAIL_USERNAME` | CI email notifications |
+| `EMAIL_PASSWORD` | CI email password |
+
 ## Tech Stack
 
 | Layer | Technology |
