@@ -1,72 +1,76 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // Performance: Enable React strict mode for better error detection
   reactStrictMode: true,
-
-  // Performance: Compress responses
   compress: true,
-
-  // Performance: Optimize images
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'lootably.com' },
-      { protocol: 'https', hostname: 'rapidoreach.com' }
+      { protocol: "https", hostname: "lootably.com" },
+      { protocol: "https", hostname: "rapidoreach.com" },
     ],
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
-
-  // Performance: Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ["lucide-react", "framer-motion"],
   },
-
-  // Performance: Configure headers for caching
   async headers() {
     return [
       {
-        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
+        source: "/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
       {
-        source: '/fonts/:path*',
+        source: "/fonts/:path*",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
     ];
   },
-
   turbopack: {
     root: __dirname,
   },
-
   async redirects() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         has: [
           {
-            type: 'host',
-            value: 'www.tapcash.online',
+            type: "host",
+            value: "www.tapcash.online",
           },
         ],
-        destination: 'https://tapcash.online/:path*',
+        destination: "https://tapcash.online/:path*",
         permanent: true,
       },
     ];
   },
 };
 
-export default nextConfig;
+const sentryConfig = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  hideSourceMaps: true,
+  disableLogger: true,
+  automaticVercelMonitors: true,
+};
+
+export default process.env.SENTRY_DSN
+  ? withSentryConfig(nextConfig, sentryConfig)
+  : nextConfig;

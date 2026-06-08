@@ -1,0 +1,135 @@
+# Better Uptime Configuration for TapCash
+# Install: npm i -g @betteruptime/cli
+# Deploy: betteruptime push --config better-uptime.yml
+
+monitors:
+  - name: "TapCash - Main Site"
+    url: "https://tapcash.online"
+    interval: 60
+    type: "http"
+    expected_status_codes: [200]
+    check_locations: ["us-east-1", "eu-west-1", "ap-southeast-1"]
+    headers:
+      User-Agent: "BetterUptime-TapCash/1.0"
+    alert_after: 2
+    escalation_policy: "default"
+
+  - name: "TapCash - Health Check API"
+    url: "https://tapcash.online/api/health"
+    interval: 30
+    type: "http"
+    expected_status_codes: [200, 503]
+    expected_body_contains: '"status":"healthy"'
+    check_locations: ["us-east-1", "eu-west-1"]
+    headers:
+      User-Agent: "BetterUptime-TapCash/1.0"
+    alert_after: 1
+    escalation_policy: "critical"
+
+  - name: "TapCash - Auth Callback"
+    url: "https://tapcash.online/api/auth/callback"
+    interval: 300
+    type: "http"
+    expected_status_codes: [200, 302, 400]
+    check_locations: ["us-east-1"]
+    headers:
+      User-Agent: "BetterUptime-TapCash/1.0"
+    alert_after: 3
+    escalation_policy: "default"
+
+  - name: "TapCash - Payout API"
+    url: "https://tapcash.online/api/payouts/request"
+    interval: 300
+    type: "http"
+    method: "POST"
+    expected_status_codes: [400, 401, 403]
+    check_locations: ["us-east-1"]
+    headers:
+      User-Agent: "BetterUptime-TapCash/1.0"
+      Content-Type: "application/json"
+    body: '{"amountCoins": 2000, "method": "paypal", "destination": "test@test.com"}'
+    alert_after: 3
+    escalation_policy: "critical"
+
+status_page:
+  name: "TapCash Status"
+  domain: "status.tapcash.online"
+  theme: "dark"
+  logo_url: "https://tapcash.online/icon.png"
+  components:
+    - name: "Web Application"
+      description: "Main TapCash web application"
+      status_page_component_id: "web-app"
+    - name: "API Services"
+      description: "REST APIs for offers, payouts, auth"
+      status_page_component_id: "api-services"
+    - name: "Firebase Backend"
+      description: "Firestore, Auth, Functions"
+      status_page_component_id: "firebase"
+    - name: "Offerwall Integrations"
+      description: "Lootably, RapidoReach offerwalls"
+      status_page_component_id: "offerwalls"
+    - name: "Payment Processing"
+      description: "PayPal, Interac, Crypto payouts"
+      status_page_component_id: "payments"
+
+incident_templates:
+  - name: "API Degraded"
+    message: "API responding slowly or returning errors. Investigating."
+    status: "investigating"
+    affected_components: ["api-services"]
+
+  - name: "Payment Provider Outage"
+    message: "Payment provider (PayPal/Interac/Crypto) experiencing issues. Payouts may be delayed."
+    status: "investigating"
+    affected_components: ["payments"]
+
+  - name: "Offerwall Unavailable"
+    message: "Lootably or RapidoReach offerwall is unavailable. Users cannot complete offers."
+    status: "investigating"
+    affected_components: ["offerwalls"]
+
+  - name: "Database Issues"
+    message: "Firestore connectivity issues. Some features may not work."
+    status: "investigating"
+    affected_components: ["firebase"]
+
+escalation_policies:
+  - name: "default"
+    steps:
+      - delay: 0
+        notify: ["email:oncall@tapcash.com", "slack:#alerts"]
+      - delay: 300
+        notify: ["sms:+1xxx-xxx-xxxx", "phone:+1xxx-xxx-xxxx"]
+      - delay: 900
+        notify: ["email:admin@tapcash.com"]
+
+  - name: "critical"
+    steps:
+      - delay: 0
+        notify: ["email:oncall@tapcash.com", "slack:#critical-alerts", "sms:+1xxx-xxx-xxxx", "phone:+1xxx-xxx-xxxx"]
+      - delay: 60
+        notify: ["email:admin@tapcash.com", "slack:#critical-alerts"]
+      - delay: 300
+        notify: ["phone:+1xxx-xxx-xxxx"]
+
+notification_channels:
+  - type: "email"
+    name: "oncall@tapcash.com"
+    address: "oncall@tapcash.com"
+
+  - type: "slack"
+    name: "#alerts"
+    webhook_url: "${SLACK_ALERTS_WEBHOOK}"
+
+  - type: "slack"
+    name: "#critical-alerts"
+    webhook_url: "${SLACK_CRITICAL_WEBHOOK}"
+
+  - type: "sms"
+    name: "On-call Phone"
+    number: "+1xxx-xxx-xxxx"
+
+  - type: "phone"
+    name: "On-call Phone"
+    number: "+1xxx-xxx-xxxx"

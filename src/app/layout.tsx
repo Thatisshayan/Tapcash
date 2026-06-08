@@ -5,6 +5,7 @@ import "../styles/premium.css";
 import { AuthProvider } from "../context/AuthContext";
 import GlobalNotificationListener from "@/components/GlobalNotificationListener";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import VercelAnalytics from "@/components/VercelAnalytics";
 
 // Optimize fonts with next/font
 const spaceGrotesk = Space_Grotesk({
@@ -77,6 +78,7 @@ export default function RootLayout({
         <AuthProvider>
           <GlobalNotificationListener />
           <ServiceWorkerRegistrar />
+          <VercelAnalytics />
           {children}
         </AuthProvider>
       </body>
