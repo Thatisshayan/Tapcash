@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+interface RateLimitInfo {
+  remaining: number;
+  resetTime: number;
+  limit: number;
+}
+
 /**
  * Rate limiting configuration
  */
@@ -37,16 +43,20 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; remaining
  * Security middleware for API routes
  * Validates request headers and implements rate limiting
  */
-export async function securityMiddleware(request: NextRequest): Promise<NextResponse | null> {
+export async function securityMiddleware(request: NextRequest): Promise<{ response?: NextResponse; rateLimit?: RateLimitInfo }> {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || "unknown";
   const { allowed, remaining, resetTime } = checkRateLimit(ip, request.nextUrl.pathname);
+  const rateLimit: RateLimitInfo = { remaining, resetTime, limit: RATE_LIMIT_MAX_REQUESTS };
 
   // Rate limit exceeded
   if (!allowed) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded. Please try again later." },
-      { status: 429, headers: { "X-RateLimit-Reset": String(resetTime) } }
-    );
+    return { 
+      response: NextResponse.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      ),
+      rateLimit 
+    };
   }
 
   // Check for required headers
@@ -54,30 +64,34 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   
   // Allow GET requests without content-type
   if (request.method !== "GET" && !contentType?.includes("application/json")) {
-    return NextResponse.json(
-      { error: "Content-Type must be application/json" },
-      { status: 400 }
-    );
+    return { 
+      response: NextResponse.json(
+        { error: "Content-Type must be application/json" },
+        { status: 400 }
+      ),
+      rateLimit 
+    };
   }
 
-  // Add security headers
-  const response = NextResponse.next();
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("X-RateLimit-Remaining", String(remaining));
-
-  return null; // Continue to route handler
+  // Continue to route handler with rate limit info
+  return { rateLimit };
 }
 
 /**
  * Response middleware for API routes
- * Adds standard headers to all responses
+ * Adds standard headers to all responses including rate limit info
  */
-export function responseMiddleware(response: NextResponse): NextResponse {
+export function responseMiddleware(response: NextResponse, rateLimit?: RateLimitInfo): NextResponse {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
+  
+  if (rateLimit) {
+    response.headers.set("X-RateLimit-Limit", String(rateLimit.limit));
+    response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+    response.headers.set("X-RateLimit-Reset", String(rateLimit.resetTime));
+  }
+  
   return response;
 }
 
