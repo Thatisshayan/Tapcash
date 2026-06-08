@@ -56,3 +56,29 @@ secrets/
 Thumbs.db
 
 # Made with Bob
+
+# Test artifacts
+/playwright-report/
+/test-results/
+.coverage
+
+# Utility scripts (local dev only)
+*.dev.js
+dev-tools/
+
+# Scraped / temp content
+cleaned_*.txt
+doc_*.txt
+*.jpg
+*.jpeg
+*.png
+!public/**/*.png
+!public/**/*.jpg
+!mobile/**/*.png
+
+# Desktop shortcuts
+desktop/
+
+# Electron build
+/src-electron/
+
