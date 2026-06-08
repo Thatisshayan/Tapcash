@@ -1,7 +1,6 @@
-// src/app/api/auth/signup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
+import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt, calculateFraudScore } from "@/lib/antiFraud";
 import { sendWelcomeEmail } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 import { promises as dnsPromises } from "dns";
@@ -9,6 +8,7 @@ import { getErrorMessage } from "@/lib/error";
 import { securityMiddleware, responseMiddleware } from "@/middleware";
 import { signupSchema } from "@/lib/validation/signupSchema";
 import type { ZodIssue } from "zod";
+import type { FraudScore } from "@/lib/antiFraud";
 
 export async function POST(request: NextRequest) {
   const securityResponse = await securityMiddleware(request);
@@ -225,21 +225,30 @@ export async function POST(request: NextRequest) {
     const refCookie = request.cookies.get("tapcash_ref");
     const referredBy = refCookie?.value || null;
 
-    const userRef = adminDb.collection("users").doc(userRecord.uid);
-    await userRef.set({
-      uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: displayName,
-      status: "active",
-      isFlagged: false,
-      authProvider: "email",
-      emailVerified: false,
-      registrationIp: ip,
-      userAgent,
-      deviceFingerprint: deviceFingerprint || "",
-      referredBy,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+const userRef = adminDb.collection("users").doc(userRecord.uid);
+     const fraudScore: FraudScore = calculateFraudScore({
+       userAgent,
+       deviceFingerprint: body.deviceFingerprint,
+       emailDomain: domain,
+       ip,
+     });
+     
+     await userRef.set({
+       uid: userRecord.uid,
+       email: userRecord.email,
+       displayName: displayName,
+       status: "active",
+       isFlagged: fraudScore.score > 25, // Flag if high risk
+       fraudScore: fraudScore.score,
+       fraudFlags: fraudScore.riskFactors,
+       authProvider: "email",
+       emailVerified: false,
+       registrationIp: ip,
+       userAgent,
+       deviceFingerprint: deviceFingerprint || "",
+       referredBy,
+       createdAt: FieldValue.serverTimestamp(),
+     });
 
     await sendWelcomeEmail(email, displayName || email);
 

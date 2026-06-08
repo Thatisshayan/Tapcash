@@ -13,6 +13,15 @@ export interface FraudLog {
   createdAt: Date;
 }
 
+export interface FraudScore {
+  score: number; // 0-100, lower = less risky
+  riskFactors: string[];
+  vpnDetected: boolean;
+  disposableEmail: boolean;
+  botDetected: boolean;
+  duplicateDevice: boolean;
+}
+
 // Subnets/IP patterns to bypass in development environments
 const LOCAL_IPS = ["127.0.0.1", "::1", "localhost"];
 const LOCAL_SUBNETS = ["10.", "192.168.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31."];
@@ -124,4 +133,53 @@ export async function logFraudAttempt(log: FraudLog): Promise<void> {
   } catch (err) {
     console.error("Failed to write to fraud_flags collection:", err);
   }
+}
+
+/**
+ * Calculate fraud risk score for a user based on registration signals
+ */
+export function calculateFraudScore(params: {
+  userAgent: string;
+  deviceFingerprint?: string;
+  emailDomain: string;
+  ip?: string;
+}): FraudScore {
+  const { userAgent, deviceFingerprint, emailDomain, ip } = params;
+  let score = 0;
+  const riskFactors: string[] = [];
+
+  // Bot detection (-20 points)
+  const botCheck = isBotAgent(userAgent);
+  if (botCheck.isBot) {
+    score += 20;
+    riskFactors.push(`Bot user agent: ${botCheck.reason}`);
+  }
+
+  // Disposable email (-15 points)
+  const DISPOSABLE_DOMAINS = [
+    "yopmail.com", "tempmail.com", "mailinator.com", "guerrillamail.com",
+    "sharklasers.com", "dispostable.com", "10minutemail.com", "trashmail.com",
+  ];
+  if (DISPOSABLE_DOMAINS.includes(emailDomain.toLowerCase())) {
+    score += 15;
+    riskFactors.push("Disposable email domain");
+  }
+
+  // Missing fingerprint (-10 points)
+  if (!deviceFingerprint || deviceFingerprint.trim().length === 0) {
+    score += 10;
+    riskFactors.push("Missing device fingerprint");
+  }
+
+  // VPN/proxy risk (-25 points if detected)
+  // This is checked separately via isIpSuspicious
+
+  return {
+    score: Math.min(100, score),
+    riskFactors,
+    vpnDetected: false, // Will be set by caller
+    disposableEmail: DISPOSABLE_DOMAINS.includes(emailDomain.toLowerCase()),
+    botDetected: botCheck.isBot,
+    duplicateDevice: false, // Will be set by caller
+  };
 }
