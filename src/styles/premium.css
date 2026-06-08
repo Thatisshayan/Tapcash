@@ -229,7 +229,12 @@
   height: 100%;
   border-radius: 99px;
   background: linear-gradient(90deg, var(--model-u-green), #9CFF39);
+  box-shadow: 0 0 12px var(--model-u-green-glow);
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.model-u-progress-bar:hover .model-u-progress-fill {
+  box-shadow: 0 0 20px var(--model-u-green-glow);
 }
 
 /* Score Ring (TapScore) */

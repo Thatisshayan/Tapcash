@@ -1,8 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShieldCheck, Gamepad2, Target, Wallet, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
+import { ShieldCheck, Gamepad2, Target, Wallet, ChevronRight, CreditCard, Gift, Bitcoin, Banknote } from 'lucide-react';
 
 export default function Hero() {
   return (
@@ -37,7 +36,7 @@ export default function Hero() {
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
-            Start My Safest Offer <ChevronRight size={20} />
+            Start My Sweet Offer <ChevronRight size={20} />
           </motion.button>
           <button className="model-u-btn-secondary">See How It Works</button>
         </div>
@@ -59,7 +58,7 @@ export default function Hero() {
             <div className="w-8 h-8 rounded-full border border-[rgba(49,240,111,0.45)] flex items-center justify-center">
               <Wallet size={16} className="text-[#31F06F]" />
             </div>
-            Cash Out Fast
+            Cash Out Fast & Secure
           </span>
         </div>
       </motion.div>
@@ -71,6 +70,28 @@ export default function Hero() {
         transition={{ duration: 0.7, delay: 0.2 }}
         className="relative h-[530px] flex items-end justify-center"
       >
+        {/* Floating Elements */}
+        <motion.div
+          className="absolute top-[20px] left-[60px] w-12 h-12 rounded-full bg-gradient-to-br from-[#31F06F] to-[#18D9FF] opacity-80 blur-[2px]"
+          animate={{ y: [-4, 4, -4] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-[100px] right-[50px] w-8 h-8 rounded-full bg-gradient-to-br from-[#7C3DFF] to-[#18D9FF] opacity-70"
+          animate={{ y: [4, -4, 4] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-[80px] left-[40px] w-10 h-10 rounded-full bg-gradient-to-br from-[#31F06F] to-[#FF2F42] opacity-75"
+          animate={{ y: [-6, 6, -6] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full border-2 border-[var(--model-u-purple-glow)] opacity-40"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+
         <div className="model-u-halo top-[38px]" />
         <div className="relative w-[360px] h-[430px] rounded-[45%_45%_16%_16%] bg-gradient-to-b from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] flex items-center justify-center flex-col"
           style={{ filter: 'drop-shadow(0 38px 60px rgba(0,0,0,0.42))' }}
@@ -91,13 +112,30 @@ export default function Hero() {
       >
         {/* Balance Card */}
         <div className="model-u-card">
-          <span className="uppercase text-[#B9C5DF] text-[13px] font-extrabold">Your Balance</span>
+          <span className="uppercase text-[#B9C5DF] text-[13px] font-extrabold">YOUR BALANCE</span>
           <strong className="block text-[44px] my-2">$12.50</strong>
-          <em className="text-[#31F06F] font-extrabold not-italic">+$4.20 today</em>
+          <em className="text-[#31F06F] font-extrabold not-italic">+14.3% today</em>
           <div className="model-u-progress-bar my-4">
             <i className="model-u-progress-fill" style={{ width: '62%' }} />
           </div>
-          <small className="text-[#C1C9DD]">Min. $20 to withdraw</small>
+          <div className="flex justify-between items-center mb-4">
+            <small className="text-[#C1C9DD]">Pts. 820 to withdraw</small>
+            <small className="text-white font-bold">$12.50 / $20</small>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
+              <CreditCard size={18} className="text-[#31F06F]" />
+            </div>
+            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
+              <Gift size={18} className="text-[#18D9FF]" />
+            </div>
+            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
+              <Bitcoin size={18} className="text-[#FFC442]" />
+            </div>
+            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
+              <Banknote size={18} className="text-[#7C3DFF]" />
+            </div>
+          </div>
         </div>
 
         {/* Safe Offer Card */}

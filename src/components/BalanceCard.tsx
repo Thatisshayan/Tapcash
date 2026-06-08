@@ -1,45 +1,75 @@
 "use client";
 
-interface BalanceCardProps {
-  balance: number;
-  todayEarnings: number;
-  minWithdraw: number;
+import { CreditCard, Gift, Bitcoin, Banknote } from 'lucide-react';
+
+interface WithdrawMethod {
+  id: string;
+  label: string;
+  iconColor: string;
 }
 
-export default function BalanceCard({ balance, todayEarnings, minWithdraw }: BalanceCardProps) {
-  const progress = (balance / minWithdraw) * 100;
+interface BalanceCardProps {
+  balance: number;
+  growthPercent: number;
+  pointsToWithdraw: number;
+  currentAmount: number;
+  targetAmount: number;
+  withdrawMethods?: WithdrawMethod[];
+}
+
+export default function BalanceCard({ 
+  balance, 
+  growthPercent, 
+  pointsToWithdraw, 
+  currentAmount, 
+  targetAmount,
+  withdrawMethods = [
+    { id: 'paypal', label: 'PayPal', iconColor: '#31F06F' },
+    { id: 'giftcard', label: 'Gift Card', iconColor: '#18D9FF' },
+    { id: 'crypto', label: 'Crypto', iconColor: '#FFC442' },
+    { id: 'bank', label: 'Bank', iconColor: '#7C3DFF' }
+  ]
+}: BalanceCardProps) {
+  const progress = (currentAmount / targetAmount) * 100;
+  
+  const icons = {
+    paypal: CreditCard,
+    giftcard: Gift,
+    crypto: Bitcoin,
+    bank: Banknote
+  };
 
   return (
-    <div className="rounded-3xl border border-white/8 bg-[#1A1F2E] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">
-        YOUR BALANCE
-      </p>
+    <div className="model-u-card">
+      <span className="uppercase text-[#B9C5DF] text-[13px] font-extrabold">YOUR BALANCE</span>
+      <strong className="block text-[44px] my-2">${balance.toFixed(2)}</strong>
+      <em className="text-[#31F06F] font-extrabold not-italic">+{growthPercent}% today</em>
       
-      <div className="mt-3 flex items-baseline gap-2">
-        <p className="font-display text-5xl font-black text-white">
-          ${balance.toFixed(2)}
-        </p>
-        {todayEarnings > 0 && (
-          <span className="text-lg font-bold text-[#31F06F]">
-            +${todayEarnings.toFixed(2)} today
-          </span>
-        )}
+      <div className="relative model-u-progress-bar my-4">
+        <i 
+          className="model-u-progress-fill" 
+          style={{ width: `${Math.min(progress, 100)}%` }}
+        />
       </div>
-
-      <div className="mt-6 space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-400">Min. ${minWithdraw.toFixed(2)} to withdraw</span>
-          <span className="font-bold text-white">
-            ${balance.toFixed(2)} / ${minWithdraw.toFixed(2)}
-          </span>
-        </div>
-        
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[#31F06F] to-[#18D9FF] transition-all duration-500"
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
+      
+      <div className="flex justify-between items-center mb-4">
+        <small className="text-[#C1C9DD]">Pts. {pointsToWithdraw} to withdraw</small>
+        <small className="text-white font-bold">${currentAmount.toFixed(2)} / ${targetAmount.toFixed(2)}</small>
+      </div>
+      
+      <div className="flex gap-3">
+        {withdrawMethods.map((method) => {
+          const Icon = icons[method.id as keyof typeof icons] || CreditCard;
+          return (
+            <div 
+              key={method.id}
+              className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center"
+              title={method.label}
+            >
+              <Icon size={18} style={{ color: method.iconColor }} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
