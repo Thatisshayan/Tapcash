@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Manrope } from "next/font/google";
+import { Space_Grotesk, Manrope, Inter } from "next/font/google";
 import "./globals.css";
+import "../styles/premium.css";
 import { AuthProvider } from "../context/AuthContext";
 import GlobalNotificationListener from "@/components/GlobalNotificationListener";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
@@ -18,6 +19,15 @@ const manrope = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-manrope",
+  display: "swap",
+  preload: true,
+});
+
+// Inter font for Model U premium design
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
   display: "swap",
   preload: true,
 });
@@ -61,9 +71,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased dark`}
+      className={`${spaceGrotesk.variable} ${manrope.variable} ${inter.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
+      <body className="min-h-full flex flex-col model-u-gradient-hero-bg text-white">
         <AuthProvider>
           <GlobalNotificationListener />
           <ServiceWorkerRegistrar />
