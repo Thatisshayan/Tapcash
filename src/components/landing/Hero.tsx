@@ -96,10 +96,38 @@ export default function Hero() {
         <div className="relative w-[360px] h-[430px] rounded-[45%_45%_16%_16%] bg-gradient-to-b from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] flex items-center justify-center flex-col"
           style={{ filter: 'drop-shadow(0 38px 60px rgba(0,0,0,0.42))' }}
         >
-          <div className="text-[140px]">😊</div>
-          <div className="mt-[-28px] border border-[var(--model-u-line)] bg-[#060B16] rounded-[18px] px-6 py-10 text-[#18D9FF] font-black text-2xl">
-            TC
-          </div>
+          {/* SVG Character: Young person in hoodie holding phone */}
+          <svg viewBox="0 0 200 240" className="w-[200px] h-[240px]">
+            {/* Hoodie shadow */}
+            <ellipse cx="100" cy="230" rx="60" ry="12" fill="rgba(0,0,0,0.3)" />
+            
+            {/* Hoodie body */}
+            <path d="M50 160 L50 120 C50 90 70 70 100 70 C130 70 150 90 150 120 L150 160 L130 160 L130 200 C130 210 120 220 100 220 C80 220 70 210 70 200 L70 160 Z" fill="#1A1F2E" stroke="#31F06F" strokeWidth="2" />
+            
+            {/* Hood */}
+            <path d="M60 110 C60 80 80 65 100 65 C120 65 140 80 140 110 C130 110 125 115 125 125 L75 125 C75 115 70 110 60 110 Z" fill="#0D1117" stroke="#31F06F" strokeWidth="1" />
+            
+            {/* Phone in hand - pointing gesture */}
+            <rect x="115" y="130" width="35" height="55" rx="6" fill="#0A0F1A" stroke="#7C3DFF" strokeWidth="1.5" />
+            <rect x="120" y="135" width="25" height="45" rx="3" fill="#18D9FF" opacity="0.8" />
+            <circle cx="132.5" cy="155" r="3" fill="#FFFFFF" opacity="0.9" />
+            
+            {/* Arm pointing to phone */}
+            <path d="M140 140 C155 145 165 150 175 155" stroke="#18D9FF" strokeWidth="8" strokeLinecap="round" opacity="0.7" />
+            
+            {/* Face */}
+            <circle cx="100" cy="100" r="25" fill="#F8FAFC" />
+            <circle cx="90" cy="95" r="5" fill="#050813" />
+            <circle cx="110" cy="95" r="5" fill="#050813" />
+            <path d="M85 110 C95 120 105 120 115 110" stroke="#050813" strokeWidth="2" fill="none" />
+            
+            {/* Hoodie strings */}
+            <line x1="98" y1="125" x2="98" y2="135" stroke="#31F06F" strokeWidth="1" />
+            <line x1="102" y1="125" x2="102" y2="135" stroke="#31F06F" strokeWidth="1" />
+            
+            {/* TC badge */}
+            <text x="122" y="165" fill="#31F06F" fontWeight="bold" fontSize="14">TC</text>
+          </svg>
         </div>
       </motion.div>
 
