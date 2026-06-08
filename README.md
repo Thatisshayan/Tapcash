@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TapCash
 
-## Getting Started
+**Premium Rewards Platform** — Complete verified offers, track every step, and cash out when rewards clear.
 
-First, run the development server:
+---
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local  # Fill in your Firebase + API keys
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Auth | Firebase Authentication |
+| Database | Firestore (via Firebase Admin) |
+| Payments | PayPal, Interac e-Transfer, Tremendous Gift Cards |
+| Offers | Lootably, RapidoReach |
+| UI | Tailwind CSS 4, Framer Motion, Lucide React |
+| Animation | Framer Motion |
+| Testing | Jest, Playwright |
+| CI/CD | GitHub Actions → Vercel |
+| Mobile | React Native / Expo (in /mobile/) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+├── app/          # Next.js App Router pages
+├── components/   # Reusable UI components
+├── context/      # React context providers
+├── lib/          # Utilities & services
+└── styles/       # Theme & premium CSS
 
-To learn more about Next.js, take a look at the following resources:
+docs/             # Full documentation
+├── API_DOCUMENTATION.md
+├── DEPLOYMENT_GUIDE.md
+├── DEVELOPER_GUIDE.md
+├── USER_GUIDE.md
+├── SECURITY_DOCUMENTATION.md
+└── ...
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Key Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ✅ Firebase Auth + email verification
+- ✅ Ledger-backed balance system
+- ✅ Lootably & RapidoReach offerwalls
+- ✅ Fraud detection (VPN, bot, device fingerprinting, rate limiting)
+- ✅ Admin panel (dashboard, users, transactions, offers, fraud)
+- ✅ Payouts (PayPal, Interac, Tremendous gift cards)
+- ✅ Real-time updates (Firestore listeners)
+- ✅ PWA with push notifications
+- ✅ Premium Model-U design system
+- ✅ WCAG 2.1 AA accessibility
+- ✅ Full test suite (Jest + Playwright)
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm start` | Start production server |
+| `npm run lint` | ESLint check |
+| `npm test` | Run Jest tests |
+| `npm run test:watch` | Watch mode tests |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for full deployment instructions.
+
+## Documentation
+
+All documentation is in the [`docs/`](./docs/) directory:
+
+- [API Reference](./docs/API_DOCUMENTATION.md)
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
+- [User Guide](./docs/USER_GUIDE.md)
+- [Security Documentation](./docs/SECURITY_DOCUMENTATION.md)
+- [Production Checklist](./docs/PRODUCTION_CHECKLIST.md)
