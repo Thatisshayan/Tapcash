@@ -9,7 +9,7 @@ import {
   tapCashOffers,
   tapCashLedgerSummary,
   TapCashOffer,
-} from "../../../../shared/tapcash-content";
+} from "@shared/tapcash-content";
 
 export default function OfferDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

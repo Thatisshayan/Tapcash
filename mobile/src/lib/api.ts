@@ -1,4 +1,4 @@
-import { tapCashActivity, tapCashLeaderboardSeed, tapCashOffers, tapCashPayoutMethods } from "../../../shared/tapcash-content";
+import { tapCashActivity, tapCashLeaderboardSeed, tapCashOffers, tapCashPayoutMethods } from "@shared/tapcash-content";
 
 const API_BASE_URL =
   typeof window !== "undefined" && window.location?.origin

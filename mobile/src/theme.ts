@@ -9,10 +9,19 @@ export const tapCashTheme = {
     accent: "#00e6c3",
     accentBlue: "#3a7bff",
     accentGold: "#f5c842",
+    purple: "#6D28D9",
+    yellow: "#F59E0B",
+    cyan: "#16E0D2",
+    green: "#35E317",
   },
   radius: {
     xl: 28,
     lg: 24,
     md: 18,
+  },
+  spacing: {
+    sm: 8,
+    md: 16,
+    lg: 24,
   },
 };

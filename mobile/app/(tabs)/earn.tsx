@@ -3,22 +3,22 @@ import { ScrollView, View, Text, StyleSheet } from "react-native";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { loadOffers } from "../../src/lib/api";
 import { tapCashTheme } from "../../src/theme";
-import { formatCoins, tapCashOffers } from "../../../shared/tapcash-content";
+import { formatCoins, TapCashOffer, tapCashOffers } from "@shared/tapcash-content";
 
 export default function EarnScreen() {
-  const [offers, setOffers] = useState(tapCashOffers);
+  const [offers, setOffers] = useState<TapCashOffer[]>(tapCashOffers);
 
   useEffect(() => {
     let mounted = true;
     loadOffers().then((items) => {
       if (mounted && Array.isArray(items) && items.length > 0) {
         setOffers(
-          items.slice(0, 4).map((offer: any) => ({
+          items.slice(0, 4).map((offer) => ({
             id: offer.id,
             title: offer.title,
             provider: offer.provider,
             category: offer.category ?? "Offer",
-            payoutCoins: offer.payoutCoins ?? offer.payout ?? 0,
+            payoutCoins: offer.payoutCoins ?? 0,
             estimateMinutes: offer.estimateMinutes ?? 10,
             description: offer.description ?? "",
             accent: offer.accent ?? "teal",
