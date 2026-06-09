@@ -1,6 +1,6 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AppState } from "react-native";
-import * as Device from "expo-device";
+import { Device } from "expo-device";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
