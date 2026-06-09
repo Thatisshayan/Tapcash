@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ScrollView, View, Text, StyleSheet } from "react-native";
+import { ScrollView, View, Text, StyleSheet, RefreshControl } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { loadOffers } from "../../src/lib/api";
 import { tapCashTheme } from "../../src/theme";
@@ -7,34 +8,50 @@ import { formatCoins, TapCashOffer, tapCashOffers } from "@shared/tapcash-conten
 
 export default function EarnScreen() {
   const [offers, setOffers] = useState<TapCashOffer[]>(tapCashOffers);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOffers = async () => {
+    const items = await loadOffers();
+    if (Array.isArray(items) && items.length > 0) {
+      setOffers(
+        (items as TapCashOffer[]).slice(0, 4).map((offer) => ({
+          id: offer.id,
+          title: offer.title,
+          provider: offer.provider,
+          category: offer.category ?? "Offer",
+          payoutCoins: offer.payoutCoins ?? 0,
+          estimateMinutes: offer.estimateMinutes ?? 10,
+          description: offer.description ?? "",
+          accent: offer.accent ?? "teal",
+          cta: offer.cta ?? "Open",
+        }))
+      );
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-    loadOffers().then((items) => {
-      if (mounted && Array.isArray(items) && items.length > 0) {
-        setOffers(
-          (items as TapCashOffer[]).slice(0, 4).map((offer) => ({
-            id: offer.id,
-            title: offer.title,
-            provider: offer.provider,
-            category: offer.category ?? "Offer",
-            payoutCoins: offer.payoutCoins ?? 0,
-            estimateMinutes: offer.estimateMinutes ?? 10,
-            description: offer.description ?? "",
-            accent: offer.accent ?? "teal",
-            cta: offer.cta ?? "Open",
-          }))
-        );
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
+    fetchOffers();
   }, []);
 
+  const onRefresh = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRefreshing(true);
+    await fetchOffers();
+    setRefreshing(false);
+  };
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.screen} 
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={tapCashTheme.colors.accent}
+        />
+      }
+    >
       <ScreenFrame
         eyebrow="Earn"
         title="Best-fit offers first."

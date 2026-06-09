@@ -7,4 +7,5 @@ export interface Offer {
   provider: string;
   image?: string;
   category?: string;
+  deepLink?: string;
 }

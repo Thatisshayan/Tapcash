@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { tapCashTheme } from "../../../src/theme";
 import {
   formatCoins,
@@ -143,7 +144,10 @@ export default function OfferDetailScreen() {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <Pressable style={[styles.startBtn, { backgroundColor: accent }]}>
+<Pressable 
+        style={[styles.startBtn, { backgroundColor: accent }]} 
+        onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+      >
           <Text style={styles.startText}>{offer.cta}</Text>
         </Pressable>
       </View>

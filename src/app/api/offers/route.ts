@@ -28,6 +28,7 @@ function transformOffer(survey: RapidoReachSurvey): Offer {
     provider: 'rapidoreach',
     image: 'https://rapidoreach.com/wp-content/uploads/2021/08/favicon.png',
     category: 'Survey',
+    deepLink: `tapcash://offer/${survey.SurveyNumber}`,
   };
 }
 
