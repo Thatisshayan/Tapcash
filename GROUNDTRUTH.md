@@ -9,7 +9,8 @@
 
 | Commit | Message |
 |--------|---------|
-| `a4f2a4c` | fix: update expo imports for Device and clean up push notifications service |
+| `ad1df55` | fix: admin stats uses correct fraud_flags collection and optimized transactions query |
+| `083644a` | docs: add ground truth handoff document |
 | `454c85e` | docs: add comprehensive production deployment checklist |
 | `7778ac2` | feat: add push notification service and GDPR export API |
 | `21e554d` | feat: mobile enhancements - haptics, pull-to-refresh, deep linking, biometric auth, push notifications, GDPR export |
