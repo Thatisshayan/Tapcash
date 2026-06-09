@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     // Fetch platform statistics
     const [usersSnapshot, transactionsSnapshot, offersSnapshot] = await Promise.all([
       adminDb.collection('users').get(),
-      adminDb.collection('transactions').get(),
+      adminDb.collection('transactions').orderBy('timestamp', 'desc').get(),
       adminDb.collection('offers').get()
     ]);
 
@@ -64,19 +64,14 @@ export async function GET(request: NextRequest) {
     const conversionRate = totalClicks > 0 ? totalConversions / totalClicks : 0;
 
     // Get fraud alerts
-    const fraudAlertsSnapshot = await adminDb.collection('fraud_alerts')
+    const fraudAlertsSnapshot = await adminDb.collection('fraud_flags')
       .where('status', '==', 'pending')
       .get();
     const fraudAlerts = fraudAlertsSnapshot.size;
 
-    // Get recent transactions (last 10)
-    const recentTransactionsSnapshot = await adminDb.collection('transactions')
-      .orderBy('timestamp', 'desc')
-      .limit(10)
-      .get();
-
+    // Get recent transactions (last 10) - already sorted by query
     const recentTransactions = await Promise.all(
-      recentTransactionsSnapshot.docs.map(async (doc) => {
+      transactionsSnapshot.docs.slice(0, 10).map(async (doc) => {
         const txData = doc.data();
         const userDoc = await adminDb.collection('users').doc(txData.userId).get();
         const userData = userDoc.data();
