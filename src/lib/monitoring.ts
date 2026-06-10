@@ -343,8 +343,8 @@ export class ErrorBoundary {
 /**
  * API monitoring middleware
  */
-export function monitorAPI(endpoint: string, method: string) {
-  return async (handler: Function) => {
+export function monitorAPI<T = any>(endpoint: string, method: string) {
+  return async (handler: () => Promise<T>): Promise<T> => {
     const timer = new PerformanceTimer(`api_${method}_${endpoint}`);
     let statusCode = 200;
 
