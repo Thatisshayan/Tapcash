@@ -4,17 +4,10 @@ test.describe('TapCash Core User Flows', () => {
   test('should load the landing page and display main CTA', async ({ page }) => {
     await page.goto('/');
     
-    // Expect the title to have TapCash
     await expect(page).toHaveTitle(/TapCash/i);
     
-    // Check for a visible Sign In or Get Started button
-    const getStartedBtn = page.getByRole('link', { name: /START EARNING/i }).first();
-    if (await getStartedBtn.isVisible()) {
-      await expect(getStartedBtn).toBeVisible();
-    } else {
-      const signInBtn = page.getByRole('link', { name: /SIGN IN/i }).first();
-      await expect(signInBtn).toBeVisible();
-    }
+    const signUpBtn = page.getByRole('button', { name: /Sign Up Free/i }).first();
+    await expect(signUpBtn).toBeVisible();
   });
 
   test('should have working navigation to policy pages', async ({ page }) => {
@@ -30,25 +23,23 @@ test.describe('TapCash Core User Flows', () => {
   test('Dashboard should show unauthenticated hero view for guests', async ({ page }) => {
     await page.goto('/dashboard');
     
-    const heroText = page.locator('text=Earn Cash Effortlessly Completing Fast Tasks');
+    const heroText = page.locator('text=Sign in to open your dashboard');
     await expect(heroText).toBeVisible();
     
-    const signInBtn = page.getByRole('link', { name: /Sign In/i }).first();
+    const signInBtn = page.getByRole('link', { name: /Sign in/i }).first();
     await expect(signInBtn).toBeVisible();
   });
 
-  test('Referrals should redirect unauthenticated users to home', async ({ page }) => {
+  test('Referrals should show access gate for unauthenticated users', async ({ page }) => {
     await page.goto('/referrals');
     
-    // The referral page has an "Authentication Required" state for unauthenticated users instead of an automatic redirect.
-    // It shows a "Return Home" button.
-    const authRequiredText = page.locator('text=Authentication Required');
-    await expect(authRequiredText).toBeVisible();
+    const accessText = page.locator('text=Access Restricted');
+    await expect(accessText).toBeVisible();
     
-    const returnHomeBtn = page.getByRole('link', { name: /Return Home/i });
-    await expect(returnHomeBtn).toBeVisible();
-    await returnHomeBtn.click();
+    const signInBtn = page.getByRole('link', { name: /Sign In Now/i });
+    await expect(signInBtn).toBeVisible();
+    await signInBtn.click();
     
-    await expect(page).toHaveURL(/.*?\/?$/); // matches home
+    await expect(page).toHaveURL(/.*signin/);
   });
 });
