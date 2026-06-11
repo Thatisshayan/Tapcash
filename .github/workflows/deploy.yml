@@ -218,8 +218,10 @@ jobs:
       - name: Run smoke tests
         run: |
           sleep 10
-          vercel curl ${{ steps.deploy.outputs.url }} --token=${{ secrets.VERCEL_TOKEN }} > /dev/null
-          vercel curl ${{ steps.deploy.outputs.url }}/api/health --token=${{ secrets.VERCEL_TOKEN }} > /dev/null
+          vercel curl ${{ steps.deploy.outputs.url }} > /dev/null
+          vercel curl ${{ steps.deploy.outputs.url }}/api/health > /dev/null
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy Firebase Functions
         uses: w9jds/firebase-action@master
