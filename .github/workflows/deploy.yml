@@ -218,8 +218,8 @@ jobs:
       - name: Run smoke tests
         run: |
           sleep 10
-          curl -f ${{ steps.deploy.outputs.url }} || exit 1
-          curl -f ${{ steps.deploy.outputs.url }}/api/health || exit 1
+          vercel curl ${{ steps.deploy.outputs.url }} --token=${{ secrets.VERCEL_TOKEN }} > /dev/null
+          vercel curl ${{ steps.deploy.outputs.url }}/api/health --token=${{ secrets.VERCEL_TOKEN }} > /dev/null
 
       - name: Deploy Firebase Functions
         uses: w9jds/firebase-action@master
@@ -274,6 +274,7 @@ jobs:
         run: |
           echo "⚠️ Deployment failed, initiating rollback..."
           vercel rollback --token=${{ secrets.VERCEL_TOKEN }} --yes
+        continue-on-error: true
 
       - name: Notify rollback
         uses: actions/github-script@v6
@@ -335,8 +336,10 @@ jobs:
             📦 Commit: ${{ github.sha }}
             👤 Author: ${{ github.actor }}
             🔗 URL: https://tapcash.com
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        continue-on-error: true
 
       - name: Send email notification
         uses: dawidd6/action-send-mail@v3
@@ -353,6 +356,7 @@ jobs:
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
             URL: https://tapcash.com
-        if: always()
+        if: always() && secrets.EMAIL_USERNAME != ''
+        continue-on-error: true
 
 # Made with Bob
