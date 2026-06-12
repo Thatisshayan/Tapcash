@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { BadgeCheck, Clock, Loader2, ShieldCheck } from "lucide-react";
-import Header from "@/components/Header";
+import PremiumHeader from "@/components/layout/PremiumHeader";
+import PremiumFooter from "@/components/layout/PremiumFooter";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
@@ -60,7 +61,7 @@ export default function TransactionsLedgerPage() {
   if (authLoading || (user && loading)) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <Header />
+        <PremiumHeader />
         <div className="flex min-h-[70vh] items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
         </div>
@@ -71,7 +72,7 @@ export default function TransactionsLedgerPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <Header />
+        <PremiumHeader />
         <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
           <div className="w-full rounded-[2rem] border border-white/8 bg-white/[0.03] p-8 text-center">
             <ShieldCheck className="mx-auto h-12 w-12 text-[#8cf8e9]" />
@@ -83,13 +84,14 @@ export default function TransactionsLedgerPage() {
             </div>
           </div>
         </main>
+      <PremiumFooter />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#040913] text-white">
-      <Header />
+      <PremiumHeader />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
           <PageShell eyebrow="Ledger clarity" title="Every reward, reversal, and cashout in one cleaner timeline." description="The ledger is presented like a product surface, not a raw database dump." kicker={<BadgeCheck className="h-6 w-6 text-[#8cf8e9]" />}>
@@ -174,6 +176,7 @@ export default function TransactionsLedgerPage() {
           </div>
         </div>
       </main>
+      <PremiumFooter />
     </div>
   );
 }

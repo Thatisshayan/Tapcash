@@ -3,6 +3,7 @@ import { Space_Grotesk, Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import "../styles/premium.css";
 import { AuthProvider } from "../context/AuthContext";
+import { ABTestProvider } from "../context/ABTestContext";
 import GlobalNotificationListener from "@/components/GlobalNotificationListener";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import VercelAnalytics from "@/components/VercelAnalytics";
@@ -75,12 +76,14 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${manrope.variable} ${inter.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col model-u-gradient-hero-bg text-white">
-        <AuthProvider>
-          <GlobalNotificationListener />
-          <ServiceWorkerRegistrar />
-          <VercelAnalytics />
-          {children}
-        </AuthProvider>
+        <ABTestProvider>
+          <AuthProvider>
+            <GlobalNotificationListener />
+            <ServiceWorkerRegistrar />
+            <VercelAnalytics />
+            {children}
+          </AuthProvider>
+        </ABTestProvider>
       </body>
     </html>
   );

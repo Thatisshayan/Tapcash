@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Activity, Loader2, Lock, ShieldCheck, Sparkles, BadgeCheck } from "lucide-react";
-import Header from "@/components/Header";
+import PremiumHeader from "@/components/layout/PremiumHeader";
+import PremiumFooter from "@/components/layout/PremiumFooter";
 import { useAuth } from "@/context/AuthContext";
 import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
 import { rapidoReachTrustPoints } from "@shared/tapcash-content";
@@ -51,7 +52,7 @@ export default function RapidoReachPage() {
 
   return (
     <div className="min-h-screen bg-[#050813] text-white">
-      <Header />
+      <PremiumHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -175,6 +176,7 @@ export default function RapidoReachPage() {
           </MotionWrap>
         </div>
       </main>
+      <PremiumFooter />
     </div>
   );
 }

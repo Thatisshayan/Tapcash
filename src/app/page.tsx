@@ -1,6 +1,6 @@
 import PremiumHeader from '@/components/layout/PremiumHeader';
 import PremiumFooter from '@/components/layout/PremiumFooter';
-import Hero from '@/components/landing/Hero';
+import HeroDynamic from '@/components/landing/HeroDynamic';
 import TopOffers from '@/components/landing/TopOffers';
 import CashPathLive from '@/components/landing/CashPathLive';
 import AppPreview from '@/components/landing/AppPreview';
@@ -23,7 +23,7 @@ export default function HomePage() {
       <PremiumHeader />
       
       <main className="model-u-page">
-        <Hero />
+        <HeroDynamic />
         <TopOffers />
         <CashPathLive />
         <AppPreview />

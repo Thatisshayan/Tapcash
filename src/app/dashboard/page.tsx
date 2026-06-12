@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { ArrowRight, BadgeCheck, CircleGauge, Loader2, Sparkles, ShieldCheck, Trophy, Wallet } from "lucide-react";
-import Header from "@/components/Header";
+import PremiumHeader from "@/components/layout/PremiumHeader";
+import PremiumFooter from "@/components/layout/PremiumFooter";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { accentClass, formatCadFromCoins, formatCoins, tapCashActivity, tapCashLeaderboardSeed, tapCashOffers } from "@shared/tapcash-content";
@@ -126,7 +127,7 @@ export default function DashboardPage() {
   if (authLoading || (user && loading && !ledger)) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <Header />
+        <PremiumHeader />
         <div className="flex min-h-[70vh] items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
         </div>
@@ -137,7 +138,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <Header />
+        <PremiumHeader />
         <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
           <MotionWrap>
             <PageShell eyebrow="Authentication" title="Sign in to open your dashboard" description="The full ledger, offer data, and cashout queue open after authentication.">
@@ -148,6 +149,7 @@ export default function DashboardPage() {
             </PageShell>
           </MotionWrap>
         </main>
+        <PremiumFooter />
       </div>
     );
   }
@@ -165,7 +167,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#040913] text-white">
-      <Header />
+      <PremiumHeader />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
           <PageShell eyebrow="Dashboard" title="A cleaner place to scan rewards, balance, and next actions." description="TapCash keeps the primary screen focused on what matters: verified state, payout path, and the strongest next CTA.">
@@ -335,6 +337,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      <PremiumFooter />
     </div>
   );
 }

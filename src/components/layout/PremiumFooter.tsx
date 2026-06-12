@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
-import { MessageCircle, Mail, Share2, Github, Linkedin, Twitter } from 'lucide-react';
+import { MessageCircle, Mail, Share2, Globe, Users, ExternalLink } from 'lucide-react';
 
 export default function PremiumFooter() {
   const footerSections = [
@@ -41,13 +41,13 @@ export default function PremiumFooter() {
   ];
 
   const socialLinks = [
-    { icon: Twitter, href: 'https://twitter.com/tapcash', label: 'Twitter' },
-    { icon: Github, href: 'https://github.com/tapcash', label: 'GitHub' },
-    { icon: Linkedin, href: 'https://linkedin.com/company/tapcash', label: 'LinkedIn' },
+    { icon: Globe, href: 'https://twitter.com/tapcash', label: 'Twitter' },
+    { icon: Users, href: 'https://github.com/tapcash', label: 'GitHub' },
+    { icon: ExternalLink, href: 'https://linkedin.com/company/tapcash', label: 'LinkedIn' },
     { icon: Mail, href: 'mailto:support@tapcash.online', label: 'Email' },
   ];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -58,12 +58,12 @@ export default function PremiumFooter() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 10 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, ease: 'easeOut' },
+      transition: { duration: 0.4 },
     },
   };
 
