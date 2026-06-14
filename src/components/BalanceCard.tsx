@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { CreditCard, Gift, Bitcoin, Banknote, TrendingUp } from 'lucide-react';
 
 interface WithdrawMethod {
@@ -49,7 +49,7 @@ export default function BalanceCard({
         delayChildren: 0.1,
       },
     },
-  };
+  } satisfies Variants;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -58,7 +58,7 @@ export default function BalanceCard({
       y: 0,
       transition: { duration: 0.4, ease: 'easeOut' },
     },
-  };
+  } satisfies Variants;
 
   return (
     <motion.div

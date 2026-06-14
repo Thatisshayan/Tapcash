@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { ShieldCheck, ChevronRight, CreditCard, Gift, Bitcoin, Banknote } from 'lucide-react';
 import Image from 'next/image';
 
@@ -15,7 +15,7 @@ export default function Hero() {
         delayChildren: 0.1,
       },
     },
-  };
+  } satisfies Variants;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -24,7 +24,7 @@ export default function Hero() {
       y: 0,
       transition: { duration: 0.7, ease: 'easeOut' },
     },
-  };
+  } satisfies Variants;
 
   const floatingVariants = {
     animate: {
@@ -35,7 +35,7 @@ export default function Hero() {
         ease: 'easeInOut',
       },
     },
-  };
+  } satisfies Variants;
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr_0.9fr] gap-8 items-center min-h-[600px] py-12 lg:py-20">

@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Shield, Users, TrendingUp, Award } from 'lucide-react';
 
 const trustItems = [
@@ -44,7 +44,7 @@ export default function TrustStrip() {
         delayChildren: 0.2,
       },
     },
-  };
+  } satisfies Variants;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -53,7 +53,7 @@ export default function TrustStrip() {
       y: 0,
       transition: { duration: 0.5, ease: 'easeOut' },
     },
-  };
+  } satisfies Variants;
 
   return (
     <section className="mt-12 lg:mt-16">

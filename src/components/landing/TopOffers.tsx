@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Flame, ChevronRight, Zap, TrendingUp, CheckCircle } from 'lucide-react';
 import { sampleOffers } from '@/styles/theme';
 import Image from 'next/image';
@@ -24,7 +24,7 @@ export default function TopOffers() {
         delayChildren: 0.2,
       },
     },
-  };
+  } satisfies Variants;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -33,7 +33,7 @@ export default function TopOffers() {
       y: 0,
       transition: { duration: 0.5, ease: 'easeOut' },
     },
-  };
+  } satisfies Variants;
 
   return (
     <section className="model-u-card mt-8">
