@@ -20,10 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["./shared/*"],
-      "firebase/auth": ["./types/firebase-auth.d.ts"],
-      "firebase/firestore": ["./types/firebase-firestore.d.ts"],
-      "firebase/functions": ["./types/firebase-functions.d.ts"]
+      "@shared/*": ["./shared/*"]
     }
   },
   "include": [
