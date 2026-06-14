@@ -200,16 +200,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel (Production)
-        id: vercel-deploy
-        uses: amondnet/vercel-action@v25
-        timeout-minutes: 10
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -221,12 +222,32 @@ jobs:
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
 
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Link Vercel Project
+        run: vercel link --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel (Production)
+        id: vercel-deploy
+        run: |
+          echo "Deploying to production..."
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes | tail -1)
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOY_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Run smoke tests
-        if: steps.vercel-deploy.outputs.url != ''
+        if: steps.vercel-deploy.outputs.deploy_url != ''
         run: |
           sleep 15
-          curl -sf "${{ steps.vercel-deploy.outputs.url }}" > /dev/null
-          curl -sf "${{ steps.vercel-deploy.outputs.url }}/api/health" > /dev/null
+          curl -sf "${{ steps.vercel-deploy.outputs.deploy_url }}" > /dev/null
+          curl -sf "${{ steps.vercel-deploy.outputs.deploy_url }}/api/health" > /dev/null
 
       - name: Deploy Firebase Functions
         if: needs.validate-secrets.outputs.has-firebase == 'true'
@@ -248,7 +269,7 @@ jobs:
         run: |
           echo "Production deployment successful!"
           echo "Version: ${{ github.sha }}"
-          echo "URL: ${{ steps.vercel-deploy.outputs.url }}"
+          echo "URL: ${{ steps.vercel-deploy.outputs.deploy_url }}"
           echo "Deployed by: ${{ github.actor }}"
 
   # Performance testing after deployment
