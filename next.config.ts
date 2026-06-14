@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  dynamicParams: true,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lootably.com" },
@@ -20,16 +19,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    ppr: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
   staticPageGenerationTimeout: 120,
   skipTrailingSlashRedirect: true,
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
-    ppr: false,
-  },
   async headers() {
     return [
       {
