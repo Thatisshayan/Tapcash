@@ -1,10 +1,5 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -45,7 +40,7 @@ const nextConfig: NextConfig = {
     ];
   },
   turbopack: {
-    root: resolve(__dirname),
+    root: process.cwd(),
   },
   async redirects() {
     return [
