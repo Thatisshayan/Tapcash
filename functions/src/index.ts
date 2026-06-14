@@ -1,9 +1,10 @@
 import * as functions from "firebase-functions/v1";
-import * as admin from "firebase-admin";
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
-admin.initializeApp();
+initializeApp();
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // 1. Auth Hook: Initialize user profile on new signup
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
@@ -12,8 +13,8 @@ export const onUserCreated = functions.auth.user().onCreate(async (user) => {
 
   batch.set(userRef, {
       email: user.email,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      lastLogin: FieldValue.serverTimestamp(),
     });
 
   await batch.commit();
@@ -47,7 +48,7 @@ export const completeTask = functions.https.onCall(async (data: any, context: an
         offerId,
         rewardCents,
         status: "completed",
-        completedAt: admin.firestore.FieldValue.serverTimestamp()
+        completedAt: FieldValue.serverTimestamp()
       });
 
       transaction.set(ledgerRef, {
@@ -60,8 +61,8 @@ export const completeTask = functions.https.onCall(async (data: any, context: an
         source: "cloud_function_task",
         referenceId: taskId,
         metadata: { offerId, rewardCents },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       const auditRef = db.collection("audit").doc();
@@ -71,7 +72,7 @@ export const completeTask = functions.https.onCall(async (data: any, context: an
         taskId,
         offerId,
         rewardCents,
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
+        timestamp: FieldValue.serverTimestamp()
       });
     });
 
@@ -118,8 +119,8 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
         method,
         payoutAddress,
         status: "pending_review",
-        requestedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        requestedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -132,8 +133,8 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
         source: "cloud_function_cashout",
         referenceId: withdrawalRef.id,
         metadata: { method, payoutAddress },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
       
       const auditRef = db.collection("audit").doc();
@@ -142,7 +143,7 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
         uid,
         amountCents,
         method,
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
+        timestamp: FieldValue.serverTimestamp()
       });
     });
 
