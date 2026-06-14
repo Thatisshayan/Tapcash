@@ -237,6 +237,7 @@ jobs:
       - name: Deploy Firebase Functions
         if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
+        continue-on-error: true
         with:
           args: deploy --only functions
         env:
@@ -245,6 +246,7 @@ jobs:
       - name: Deploy Firestore Rules
         if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
+        continue-on-error: true
         with:
           args: deploy --only firestore:rules,firestore:indexes
         env:
