@@ -80,10 +80,6 @@ export function ABTestProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ABTestContext.Provider value={{ heroVariant, setHeroVariant: handleSetHeroVariant, userId, sessionId, trackEvent }}>
       {children}
