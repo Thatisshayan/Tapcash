@@ -234,7 +234,6 @@ jobs:
       - name: Deploy Firebase Functions
         if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
-        continue-on-error: true
         with:
           args: deploy --only functions
         env:
@@ -243,7 +242,6 @@ jobs:
       - name: Deploy Firestore Rules
         if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
-        continue-on-error: true
         with:
           args: deploy --only firestore:rules,firestore:indexes
         env:
@@ -276,11 +274,11 @@ jobs:
         run: npm install -g @lhci/cli
 
       - name: Run Lighthouse
-        run: |
-          lhci autorun --collect.url=https://tapcash.online --collect.numberOfRuns=3
+        run: lhci autorun
         continue-on-error: true
 
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: lighthouse-results
           path: .lighthouseci
@@ -290,7 +288,7 @@ jobs:
   notify:
     name: Notify Team
     runs-on: ubuntu-latest
-    needs: [deploy-production, performance]
+    needs: [deploy-production]
     if: always()
     
     steps:
