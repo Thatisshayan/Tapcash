@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       has-vercel: ${{ steps.check.outputs.has-vercel }}
-      has-firebase: ${{ steps.check.outputs.has-firebase }}
     steps:
       - name: Check required secrets
         id: check
@@ -29,12 +28,6 @@ jobs:
           else
             echo "has-vercel=false" >> $GITHUB_OUTPUT
             echo "::warning::VERCEL_TOKEN secret is not set. Deployment will be skipped."
-          fi
-          if [ -n "${{ secrets.FIREBASE_TOKEN }}" ]; then
-            echo "has-firebase=true" >> $GITHUB_OUTPUT
-          else
-            echo "has-firebase=false" >> $GITHUB_OUTPUT
-            echo "::warning::FIREBASE_TOKEN secret is not set. Firebase deploy will be skipped."
           fi
 
   # Run tests on all PRs and pushes
@@ -203,9 +196,6 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install Firebase Functions dependencies
-        run: npm ci --prefix functions --legacy-peer-deps
-
       - name: Link Vercel Project
         run: vercel link --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
@@ -233,24 +223,6 @@ jobs:
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "Warning: Site returned $HTTP_STATUS instead of 200, but deployment may still be propagating"
           fi
-
-      - name: Deploy Firebase Functions
-        if: needs.validate-secrets.outputs.has-firebase == 'true'
-        uses: w9jds/firebase-action@master
-        continue-on-error: true
-        with:
-          args: deploy --only functions
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
-      - name: Deploy Firestore Rules
-        if: needs.validate-secrets.outputs.has-firebase == 'true'
-        uses: w9jds/firebase-action@master
-        continue-on-error: true
-        with:
-          args: deploy --only firestore:rules,firestore:indexes
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Create deployment notification
         run: |
