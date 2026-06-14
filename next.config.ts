@@ -21,9 +21,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "framer-motion"],
     ppr: false,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   staticPageGenerationTimeout: 120,
   skipTrailingSlashRedirect: true,
   async headers() {

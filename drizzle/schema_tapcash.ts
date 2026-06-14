@@ -16,6 +16,9 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
+// Note: This schema file is for reference. 
+// Use the actual schema from drizzle/schema.ts in your project.
+
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const userStatusEnum = pgEnum('user_status', ['active', 'suspended', 'flagged']);
