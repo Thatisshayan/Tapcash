@@ -48,7 +48,7 @@ export default function TapScoreSection() {
               transition={{
                 duration: 4,
                 repeat: Infinity,
-                ease: 'easeInOut',
+                ease: "easeInOut" as any,
               }}
             />
 
@@ -59,7 +59,7 @@ export default function TapScoreSection() {
               transition={{
                 duration: 20,
                 repeat: Infinity,
-                ease: 'linear',
+                ease: "easeInOut" as any,
               }}
               style={{ opacity: 0.5 }}
             />

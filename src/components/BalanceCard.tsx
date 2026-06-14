@@ -56,7 +56,7 @@ export default function BalanceCard({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, ease: 'easeOut' },
+      transition: { duration: 0.4 },
     },
   } satisfies Variants;
 
@@ -107,7 +107,7 @@ export default function BalanceCard({
             className="model-u-progress-fill absolute top-0 left-0 h-full rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${Math.min(progress, 100)}%` }}
-            transition={{ delay: 0.4, duration: 1.2, ease: 'easeOut' }}
+            transition={{ delay: 0.4, duration: 1.2 }}
           />
         </div>
         

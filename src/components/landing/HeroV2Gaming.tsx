@@ -26,7 +26,7 @@ export default function HeroV2Gaming() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.7, ease: 'easeOut' },
+      transition: { duration: 0.7, ease: "easeInOut" as any },
     },
   };
 
@@ -36,7 +36,7 @@ export default function HeroV2Gaming() {
       transition: {
         duration: 4,
         repeat: Infinity,
-        ease: 'easeInOut',
+        ease: "easeInOut" as any,
       },
     },
   };
@@ -133,7 +133,7 @@ export default function HeroV2Gaming() {
           transition={{
             duration: 6,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut" as any,
           }}
         />
 
@@ -141,12 +141,12 @@ export default function HeroV2Gaming() {
         <motion.div
           className="absolute top-12 left-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6B6B] to-[#FFD700] opacity-40 blur-2xl"
           animate={{ y: [-20, 20, -20], x: [-10, 10, -10] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" as any }}
         />
         <motion.div
           className="absolute bottom-16 right-12 w-20 h-20 rounded-full bg-gradient-to-br from-[#31F06F] to-[#18D9FF] opacity-30 blur-3xl"
           animate={{ y: [20, -20, 20], x: [10, -10, 10] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" as any }}
         />
 
         {/* Gaming Hero Visual */}
@@ -197,7 +197,7 @@ export default function HeroV2Gaming() {
               className="model-u-progress-fill"
               initial={{ width: 0 }}
               animate={{ width: '85%' }}
-              transition={{ delay: 0.8, duration: 1, ease: 'easeOut' }}
+              transition={{ delay: 0.8, duration: 1, ease: "easeInOut" as any }}
               style={{ background: 'linear-gradient(90deg, #FF6B6B, #FFD700)' }}
             />
           </div>

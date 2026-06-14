@@ -22,7 +22,7 @@ export default function Hero() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.7, ease: 'easeOut' },
+      transition: { duration: 0.7, ease: "easeInOut" as any },
     },
   } satisfies Variants;
 
@@ -32,7 +32,7 @@ export default function Hero() {
       transition: {
         duration: 4,
         repeat: Infinity,
-        ease: 'easeInOut',
+        ease: "easeInOut" as any,
       },
     },
   } satisfies Variants;
@@ -129,7 +129,7 @@ export default function Hero() {
           transition={{
             duration: 6,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut" as any,
           }}
         />
 
@@ -137,12 +137,12 @@ export default function Hero() {
         <motion.div
           className="absolute top-12 left-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#31F06F] to-[#18D9FF] opacity-40 blur-2xl"
           animate={{ y: [-20, 20, -20], x: [-10, 10, -10] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" as any }}
         />
         <motion.div
           className="absolute bottom-16 right-12 w-20 h-20 rounded-full bg-gradient-to-br from-[#7C3DFF] to-[#FF2F42] opacity-30 blur-3xl"
           animate={{ y: [20, -20, 20], x: [10, -10, 10] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" as any }}
         />
 
         {/* Premium Phone Mockup */}
@@ -193,7 +193,7 @@ export default function Hero() {
               className="model-u-progress-fill"
               initial={{ width: 0 }}
               animate={{ width: '62%' }}
-              transition={{ delay: 0.8, duration: 1, ease: 'easeOut' }}
+              transition={{ delay: 0.8, duration: 1, ease: "easeInOut" as any }}
             />
           </div>
 

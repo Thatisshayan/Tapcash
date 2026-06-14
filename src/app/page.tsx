@@ -1,11 +1,11 @@
 import PremiumHeader from '@/components/layout/PremiumHeader';
 import PremiumFooter from '@/components/layout/PremiumFooter';
-import HeroDynamic from '@/components/landing/HeroDynamic';
-import TopOffers from '@/components/landing/TopOffers';
-import CashPathLive from '@/components/landing/CashPathLive';
+import HeroPremium from '@/components/landing/HeroPremium';
+import TopOffersPremium from '@/components/landing/TopOffersPremium';
+import CashPathLivePremium from '@/components/landing/CashPathLivePremium';
 import AppPreview from '@/components/landing/AppPreview';
-import TapScoreSection from '@/components/landing/TapScoreSection';
-import TrustStrip from '@/components/landing/TrustStrip';
+import TapScoreSectionPremium from '@/components/landing/TapScoreSectionPremium';
+import TrustStripPremium from '@/components/landing/TrustStripPremium';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -22,13 +22,13 @@ export default function HomePage() {
     <>
       <PremiumHeader />
       
-      <main className="model-u-page">
-        <HeroDynamic />
-        <TopOffers />
-        <CashPathLive />
+      <main>
+        <HeroPremium />
+        <TopOffersPremium />
+        <CashPathLivePremium />
         <AppPreview />
-        <TapScoreSection />
-        <TrustStrip />
+        <TapScoreSectionPremium />
+        <TrustStripPremium />
       </main>
 
       <PremiumFooter />

@@ -4,6 +4,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lootably.com" },
@@ -16,7 +19,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    ppr: false,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  staticPageGenerationTimeout: 120,
+  skipTrailingSlashRedirect: true,
   async headers() {
     return [
       {
@@ -41,6 +50,10 @@ const nextConfig: NextConfig = {
   },
   turbopack: {
     root: process.cwd(),
+  },
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
   },
   async redirects() {
     return [

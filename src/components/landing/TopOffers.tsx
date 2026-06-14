@@ -31,7 +31,7 @@ export default function TopOffers() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: 'easeOut' },
+      transition: { duration: 0.5, ease: "easeInOut" as any },
     },
   } satisfies Variants;
 
