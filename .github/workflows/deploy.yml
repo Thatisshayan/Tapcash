@@ -305,7 +305,7 @@ jobs:
             URL: https://tapcash.online
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        if: always()
         continue-on-error: true
 
       - name: Send email notification
@@ -323,5 +323,5 @@ jobs:
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
             URL: https://tapcash.online
-        if: always() && secrets.EMAIL_USERNAME != ''
+        if: always()
         continue-on-error: true
