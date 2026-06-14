@@ -196,7 +196,7 @@ jobs:
     needs: [test, security, e2e, validate-secrets]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.validate-secrets.outputs.has-vercel == 'true'
     environment:
-      name: production
+      name: TAP CASH / production
       url: https://tapcash.online
     
     steps:
