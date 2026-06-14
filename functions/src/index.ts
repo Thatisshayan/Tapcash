@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions";
+import { HttpsError, auth as authV1, https as httpsV1 } from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -7,7 +7,7 @@ admin.initializeApp();
 const db = getFirestore();
 
 // 1. Auth Hook: Initialize user profile on new signup
-export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+export const onUserCreated = authV1.user().onCreate(async (user) => {
   const userRef = db.collection("users").doc(user.uid);
   const batch = db.batch();
 
@@ -23,14 +23,14 @@ export const onUserCreated = functions.auth.user().onCreate(async (user) => {
 });
 
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
-export const completeTask = functions.https.onCall(async (request) => {
+export const completeTask = httpsV1.onCall(async (request) => {
   if (!request.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+    throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
   const { taskId, offerId, rewardCents } = request.data;
   if (!taskId || !offerId || !rewardCents || rewardCents <= 0) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing task data.");
+    throw new HttpsError("invalid-argument", "Missing task data.");
   }
 
   const uid = request.auth.uid;
@@ -42,7 +42,7 @@ export const completeTask = functions.https.onCall(async (request) => {
       // Idempotency check: see if task already exists
       const taskDoc = await transaction.get(taskRef);
       if (taskDoc.exists && taskDoc.data()?.status === "completed") {
-        throw new functions.https.HttpsError("already-exists", "Task already completed.");
+        throw new HttpsError("already-exists", "Task already completed.");
       }
 
       // Record the task
@@ -85,14 +85,14 @@ export const completeTask = functions.https.onCall(async (request) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to complete task";
     console.error("Error in completeTask:", error);
-    throw new functions.https.HttpsError("internal", message);
+    throw new HttpsError("internal", message);
   }
 });
 
 // 3. Request Payout (Callable)
-export const requestPayout = functions.https.onCall(async (request) => {
+export const requestPayout = httpsV1.onCall(async (request) => {
   if (!request.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+    throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
   const { amountCents, method, payoutAddress } = request.data as {
@@ -101,7 +101,7 @@ export const requestPayout = functions.https.onCall(async (request) => {
     payoutAddress: string;
   };
   if (!amountCents || amountCents <= 0 || !payoutAddress) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid payout request.");
+    throw new HttpsError("invalid-argument", "Invalid payout request.");
   }
 
   const uid = request.auth.uid;
@@ -117,7 +117,7 @@ export const requestPayout = functions.https.onCall(async (request) => {
 
     await db.runTransaction(async (transaction) => {
       if (currentBalance < amountCents) {
-        throw new functions.https.HttpsError("failed-precondition", "Insufficient funds.");
+        throw new HttpsError("failed-precondition", "Insufficient funds.");
       }
 
       transaction.set(withdrawalRef, {
@@ -161,6 +161,6 @@ export const requestPayout = functions.https.onCall(async (request) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to process payout";
     console.error("Error in requestPayout:", error);
-    throw new functions.https.HttpsError("internal", message);
+    throw new HttpsError("internal", message);
   }
 });
