@@ -1,21 +1,19 @@
-import { HttpsError, auth as authV1, https as httpsV1 } from "firebase-functions/v1";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 admin.initializeApp();
 
-const db = getFirestore();
+const db = admin.firestore();
 
 // 1. Auth Hook: Initialize user profile on new signup
-export const onUserCreated = authV1.user().onCreate(async (user) => {
+export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   const userRef = db.collection("users").doc(user.uid);
   const batch = db.batch();
 
-  // Create base user document
   batch.set(userRef, {
       email: user.email,
-      createdAt: FieldValue.serverTimestamp(),
-      lastLogin: FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
     });
 
   await batch.commit();
@@ -23,38 +21,35 @@ export const onUserCreated = authV1.user().onCreate(async (user) => {
 });
 
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
-export const completeTask = httpsV1.onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
+export const completeTask = functions.https.onCall(async (data: any, context: any) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { taskId, offerId, rewardCents } = request.data;
+  const { taskId, offerId, rewardCents } = data;
   if (!taskId || !offerId || !rewardCents || rewardCents <= 0) {
-    throw new HttpsError("invalid-argument", "Missing task data.");
+    throw new functions.https.HttpsError("invalid-argument", "Missing task data.");
   }
 
-  const uid = request.auth.uid;
+  const uid = context.auth.uid;
   const taskRef = db.collection("tasks").doc(taskId);
   const ledgerRef = db.collection("ledger_transactions").doc();
 
   try {
-    await db.runTransaction(async (transaction) => {
-      // Idempotency check: see if task already exists
+    await db.runTransaction(async (transaction: any) => {
       const taskDoc = await transaction.get(taskRef);
       if (taskDoc.exists && taskDoc.data()?.status === "completed") {
-        throw new HttpsError("already-exists", "Task already completed.");
+        throw new functions.https.HttpsError("already-exists", "Task already completed.");
       }
 
-      // Record the task
       transaction.set(taskRef, {
         userId: uid,
         offerId,
         rewardCents,
         status: "completed",
-        completedAt: FieldValue.serverTimestamp()
+        completedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Append to the ledger
       transaction.set(ledgerRef, {
         id: ledgerRef.id,
         userId: uid,
@@ -65,11 +60,10 @@ export const completeTask = httpsV1.onCall(async (request) => {
         source: "cloud_function_task",
         referenceId: taskId,
         metadata: { offerId, rewardCents },
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Write an audit log
       const auditRef = db.collection("audit").doc();
       transaction.set(auditRef, {
         action: "task_completed",
@@ -77,47 +71,43 @@ export const completeTask = httpsV1.onCall(async (request) => {
         taskId,
         offerId,
         rewardCents,
-        timestamp: FieldValue.serverTimestamp()
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
     });
 
     return { success: true, rewardCents };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to complete task";
+  } catch (error: any) {
     console.error("Error in completeTask:", error);
-    throw new HttpsError("internal", message);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", error.message || "Failed to complete task");
   }
 });
 
 // 3. Request Payout (Callable)
-export const requestPayout = httpsV1.onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
+export const requestPayout = functions.https.onCall(async (data: any, context: any) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { amountCents, method, payoutAddress } = request.data as {
-    amountCents: number;
-    method: string;
-    payoutAddress: string;
-  };
+  const { amountCents, method, payoutAddress } = data;
   if (!amountCents || amountCents <= 0 || !payoutAddress) {
-    throw new HttpsError("invalid-argument", "Invalid payout request.");
+    throw new functions.https.HttpsError("invalid-argument", "Invalid payout request.");
   }
 
-  const uid = request.auth.uid;
+  const uid = context.auth.uid;
   const withdrawalRef = db.collection("cashout_requests").doc();
   const ledgerRef = db.collection("ledger_transactions").doc();
 
   try {
     const ledgerSnap = await db.collection("ledger_transactions").where("userId", "==", uid).get();
     let currentBalance = 0;
-    ledgerSnap.forEach((doc) => {
+    ledgerSnap.forEach((doc: any) => {
       currentBalance += Number(doc.data().balanceEffectCoins || 0);
     });
 
-    await db.runTransaction(async (transaction) => {
+    await db.runTransaction(async (transaction: any) => {
       if (currentBalance < amountCents) {
-        throw new HttpsError("failed-precondition", "Insufficient funds.");
+        throw new functions.https.HttpsError("failed-precondition", "Insufficient funds.");
       }
 
       transaction.set(withdrawalRef, {
@@ -128,8 +118,8 @@ export const requestPayout = httpsV1.onCall(async (request) => {
         method,
         payoutAddress,
         status: "pending_review",
-        requestedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -142,25 +132,24 @@ export const requestPayout = httpsV1.onCall(async (request) => {
         source: "cloud_function_cashout",
         referenceId: withdrawalRef.id,
         metadata: { method, payoutAddress },
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       
-      // Write audit
       const auditRef = db.collection("audit").doc();
       transaction.set(auditRef, {
         action: "payout_requested",
         uid,
         amountCents,
         method,
-        timestamp: FieldValue.serverTimestamp()
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
     });
 
     return { success: true, message: "Payout request submitted." };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to process payout";
+  } catch (error: any) {
     console.error("Error in requestPayout:", error);
-    throw new HttpsError("internal", message);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", error.message || "Failed to process payout");
   }
 });
