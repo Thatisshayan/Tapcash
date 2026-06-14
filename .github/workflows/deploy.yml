@@ -195,9 +195,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, security, e2e, validate-secrets]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.validate-secrets.outputs.has-vercel == 'true'
-    environment:
-      name: TAP CASH / production
-      url: https://tapcash.online
     
     steps:
       - name: Checkout code
@@ -206,6 +203,7 @@ jobs:
       - name: Deploy to Vercel (Production)
         id: vercel-deploy
         uses: amondnet/vercel-action@v25
+        timeout-minutes: 10
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
