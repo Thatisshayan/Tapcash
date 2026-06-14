@@ -13,6 +13,30 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
+  # Validate required secrets exist
+  validate-secrets:
+    name: Validate Secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-vercel: ${{ steps.check.outputs.has-vercel }}
+      has-firebase: ${{ steps.check.outputs.has-firebase }}
+    steps:
+      - name: Check required secrets
+        id: check
+        run: |
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "has-vercel=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-vercel=false" >> $GITHUB_OUTPUT
+            echo "::warning::VERCEL_TOKEN secret is not set. Deployment will be skipped."
+          fi
+          if [ -n "${{ secrets.FIREBASE_TOKEN }}" ]; then
+            echo "has-firebase=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-firebase=false" >> $GITHUB_OUTPUT
+            echo "::warning::FIREBASE_TOKEN secret is not set. Firebase deploy will be skipped."
+          fi
+
   # Run tests on all PRs and pushes
   test:
     name: Run Tests
@@ -36,7 +60,6 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
-        continue-on-error: true
 
       - name: Run unit tests
         run: npm test
@@ -50,16 +73,9 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-          # Firebase Admin (set in GitHub Secrets)
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: build
-          path: .next
-          retention-days: 1
 
   # Run E2E tests
   e2e:
@@ -140,20 +156,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Deploy to Vercel (Preview)
+        id: vercel-deploy
+        uses: amondnet/vercel-action@v25
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Build project for Vercel
-        run: vercel build --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: '--pre'
+          working-dir: ./
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -165,14 +177,8 @@ jobs:
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
 
-      - name: Deploy to Vercel Preview
-        id: deploy
-        run: |
-          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-          url=$(vercel deploy --preview --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
-
       - name: Comment PR with preview URL
+        if: steps.vercel-deploy.outputs.preview-url != ''
         uses: actions/github-script@v6
         with:
           script: |
@@ -180,51 +186,52 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ Preview deployment ready!\n\n🔗 **Preview URL**: ${{ steps.deploy.outputs.url }}\n\n📊 [View deployment logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+              body: `Preview deployment ready!\n\n**Preview URL**: ${{ steps.vercel-deploy.outputs.preview-url }}\n\n[View deployment logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
             })
 
   # Deploy to production on main branch
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [test, security, e2e]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, security, e2e, validate-secrets]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.validate-secrets.outputs.has-vercel == 'true'
     environment:
       name: production
-      url: https://tapcash.com
+      url: https://tapcash.online
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Deploy to Vercel (Production)
+        id: vercel-deploy
+        uses: amondnet/vercel-action@v25
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Deploy to Vercel Production
-        id: deploy
-        run: |
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          url=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
 
       - name: Run smoke tests
+        if: steps.vercel-deploy.outputs.url != ''
         run: |
-          sleep 10
-          vercel curl ${{ steps.deploy.outputs.url }} > /dev/null
-          vercel curl ${{ steps.deploy.outputs.url }}/api/health > /dev/null
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          sleep 15
+          curl -sf "${{ steps.vercel-deploy.outputs.url }}" > /dev/null
+          curl -sf "${{ steps.vercel-deploy.outputs.url }}/api/health" > /dev/null
 
       - name: Deploy Firebase Functions
+        if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
         with:
           args: deploy --only functions
@@ -232,65 +239,19 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy Firestore Rules
+        if: needs.validate-secrets.outputs.has-firebase == 'true'
         uses: w9jds/firebase-action@master
         with:
           args: deploy --only firestore:rules,firestore:indexes
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
-      - name: Notify deployment success
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'success',
-              target_url: '${{ steps.deploy.outputs.url }}',
-              description: 'Deployment successful',
-              context: 'Production Deployment'
-            })
-
       - name: Create deployment notification
         run: |
-          echo "🚀 Production deployment successful!"
-          echo "📦 Version: ${{ github.sha }}"
-          echo "🔗 URL: ${{ steps.deploy.outputs.url }}"
-          echo "👤 Deployed by: ${{ github.actor }}"
-
-  # Rollback on failure
-  rollback:
-    name: Rollback on Failure
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: failure()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Rollback deployment
-        run: |
-          echo "⚠️ Deployment failed, initiating rollback..."
-          vercel rollback --token=${{ secrets.VERCEL_TOKEN }} --yes
-        continue-on-error: true
-
-      - name: Notify rollback
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'failure',
-              description: 'Deployment failed, rolled back',
-              context: 'Production Deployment'
-            })
+          echo "Production deployment successful!"
+          echo "Version: ${{ github.sha }}"
+          echo "URL: ${{ steps.vercel-deploy.outputs.url }}"
+          echo "Deployed by: ${{ github.actor }}"
 
   # Performance testing after deployment
   performance:
@@ -313,7 +274,7 @@ jobs:
 
       - name: Run Lighthouse
         run: |
-          lhci autorun --collect.url=https://tapcash.com --collect.numberOfRuns=3
+          lhci autorun --collect.url=https://tapcash.online --collect.numberOfRuns=3
         continue-on-error: true
 
       - uses: actions/upload-artifact@v7
@@ -335,10 +296,10 @@ jobs:
         with:
           status: ${{ job.status }}
           text: |
-            🚀 TapCash Deployment ${{ job.status }}
-            📦 Commit: ${{ github.sha }}
-            👤 Author: ${{ github.actor }}
-            🔗 URL: https://tapcash.com
+            TapCash Deployment ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            URL: https://tapcash.online
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
@@ -358,8 +319,6 @@ jobs:
             Deployment Status: ${{ job.status }}
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
-            URL: https://tapcash.com
+            URL: https://tapcash.online
         if: always()
         continue-on-error: true
-
-# Made with Bob
