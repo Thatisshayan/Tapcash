@@ -41,7 +41,7 @@ export default function ReferralsPage() {
 
         let totalEarned = 0;
         txSnap.forEach(doc => {
-          totalEarned += doc.data().balanceEffectCoins || 0;
+          totalEarned += (doc.data() as any).balanceEffectCoins || 0;
         });
 
         setStats({ invited: totalInvited, earned: totalEarned });

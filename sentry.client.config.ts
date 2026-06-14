@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { replayIntegration } from "@sentry/react";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -21,7 +22,7 @@ Sentry.init({
   },
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration({
+    replayIntegration({
       maskAllText: false,
       blockAllMedia: false,
     }),

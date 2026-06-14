@@ -40,6 +40,9 @@
     "tailwindcss": "^4"
   },
   "devDependencies": {
+    "@firebase/auth-types": "^0.13.1",
+    "@firebase/firestore-types": "^3.0.4",
+    "@firebase/functions-types": "^0.6.4",
     "@playwright/test": "^1.60.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
