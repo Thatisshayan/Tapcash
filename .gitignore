@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/mobile/node_modules
 /.pnp
 .pnp.js
 
@@ -50,7 +51,11 @@ secrets/
 # IDE
 .vscode/*
 !.vscode/extensions.json
+.vs/
 .idea/
+
+# Local agent config
+.kilo/
 
 # OS
 Thumbs.db
