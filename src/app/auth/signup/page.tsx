@@ -49,9 +49,16 @@ export default function SignUpPage() {
         body: JSON.stringify({ email, password, name, deviceFingerprint: fingerprint }),
       });
 
-      const data = await response.json();
+      let apiError = "Registration rejected.";
+      try {
+        const data = await response.json();
+        apiError = data.error || apiError;
+      } catch {
+        apiError = response.statusText || apiError;
+      }
+
       if (!response.ok) {
-        throw new Error(data.error || "Registration rejected.");
+        throw new Error(apiError);
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, email, password);

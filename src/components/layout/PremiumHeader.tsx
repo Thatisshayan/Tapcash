@@ -110,20 +110,18 @@ export default function PremiumHeader() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <motion.button
+            <Link
+              href="/auth/signin"
               className="model-u-btn-secondary text-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
               Log In
-            </motion.button>
-            <motion.button
+            </Link>
+            <Link
+              href="/auth/signup"
               className="model-u-btn-primary text-sm"
-              whileHover={{ scale: 1.05, boxShadow: '0 20px 50px rgba(24, 217, 255, 0.25)' }}
-              whileTap={{ scale: 0.95 }}
             >
               Sign Up Free
-            </motion.button>
+            </Link>
           </motion.div>
 
           {/* Mobile Menu Button */}
@@ -156,12 +154,12 @@ export default function PremiumHeader() {
             </Link>
           ))}
           <div className="border-t border-[rgba(150,190,255,0.1)] pt-3 space-y-2">
-            <button className="w-full model-u-btn-secondary text-sm">
+            <Link href="/auth/signin" className="w-full model-u-btn-secondary text-sm">
               Log In
-            </button>
-            <button className="w-full model-u-btn-primary text-sm">
+            </Link>
+            <Link href="/auth/signup" className="w-full model-u-btn-primary text-sm">
               Sign Up Free
-            </button>
+            </Link>
           </div>
         </div>
       </motion.div>

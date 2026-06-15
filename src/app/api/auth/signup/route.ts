@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { adminAuth, adminDb, firebaseAdminMode, firebaseAdminReady } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt, calculateFraudScore } from "@/lib/antiFraud";
 import { sendWelcomeEmail } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
@@ -171,6 +171,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (!firebaseAdminReady) {
+      const rawResponse = NextResponse.json(
+        {
+          error: "Firebase Admin Auth is not configured. Enable Firebase Admin credentials or the Identity Toolkit API before signup can work.",
+          mode: firebaseAdminMode,
+        },
+        { status: 503 }
+      );
+      return responseMiddleware(rawResponse, rateLimit);
+    }
+
     let userRecord;
     try {
       userRecord = await adminAuth.createUser({
@@ -188,6 +199,10 @@ export async function POST(request: NextRequest) {
         friendlyMessage = "An account with this email address already exists.";
       } else if (authError.code === "auth/invalid-password") {
         friendlyMessage = "Password must be at least 6 characters.";
+      } else if (authError.message?.includes("Identity Toolkit API")) {
+        friendlyMessage = "Firebase Identity Toolkit API is disabled or not enabled for this project. Enable it in Google Cloud Console and retry.";
+      } else if (authError.message?.includes("PERMISSION_DENIED")) {
+        friendlyMessage = "Firebase Admin Auth permission denied. Check service account permissions and Identity Toolkit API access.";
       }
 
       const rawResponse = NextResponse.json({ error: friendlyMessage }, { status: 400 });
