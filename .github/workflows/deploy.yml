@@ -173,7 +173,7 @@ jobs:
 
       - name: Comment PR with preview URL
         if: steps.vercel-deploy.outputs.preview-url != ''
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.createComment({
