@@ -368,21 +368,90 @@
   animation: model-u-glow-pulse 2.5s ease-in-out infinite;
 }
 
+/* ===== ENHANCED TYPOGRAPHY ===== */
+
+.text-display-lg {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.text-display-md {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.text-body-lg {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.text-body {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ===== ENHANCED SPACING UTILITIES ===== */
+
+.space-y-tight { gap: 0.5rem; }
+.space-y-compact { gap: 1rem; }
+.space-y-normal { gap: 1.5rem; }
+.space-y-relaxed { gap: 2rem; }
+.space-y-spacious { gap: 3rem; }
+
+/* ===== PREMIUM CARD VARIANTS ===== */
+
+.card-elevated {
+  background: linear-gradient(135deg, rgba(20, 30, 50, 0.9) 0%, rgba(10, 15, 30, 0.95) 100%);
+  border: 1px solid rgba(24, 217, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+.card-glass {
+  background: rgba(9, 16, 31, 0.5);
+  border: 1px solid rgba(150, 190, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.card-interactive {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-8px);
+  border-color: rgba(24, 217, 255, 0.3);
+  box-shadow: 0 24px 80px rgba(24, 217, 255, 0.15);
+}
+
 /* ===== RESPONSIVE (Mobile First) ===== */
 
 @media (max-width: 640px) {
   .model-u-page,
   .model-u-header {
-    padding-left: 18px;
-    padding-right: 18px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
   
   .model-u-header {
-    gap: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
   }
   
   .model-u-brand img {
-    width: 180px;
+    width: 160px;
   }
   
   .model-u-nav {
@@ -391,8 +460,17 @@
   
   .model-u-btn-primary,
   .model-u-btn-secondary {
-    padding: 14px 24px;
-    font-size: 16px;
+    padding: 12px 20px;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .text-display-lg {
+    font-size: 2rem;
+  }
+  
+  .text-display-md {
+    font-size: 1.5rem;
   }
 }
 
@@ -407,6 +485,10 @@
   
   .model-u-nav {
     display: none;
+  }
+  
+  .text-display-lg {
+    font-size: 2.5rem;
   }
 }
 

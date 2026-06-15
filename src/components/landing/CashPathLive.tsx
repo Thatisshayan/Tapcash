@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Gamepad2, Target, Clock3, CheckCircle2, Wallet } from 'lucide-react';
 import { cashPathSteps } from '@/styles/theme';
+import Image from 'next/image';
 
 const iconMap = {
   gamepad: Gamepad2,
@@ -14,12 +15,44 @@ const iconMap = {
 
 export default function CashPathLive() {
   return (
-    <section className="model-u-card mt-6 col-span-full">
-      <h2 className="text-[#7CFF42] uppercase flex items-center gap-2 font-black text-xl mb-6">
-        CashPath™ Live
-        <i className="w-[10px] h-[10px] rounded-full bg-[#31F06F] animate-pulse" />
-      </h2>
+    <section className="mt-12 lg:mt-16">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-8"
+      >
+        <h2 className="text-3xl lg:text-4xl font-black mb-2 flex items-center justify-center gap-3">
+          <span>Your Cashout Flow</span>
+          <i className="w-2.5 h-2.5 rounded-full bg-[#31F06F] animate-pulse" />
+        </h2>
+        <p className="text-[#D7DEEF] text-lg">
+          From offer selection to cash in your pocket—transparent, tracked, and secure.
+        </p>
+      </motion.div>
 
+      {/* Premium Visual Flow */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="relative rounded-3xl overflow-hidden mb-8"
+      >
+        <Image
+          src="/images/hero/cashout-flow-visual.png"
+          alt="TapCash Cashout Flow"
+          width={2560}
+          height={1440}
+          priority
+          className="w-full h-auto rounded-3xl shadow-2xl"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(5,8,19,0.3)] rounded-3xl pointer-events-none" />
+      </motion.div>
+
+      {/* Step Details */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {cashPathSteps.map(({ step, title, text, icon }, index) => {
           const Icon = iconMap[icon as keyof typeof iconMap] || Gamepad2;
@@ -30,23 +63,18 @@ export default function CashPathLive() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="relative text-center"
+              className="model-u-card text-center"
             >
               {/* Icon */}
-              <div className="w-[74px] h-[74px] mx-auto mb-3 rounded-full grid place-items-center bg-[radial-gradient(circle,#7C3DFF,#0B1427)] border border-[rgba(255,255,255,0.18)]">
-                <Icon size={30} className="text-white" />
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full grid place-items-center bg-gradient-to-br from-[#7C3DFF] to-[#18D9FF] border border-[rgba(255,255,255,0.18)]">
+                <Icon size={24} className="text-white" />
               </div>
 
               {/* Title */}
               <b className="block font-black text-white">{title}</b>
 
               {/* Description */}
-              <span className="block text-[#AEB9D0] text-sm mt-1">{text}</span>
-
-              {/* Connecting Line */}
-              {index < cashPathSteps.length - 1 && (
-                <div className="hidden lg:block absolute right-[-26px] top-[35px] w-[52px] h-[2px] bg-gradient-to-r from-[#18D9FF] to-[#31F06F]" />
-              )}
+              <span className="block text-[#AEB9D0] text-xs mt-1">{text}</span>
             </motion.div>
           );
         })}
@@ -56,9 +84,9 @@ export default function CashPathLive() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
-        className="text-center text-[#CBD4E8] text-lg"
+        className="text-center text-[#CBD4E8] text-sm"
       >
-        Track every step. See your reward hit your account.
+        Every step is tracked and verified. No hidden fees. No surprises.
       </motion.p>
     </section>
   );

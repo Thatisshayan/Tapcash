@@ -1,186 +1,259 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ShieldCheck, Gamepad2, Target, Wallet, ChevronRight, CreditCard, Gift, Bitcoin, Banknote } from 'lucide-react';
+import { motion, type Variants } from 'framer-motion';
+import { ShieldCheck, ChevronRight, CreditCard, Gift, Bitcoin, Banknote } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Hero() {
+  // Staggered animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1,
+      },
+    },
+  } satisfies Variants;
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: "easeInOut" as any },
+    },
+  } satisfies Variants;
+
+  const floatingVariants = {
+    animate: {
+      y: [0, -12, 0],
+      transition: {
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut" as any,
+      },
+    },
+  } satisfies Variants;
+
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-[0.9fr_0.9fr_0.78fr] gap-6 items-center min-h-[500px] py-8">
-      {/* Left Column - Copy */}
+    <section className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr_0.9fr] gap-8 items-center min-h-[600px] py-12 lg:py-20">
+      {/* Left Column - Copy & CTAs */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="space-y-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6 z-10"
       >
-        <div className="model-u-micro">
+        {/* Micro Badge */}
+        <motion.div variants={itemVariants} className="model-u-micro w-fit">
           <ShieldCheck size={18} />
           Real offers. Tracked rewards. Clean cashout.
-        </div>
+        </motion.div>
 
-        <h1 className="text-[86px] leading-[0.98] tracking-[-4px] font-black">
-          Play.
-          <br />
-          <span className="model-u-text-gradient-green">Earn.</span>
-          <br />
-          Cash Out.
-        </h1>
+        {/* Main Headline */}
+        <motion.div variants={itemVariants}>
+          <h1 className="text-5xl lg:text-7xl leading-[1.1] tracking-tight font-black">
+            Play.
+            <br />
+            <span className="model-u-text-gradient-green">Earn.</span>
+            <br />
+            Cash Out.
+          </h1>
+        </motion.div>
 
-        <p className="text-[22px] leading-[1.45] text-[#E4EAFF] max-w-[540px]">
+        {/* Subheadline */}
+        <motion.p
+          variants={itemVariants}
+          className="text-lg lg:text-xl leading-relaxed text-[#D7DEEF] max-w-[540px]"
+        >
           Complete verified offers. Track every step. Cash out when rewards clear.
-        </p>
+        </motion.p>
 
-        <div className="flex gap-4 flex-wrap">
+        {/* CTA Buttons */}
+        <motion.div variants={itemVariants} className="flex gap-4 flex-wrap pt-4">
           <motion.button
             className="model-u-btn-primary"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ y: -3, boxShadow: '0 24px 60px rgba(24, 217, 255, 0.3)' }}
+            whileTap={{ scale: 0.97 }}
           >
             Start My Sweet Offer <ChevronRight size={20} />
           </motion.button>
-          <button className="model-u-btn-secondary">See How It Works</button>
-        </div>
+          <motion.button
+            className="model-u-btn-secondary"
+            whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
+            whileTap={{ scale: 0.97 }}
+          >
+            See How It Works
+          </motion.button>
+        </motion.div>
 
-        <div className="flex gap-8 items-center flex-wrap">
-          <span className="flex gap-2 items-center text-[#EAF1FF]">
-            <div className="w-8 h-8 rounded-full border border-[rgba(49,240,111,0.45)] flex items-center justify-center">
-              <Gamepad2 size={16} className="text-[#31F06F]" />
+        {/* Trust Indicators */}
+        <motion.div variants={itemVariants} className="flex gap-6 flex-wrap pt-4">
+          <div className="flex gap-2 items-center text-sm text-[#D7DEEF]">
+            <div className="w-8 h-8 rounded-full border border-[#31F06F]/40 flex items-center justify-center bg-[#31F06F]/5">
+              <span className="text-[#31F06F] font-bold">✓</span>
             </div>
-            Play Games
-          </span>
-          <span className="flex gap-2 items-center text-[#EAF1FF]">
-            <div className="w-8 h-8 rounded-full border border-[rgba(49,240,111,0.45)] flex items-center justify-center">
-              <Target size={16} className="text-[#31F06F]" />
+            <span>Play Games</span>
+          </div>
+          <div className="flex gap-2 items-center text-sm text-[#D7DEEF]">
+            <div className="w-8 h-8 rounded-full border border-[#18D9FF]/40 flex items-center justify-center bg-[#18D9FF]/5">
+              <span className="text-[#18D9FF] font-bold">✓</span>
             </div>
-            Earn Rewards
-          </span>
-          <span className="flex gap-2 items-center text-[#EAF1FF]">
-            <div className="w-8 h-8 rounded-full border border-[rgba(49,240,111,0.45)] flex items-center justify-center">
-              <Wallet size={16} className="text-[#31F06F]" />
+            <span>Earn Rewards</span>
+          </div>
+          <div className="flex gap-2 items-center text-sm text-[#D7DEEF]">
+            <div className="w-8 h-8 rounded-full border border-[#7C3DFF]/40 flex items-center justify-center bg-[#7C3DFF]/5">
+              <span className="text-[#7C3DFF] font-bold">✓</span>
             </div>
-            Cash Out Fast & Secure
-          </span>
-        </div>
+            <span>Cash Out Fast</span>
+          </div>
+        </motion.div>
       </motion.div>
 
-      {/* Center Column - Hero Character */}
+      {/* Center Column - Premium Hero Visual */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="relative h-[530px] flex items-end justify-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="relative h-[600px] flex items-center justify-center"
       >
-        {/* Floating Elements */}
+        {/* Animated Background Glow */}
         <motion.div
-          className="absolute top-[20px] left-[60px] w-12 h-12 rounded-full bg-gradient-to-br from-[#31F06F] to-[#18D9FF] opacity-80 blur-[2px]"
-          animate={{ y: [-4, 4, -4] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-[100px] right-[50px] w-8 h-8 rounded-full bg-gradient-to-br from-[#7C3DFF] to-[#18D9FF] opacity-70"
-          animate={{ y: [4, -4, 4] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-[80px] left-[40px] w-10 h-10 rounded-full bg-gradient-to-br from-[#31F06F] to-[#FF2F42] opacity-75"
-          animate={{ y: [-6, 6, -6] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full border-2 border-[var(--model-u-purple-glow)] opacity-40"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-[#18D9FF]/20 via-[#7C3DFF]/20 to-[#31F06F]/20 blur-3xl"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 0.8, 0.5],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut" as any,
+          }}
         />
 
-        <div className="model-u-halo top-[38px]" />
-        <div className="relative w-[360px] h-[430px] rounded-[45%_45%_16%_16%] bg-gradient-to-b from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] flex items-center justify-center flex-col"
-          style={{ filter: 'drop-shadow(0 38px 60px rgba(0,0,0,0.42))' }}
+        {/* Floating Accent Orbs */}
+        <motion.div
+          className="absolute top-12 left-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#31F06F] to-[#18D9FF] opacity-40 blur-2xl"
+          animate={{ y: [-20, 20, -20], x: [-10, 10, -10] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" as any }}
+        />
+        <motion.div
+          className="absolute bottom-16 right-12 w-20 h-20 rounded-full bg-gradient-to-br from-[#7C3DFF] to-[#FF2F42] opacity-30 blur-3xl"
+          animate={{ y: [20, -20, 20], x: [10, -10, 10] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" as any }}
+        />
+
+        {/* Premium Phone Mockup */}
+        <motion.div
+          variants={floatingVariants}
+          animate="animate"
+          className="relative z-10 drop-shadow-2xl"
         >
-          {/* SVG Character: Young person in hoodie holding phone */}
-          <svg viewBox="0 0 200 240" className="w-[200px] h-[240px]">
-            {/* Hoodie shadow */}
-            <ellipse cx="100" cy="230" rx="60" ry="12" fill="rgba(0,0,0,0.3)" />
-            
-            {/* Hoodie body */}
-            <path d="M50 160 L50 120 C50 90 70 70 100 70 C130 70 150 90 150 120 L150 160 L130 160 L130 200 C130 210 120 220 100 220 C80 220 70 210 70 200 L70 160 Z" fill="#1A1F2E" stroke="#31F06F" strokeWidth="2" />
-            
-            {/* Hood */}
-            <path d="M60 110 C60 80 80 65 100 65 C120 65 140 80 140 110 C130 110 125 115 125 125 L75 125 C75 115 70 110 60 110 Z" fill="#0D1117" stroke="#31F06F" strokeWidth="1" />
-            
-            {/* Phone in hand - pointing gesture */}
-            <rect x="115" y="130" width="35" height="55" rx="6" fill="#0A0F1A" stroke="#7C3DFF" strokeWidth="1.5" />
-            <rect x="120" y="135" width="25" height="45" rx="3" fill="#18D9FF" opacity="0.8" />
-            <circle cx="132.5" cy="155" r="3" fill="#FFFFFF" opacity="0.9" />
-            
-            {/* Arm pointing to phone */}
-            <path d="M140 140 C155 145 165 150 175 155" stroke="#18D9FF" strokeWidth="8" strokeLinecap="round" opacity="0.7" />
-            
-            {/* Face */}
-            <circle cx="100" cy="100" r="25" fill="#F8FAFC" />
-            <circle cx="90" cy="95" r="5" fill="#050813" />
-            <circle cx="110" cy="95" r="5" fill="#050813" />
-            <path d="M85 110 C95 120 105 120 115 110" stroke="#050813" strokeWidth="2" fill="none" />
-            
-            {/* Hoodie strings */}
-            <line x1="98" y1="125" x2="98" y2="135" stroke="#31F06F" strokeWidth="1" />
-            <line x1="102" y1="125" x2="102" y2="135" stroke="#31F06F" strokeWidth="1" />
-            
-            {/* TC badge */}
-            <text x="122" y="165" fill="#31F06F" fontWeight="bold" fontSize="14">TC</text>
-          </svg>
-        </div>
+          <Image
+            src="/images/hero/phone-dashboard-3d.png"
+            alt="TapCash Dashboard"
+            width={320}
+            height={640}
+            priority
+            className="w-80 h-auto rounded-3xl"
+          />
+        </motion.div>
       </motion.div>
 
-      {/* Right Column - Balance & Safe Offer Cards */}
+      {/* Right Column - Balance & Trust Cards */}
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.7, delay: 0.4 }}
-        className="grid gap-4"
+        className="grid gap-4 h-fit"
       >
         {/* Balance Card */}
-        <div className="model-u-card">
-          <span className="uppercase text-[#B9C5DF] text-[13px] font-extrabold">YOUR BALANCE</span>
-          <strong className="block text-[44px] my-2">$12.50</strong>
-          <em className="text-[#31F06F] font-extrabold not-italic">+14.3% today</em>
+        <motion.div
+          className="model-u-card"
+          whileHover={{ y: -4, borderColor: 'rgba(24, 217, 255, 0.3)' }}
+        >
+          <span className="uppercase text-[#B9C5DF] text-xs font-extrabold tracking-wide">
+            Your Balance
+          </span>
+          <motion.strong
+            className="block text-5xl my-3 text-[#31F06F]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            $12.50
+          </motion.strong>
+          <em className="text-[#31F06F] font-bold not-italic text-sm">+14.3% today</em>
+
+          {/* Progress Bar */}
           <div className="model-u-progress-bar my-4">
-            <i className="model-u-progress-fill" style={{ width: '62%' }} />
+            <motion.i
+              className="model-u-progress-fill"
+              initial={{ width: 0 }}
+              animate={{ width: '62%' }}
+              transition={{ delay: 0.8, duration: 1, ease: "easeInOut" as any }}
+            />
           </div>
-          <div className="flex justify-between items-center mb-4">
-            <small className="text-[#C1C9DD]">Pts. 820 to withdraw</small>
+
+          <div className="flex justify-between items-center mb-4 text-xs text-[#C1C9DD]">
+            <small>Pts. 820 to withdraw</small>
             <small className="text-white font-bold">$12.50 / $20</small>
           </div>
+
+          {/* Payout Method Icons */}
           <div className="flex gap-3">
-            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
-              <CreditCard size={18} className="text-[#31F06F]" />
-            </div>
-            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
-              <Gift size={18} className="text-[#18D9FF]" />
-            </div>
-            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
-              <Bitcoin size={18} className="text-[#FFC442]" />
-            </div>
-            <div className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center">
-              <Banknote size={18} className="text-[#7C3DFF]" />
-            </div>
+            {[
+              { Icon: CreditCard, color: '#31F06F', label: 'Card' },
+              { Icon: Gift, color: '#18D9FF', label: 'Gift' },
+              { Icon: Bitcoin, color: '#FFC442', label: 'Crypto' },
+              { Icon: Banknote, color: '#7C3DFF', label: 'Cash' },
+            ].map(({ Icon, color, label }, idx) => (
+              <motion.div
+                key={label}
+                className="flex-1 h-12 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--model-u-line)] flex items-center justify-center cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.06)]"
+                whileHover={{ scale: 1.05, borderColor: color }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 + idx * 0.1 }}
+              >
+                <Icon size={18} style={{ color }} />
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Safe Offer Card */}
-        <div className="model-u-card">
-          <b className="text-[#31F06F] uppercase text-sm font-black">New to TapCash?</b>
-          <h3 className="text-[28px] my-2 font-black">Start with our Safest Offer</h3>
-          <p className="text-[16px] text-[#D7DEEF]">No purchase · high tracking · fast payout</p>
-          <div className="border-l-[3px] border-[#31F06F] pl-3 text-[#D6E4FF] my-4">
-            TapScore <strong className="text-[28px] text-[#31F06F]">94%</strong>
+        <motion.div
+          className="model-u-card"
+          whileHover={{ y: -4, borderColor: 'rgba(24, 217, 255, 0.3)' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.6 }}
+        >
+          <b className="text-[#31F06F] uppercase text-xs font-black tracking-wide">
+            New to TapCash?
+          </b>
+          <h3 className="text-2xl my-2 font-black">Start with our Safest Offer</h3>
+          <p className="text-sm text-[#D7DEEF]">
+            No purchase · high tracking · fast payout
+          </p>
+
+          <div className="border-l-4 border-[#31F06F] pl-3 text-[#D6E4FF] my-4">
+            TapScore{' '}
+            <strong className="text-2xl text-[#31F06F] block">94%</strong>
           </div>
-          <button className="w-full mt-4 model-u-gradient-cyan-purple border-0 rounded-xl text-white py-3 font-extrabold">
+
+          <motion.button
+            className="w-full mt-4 model-u-gradient-cyan-purple border-0 rounded-xl text-white py-3 font-extrabold text-sm"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
             Start Safely
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </motion.div>
     </section>
   );
 }
-
-// Made with Bob
