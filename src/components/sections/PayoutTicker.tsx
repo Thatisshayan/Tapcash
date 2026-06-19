@@ -20,9 +20,9 @@ function TickerEntry({ name, amount }: { name: string; amount: string }) {
     <span className="flex items-center gap-3 shrink-0 pr-10">
       <span className="text-[13px] text-white/60" style={{ fontFamily: 'var(--font-inter), Inter, sans-serif' }}>
         {name} cashed out{' '}
-        <span className="text-[#00C97F]">{amount}</span>
+        <span className="text-[#00FF85]">{amount}</span>
       </span>
-      <span className="text-[#00C97F] text-[10px] opacity-40">·</span>
+      <span className="text-[#00FF85] text-[10px] opacity-40">·</span>
     </span>
   );
 }
@@ -33,7 +33,7 @@ export function PayoutTicker() {
   return (
     <div
       className="payout-ticker-wrap w-full h-12 overflow-hidden border-y border-white/[0.06] flex items-center"
-      style={{ backgroundColor: '#0e1a15' }}
+      style={{ backgroundColor: '#13132b' }}
     >
       <div
         className="payout-ticker-inner flex items-center"

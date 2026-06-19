@@ -1,161 +1,140 @@
 'use client';
 
-import { useRef } from 'react';
-import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
-import { Trophy, Gamepad2, Zap } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Flame, Zap, X, Star, ChevronRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { fadeUp, stagger } from '@/lib/motion';
-
-type IconName = 'Trophy' | 'Gamepad2' | 'Zap';
 
 interface Offer {
   name: string;
-  icon: IconName;
+  image: string;
+  tags: string[];
   platform: string;
-  score: number;
-  earn: number;
-  difficulty: string;
-  featured?: boolean;
+  price: number;
+  hot?: boolean;
+  subtitle?: string;
 }
 
 const OFFERS: Offer[] = [
-  { name: 'Monopoly Go!', icon: 'Trophy', platform: 'iOS', score: 94, earn: 35, difficulty: 'Easy', featured: true },
-  { name: 'Warzone Mobile', icon: 'Gamepad2', platform: 'Android', score: 87, earn: 25, difficulty: 'Medium' },
-  { name: 'Bingo Blitz', icon: 'Zap', platform: 'iOS', score: 91, earn: 20, difficulty: 'Easy' },
-  { name: 'Coin Master', icon: 'Trophy', platform: 'Both', score: 89, earn: 18, difficulty: 'Easy' },
-  { name: 'Royal Match', icon: 'Gamepad2', platform: 'iOS', score: 93, earn: 22, difficulty: 'Easy' },
-  { name: 'Merge Dragons', icon: 'Zap', platform: 'Android', score: 85, earn: 15, difficulty: 'Medium' },
+  { name: 'Mythic Heroes Quest', image: '/images/offers/offer-1.png', tags: ['High Paying', 'Popular'], platform: 'Android', price: 120, hot: true },
+  { name: 'Coin Master', image: '/images/offers/offer-2.png', tags: ['Easy', 'Fast Payout'], platform: 'Both', price: 35, subtitle: 'Village level 15' },
+  { name: 'Tycoon Go!', image: '/images/offers/offer-3.png', tags: ['Easy', 'No Purchase'], platform: 'iOS', price: 25 },
+  { name: 'Vegas Slots 777', image: '/images/offers/offer-4.png', tags: ['Fast Payout', 'High Paying'], platform: 'Android', price: 20, hot: true },
+  { name: 'Controller Quest', image: '/images/offers/offer-5.png', tags: ['Easy'], platform: 'Both', price: 18, subtitle: 'Reach level 50' },
+  { name: 'Match Masters', image: '/images/offers/offer-6.png', tags: ['Easy Tasks'], platform: 'iOS', price: 15 },
+  { name: 'Quick Surveys', image: '/images/offers/offer-7.png', tags: ['Easy', 'Fast Payout'], platform: 'Any', price: 3.5, subtitle: 'Complete surveys' },
+  { name: 'App Tasks', image: '/images/offers/offer-8.png', tags: ['Easy Tasks', 'No Purchase'], platform: 'Any', price: 2, subtitle: 'Easy tasks' },
 ];
 
-const ICON_MAP = { Trophy, Gamepad2, Zap };
+const FILTER_TABS = [
+  { label: 'All Offers', key: 'all', icon: null },
+  { label: 'High Paying', key: 'High Paying', icon: Flame },
+  { label: 'Fast Payout', key: 'Fast Payout', icon: Zap },
+  { label: 'No Purchase', key: 'No Purchase', icon: X },
+  { label: 'Easy Tasks', key: 'Easy Tasks', icon: Star },
+];
 
-function scoreColor(score: number) {
-  if (score >= 90) return '#00C97F';
-  if (score >= 80) return '#FFAB00';
-  return '#ef4444';
-}
+const TAG_COLORS: Record<string, string> = {
+  'High Paying': '#F5A623',
+  'Fast Payout': '#00FF85',
+  'Easy': '#7B5CF0',
+  'Easy Tasks': '#7B5CF0',
+  'No Purchase': '#00D4FF',
+  'Popular': '#FF4444',
+};
 
-function TapScoreRing({ score }: { score: number }) {
-  const r = 13;
-  const circ = 2 * Math.PI * r;
-  const dash = circ * (score / 100);
-  const color = scoreColor(score);
-
+function TagPill({ label }: { label: string }) {
+  const color = TAG_COLORS[label] ?? '#ffffff';
   return (
-    <div className="relative w-8 h-8">
-      <svg viewBox="0 0 32 32" className="w-8 h-8 -rotate-90">
-        <circle cx="16" cy="16" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-        <circle
-          cx="16"
-          cy="16"
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={circ - dash}
-        />
-      </svg>
-      <span
-        className="absolute inset-0 flex items-center justify-center text-[9px] font-bold"
-        style={{ color, fontFamily: 'var(--font-jetbrains-mono), monospace' }}
-      >
-        {score}
-      </span>
-    </div>
+    <span
+      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+      style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}
+    >
+      {label}
+    </span>
   );
 }
 
 function OfferCard({ offer }: { offer: Offer }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const rotateX = useMotionValue(0);
-  const rotateY = useMotionValue(0);
-  const springX = useSpring(rotateX, { stiffness: 280, damping: 28 });
-  const springY = useSpring(rotateY, { stiffness: 280, damping: 28 });
-  const prefersReduced = useReducedMotion();
-
-  const Icon = ICON_MAP[offer.icon];
-
-  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (prefersReduced || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const cx = (e.clientX - rect.left) / rect.width - 0.5;
-    const cy = (e.clientY - rect.top) / rect.height - 0.5;
-    rotateY.set(cx * 10);
-    rotateX.set(-cy * 10);
-  }
-
-  function onMouseLeave() {
-    rotateX.set(0);
-    rotateY.set(0);
-  }
-
   return (
-    <motion.div
-      ref={cardRef}
-      style={prefersReduced ? undefined : { rotateX: springX, rotateY: springY, transformPerspective: 800 }}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      whileHover={prefersReduced ? undefined : { scale: 1.02, boxShadow: '0 0 30px rgba(0,201,127,0.2)' }}
-      className={offer.featured ? 'row-span-2' : ''}
+    <div
+      className="rounded-2xl overflow-hidden flex flex-col"
+      style={{ background: '#13132b', border: '1px solid rgba(255,255,255,0.07)' }}
     >
-      <GlassCard className={`p-5 h-full flex flex-col gap-4 ${offer.featured ? 'border-[#00C97F]/20' : ''}`}>
-        {offer.featured && (
-          <span className="self-start text-[10px] font-semibold text-[#00C97F] bg-[#00C97F]/10 rounded-full px-2.5 py-0.5 tracking-wider uppercase">
-            Featured
-          </span>
+      {/* Artwork image */}
+      <div className="relative w-full h-40 overflow-hidden">
+        <Image
+          src={offer.image}
+          alt={offer.name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        />
+        {offer.hot && (
+          <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
+            <span
+              className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+              style={{ background: '#FF4444' }}
+            >
+              HOT
+            </span>
+          </div>
         )}
+      </div>
 
-        {/* Top row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Icon size={18} className="text-[#00C97F]" />
-            <div>
-              <p className="text-sm font-medium text-white leading-tight">{offer.name}</p>
-              <p className="text-[11px] text-white/40">{offer.platform}</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <TapScoreRing score={offer.score} />
-            <span className="text-[9px] text-white/30 uppercase tracking-wider">TapScore</span>
-          </div>
+      {/* Card body */}
+      <div className="p-4 flex flex-col gap-3 flex-1">
+        <div>
+          <p className="text-[15px] font-semibold text-white leading-snug">{offer.name}</p>
+          {offer.subtitle && (
+            <p className="text-[11px] text-white/40 mt-0.5">{offer.subtitle}</p>
+          )}
         </div>
 
-        {/* Earn amount */}
-        <p
-          className="text-[#FFAB00] leading-none"
-          style={{
-            fontFamily: 'var(--font-jetbrains-mono), monospace',
-            fontSize: offer.featured ? '44px' : '36px',
-            fontWeight: 700,
-          }}
-        >
-          ${offer.earn.toFixed(2)}
-        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {offer.tags.map((tag) => (
+            <TagPill key={tag} label={tag} />
+          ))}
+        </div>
 
-        {/* Tags */}
-        <p className="text-[12px] text-white/50">
-          {offer.difficulty} · ~{offer.difficulty === 'Easy' ? '15' : '30'} min
-        </p>
+        <p className="text-[11px] text-white/35">{offer.platform}</p>
 
-        {/* CTA */}
-        <a
+        <div className="flex items-center justify-between mt-auto pt-2">
+          <span
+            className="text-[22px] font-semibold"
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              color: '#00FF85',
+            }}
+          >
+            ${offer.price.toFixed(2)}
+          </span>
+        </div>
+
+        <Link
           href="/auth/signup"
-          className="mt-auto text-sm font-medium text-[#00C97F] hover:underline focus-visible:ring-2 focus-visible:ring-[#00C97F] rounded outline-none"
+          className="w-full text-center py-2.5 rounded-xl text-[13px] font-semibold text-white transition-colors btn-purple"
         >
-          Start offer →
-        </a>
-      </GlassCard>
-    </motion.div>
+          Start Offer
+        </Link>
+      </div>
+    </div>
   );
 }
 
 export function OffersSection() {
+  const [activeTab, setActiveTab] = useState('all');
   const prefersReduced = useReducedMotion();
 
+  const filtered =
+    activeTab === 'all'
+      ? OFFERS
+      : OFFERS.filter((o) => o.tags.some((t) => t === activeTab));
+
   return (
-    <section className="py-24 lg:py-32">
+    <section className="py-20 lg:py-28" style={{ backgroundColor: '#0d0d1a' }}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -163,32 +142,63 @@ export function OffersSection() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-80px' }}
-          className="mb-14 space-y-3"
+          className="flex items-end justify-between mb-8 gap-4"
         >
-          <motion.p
-            variants={prefersReduced ? undefined : fadeUp}
-            className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#00C97F]"
+          <div className="space-y-2">
+            <motion.p
+              variants={prefersReduced ? undefined : fadeUp}
+              className="text-[11px] font-semibold tracking-[0.15em] uppercase"
+              style={{ color: '#00FF85' }}
+            >
+              Top Offers
+            </motion.p>
+            <motion.h2
+              variants={prefersReduced ? undefined : fadeUp}
+              className="font-bold text-white"
+              style={{ fontFamily: 'var(--font-syne), Syne, sans-serif', fontSize: 'clamp(26px, 4vw, 38px)' }}
+            >
+              Hand-picked offers with the best payouts
+            </motion.h2>
+          </div>
+          <Link
+            href="/games"
+            className="shrink-0 hidden sm:flex items-center gap-1 text-[13px] font-medium text-white/50 hover:text-white transition-colors px-4 py-2 rounded-xl border border-white/[0.08] hover:border-white/15"
           >
-            Top Offers
-          </motion.p>
-          <motion.h2
-            variants={prefersReduced ? undefined : fadeUp}
-            className="font-bold text-white"
-            style={{ fontFamily: 'var(--font-syne), Syne, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}
-          >
-            The highest-paying offers, right now
-          </motion.h2>
-          <motion.p
-            variants={prefersReduced ? undefined : fadeUp}
-            className="text-white/60 text-base max-w-lg"
-          >
-            Every offer verified. Every payout tracked.
-          </motion.p>
+            View All <ChevronRight size={14} />
+          </Link>
         </motion.div>
 
-        {/* Bento grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
-          {OFFERS.map((offer) => (
+        {/* Filter tabs */}
+        <motion.div
+          variants={prefersReduced ? undefined : fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="flex items-center gap-2 overflow-x-auto pb-1 mb-8 scrollbar-none"
+        >
+          {FILTER_TABS.map(({ label, key, icon: Icon }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className="shrink-0 flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#00FF85]"
+                style={{
+                  background: isActive ? '#ffffff' : 'rgba(255,255,255,0.05)',
+                  color: isActive ? '#0d0d1a' : 'rgba(255,255,255,0.55)',
+                  border: `1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+                }}
+              >
+                {Icon && <Icon size={12} />}
+                {label}
+              </button>
+            );
+          })}
+        </motion.div>
+
+        {/* Offers grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filtered.map((offer) => (
             <OfferCard key={offer.name} offer={offer} />
           ))}
         </div>
