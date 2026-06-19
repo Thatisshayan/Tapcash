@@ -53,6 +53,12 @@
   --animate-marquee: marquee 40s linear infinite;
 }
 
+/* Ensure font custom properties are always defined (fallback to system fonts) */
+:root {
+  --font-syne: "Syne", sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
+}
+
 html, body {
   background-color: #0d0d1a;
   color: #ffffff;
