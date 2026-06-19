@@ -32,17 +32,15 @@ export function PayoutTicker() {
 
   return (
     <div
-      className="w-full h-12 overflow-hidden border-y border-white/[0.06] flex items-center"
+      className="payout-ticker-wrap w-full h-12 overflow-hidden border-y border-white/[0.06] flex items-center"
       style={{ backgroundColor: '#0e1a15' }}
     >
       <div
-        className="flex items-center"
+        className="payout-ticker-inner flex items-center"
         style={{
           animation: 'marquee 40s linear infinite',
           width: 'max-content',
         }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.animationPlayState = 'paused')}
-        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.animationPlayState = 'running')}
       >
         {doubled.map((entry, i) => (
           <TickerEntry key={i} name={entry.name} amount={entry.amount} />

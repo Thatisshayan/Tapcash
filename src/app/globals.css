@@ -145,6 +145,11 @@ body {
   animation: marquee 50s linear infinite;
 }
 
+/* PayoutTicker: pause marquee on container hover */
+.payout-ticker-wrap:hover .payout-ticker-inner {
+  animation-play-state: paused;
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
