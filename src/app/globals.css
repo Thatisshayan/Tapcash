@@ -1,42 +1,59 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-manrope), "Manrope", sans-serif;
-  --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  /* ── Fonts ── */
+  --font-sans: var(--font-inter), "Inter", sans-serif;
+  --font-display: var(--font-syne), "Syne", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 
-  /* TapCash Screenshot-Exact Color System */
-  /* Primary Colors */
+  /* ── Brand (Emerald) ── */
+  --color-brand-300: #00F59B;
+  --color-brand-400: #00C97F;
+  --color-brand-600: #009E62;
+
+  /* ── Gold Accent ── */
+  --color-gold-300: #FFD700;
+  --color-gold-400: #FFAB00;
+
+  /* ── Dark Surfaces ── */
+  --color-surface-base: #0a0f0d;
+  --color-surface-elevated: #0e1a15;
+  --color-surface-card: #122a1e;
+
+  /* ── Text ── */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A8B8B0;
+  --color-text-muted: #5a7065;
+
+  /* ── Legacy aliases (keep existing code working) ── */
   --color-cyan: #18D9FF;
   --color-purple: #7C3DFF;
   --color-green: #31F06F;
   --color-lime: #8CF8E9;
-  
-  /* Backgrounds */
   --color-bg-darkest: #0A0E1A;
   --color-bg-dark: #0F1419;
   --color-bg-card: #1A1F2E;
-  
-  /* Text */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A0AEC0;
-  --color-text-muted: #718096;
-  
-  /* Accents */
   --color-hot-red: #FF3B3B;
   --color-warning-yellow: #FFC442;
-  
-  /* Legacy support */
-  --color-background: #0A0E1A;
-  --color-background-darker: #0F1419;
-  --color-panel: rgba(26, 31, 46, 0.74);
+  --color-background: #0a0f0d;
+  --color-background-darker: #0e1a15;
+  --color-panel: rgba(18, 42, 30, 0.74);
   --color-foreground: #FFFFFF;
-  --color-muted: #A0AEC0;
+  --color-muted: #A8B8B0;
   --color-teal: #18D9FF;
-  --color-emerald: #18D9FF;
-  --color-emerald-light: #8CF8E9;
-  --color-gold: #FFC442;
-  --color-gold-dim: #c9a02a;
-  --color-yellow: #FFC442;
+  --color-emerald: #00C97F;
+  --color-emerald-light: #00F59B;
+  --color-gold: #FFD700;
+  --color-gold-dim: #FFAB00;
+  --color-yellow: #FFD700;
+
+  /* ── Shadows / Glows ── */
+  --shadow-glow-brand: 0 0 24px rgba(0, 201, 127, 0.25);
+  --shadow-glow-gold: 0 0 24px rgba(255, 215, 0, 0.25);
+  --shadow-card-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* ── Animation ── */
+  --animate-marquee: marquee 40s linear infinite;
 }
 
 body {
@@ -73,6 +90,27 @@ body {
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
+}
+
+@keyframes earningsPulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(0, 201, 127, 0.4); }
+  50%       { text-shadow: 0 0 40px rgba(0, 201, 127, 0.8), 0 0 60px rgba(0, 201, 127, 0.3); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+@keyframes hueShift {
+  0%   { filter: hue-rotate(0deg); }
+  50%  { filter: hue-rotate(8deg); }
+  100% { filter: hue-rotate(0deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
 }
 
 @keyframes float {
