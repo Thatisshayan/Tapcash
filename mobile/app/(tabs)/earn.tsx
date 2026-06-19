@@ -1,31 +1,31 @@
-import { useEffect, useState } from "react";
-import { ScrollView, View, Text, StyleSheet, RefreshControl } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  RefreshControl,
+  TouchableOpacity,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { ScreenFrame } from "../../src/components/ScreenFrame";
+import { theme } from "../../src/theme";
+import { OfferCard } from "../../src/components/OfferCard";
 import { loadOffers } from "../../src/lib/api";
-import { tapCashTheme } from "../../src/theme";
-import { formatCoins, TapCashOffer, tapCashOffers } from "@shared/tapcash-content";
+import { TapCashOffer, tapCashOffers } from "../../../shared/tapcash-content";
+
+const FILTERS = ["All", "High Paying", "Fast Payout", "No Purchase", "Easy"];
 
 export default function EarnScreen() {
+  const insets = useSafeAreaInsets();
   const [offers, setOffers] = useState<TapCashOffer[]>(tapCashOffers);
+  const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchOffers = async () => {
     const items = await loadOffers();
     if (Array.isArray(items) && items.length > 0) {
-      setOffers(
-        (items as TapCashOffer[]).slice(0, 4).map((offer) => ({
-          id: offer.id,
-          title: offer.title,
-          provider: offer.provider,
-          category: offer.category ?? "Offer",
-          payoutCoins: offer.payoutCoins ?? 0,
-          estimateMinutes: offer.estimateMinutes ?? 10,
-          description: offer.description ?? "",
-          accent: offer.accent ?? "teal",
-          cta: offer.cta ?? "Open",
-        }))
-      );
+      setOffers(items as TapCashOffer[]);
     }
   };
 
@@ -40,78 +40,116 @@ export default function EarnScreen() {
     setRefreshing(false);
   };
 
+  const filteredOffers = offers.filter((offer) => {
+    if (filter === "All") return true;
+    if (filter === "High Paying") return offer.payoutCoins >= 500;
+    if (filter === "Fast Payout") return offer.estimateMinutes <= 15;
+    if (filter === "No Purchase") return true; // Placeholder
+    if (filter === "Easy") return offer.estimateMinutes <= 10;
+    return true;
+  });
+
+  const handleFilterPress = (f: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFilter(f);
+  };
+
   return (
-    <ScrollView 
-      style={styles.screen} 
+    <ScrollView
+      style={[styles.screen, { paddingTop: insets.top + 12 }]}
       contentContainerStyle={styles.content}
       refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={tapCashTheme.colors.accent}
-        />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.green} />
       }
     >
-      <ScreenFrame
-        eyebrow="Earn"
-        title="Best-fit offers first."
-        description="The mobile flow surfaces the same offer hierarchy as web, but tuned for thumb reach."
+      <Text style={styles.headerTitle}>Top Offers</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterRow}
+        contentContainerStyle={styles.filterContent}
       >
-        <View style={styles.stack}>
-          {offers.map((offer) => {
-            return (
-              <View key={offer.id} style={styles.offerCard}>
-                <View style={styles.offerTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.offerBadge}>{offer.provider} · {offer.category}</Text>
-                    <Text style={styles.offerTitle}>{offer.title}</Text>
-                    <Text style={styles.offerDesc}>{offer.description}</Text>
-                  </View>
-                  <View style={styles.offerPayout}>
-                    <Text style={styles.offerPayoutLabel}>Payout</Text>
-                    <Text style={styles.offerPayoutValue}>{formatCoins(offer.payoutCoins)}</Text>
-                  </View>
-                </View>
-                <View style={styles.offerBottom}>
-                  <Text style={styles.offerMeta}>{offer.estimateMinutes} min session</Text>
-                  <Text style={styles.offerCta}>{offer.cta}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </ScreenFrame>
+        {FILTERS.map((f) => {
+          const isActive = f === filter;
+          return (
+            <TouchableOpacity
+              key={f}
+              style={[
+                styles.filterPill,
+                isActive ? styles.filterPillActive : styles.filterPillInactive,
+              ]}
+              onPress={() => handleFilterPress(f)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  isActive ? styles.filterTextActive : styles.filterTextInactive,
+                ]}
+              >
+                {f}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.list}>
+        {filteredOffers.map((offer, idx) => (
+          <OfferCard key={offer.id} offer={offer} index={idx} />
+        ))}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tapCashTheme.colors.background },
-  content: { paddingBottom: 28 },
-  stack: { gap: 12 },
-  offerCard: {
-    borderRadius: tapCashTheme.radius.xl,
-    backgroundColor: tapCashTheme.colors.surface,
+  screen: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
+  content: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  headerTitle: {
+    color: theme.colors.text,
+    fontSize: theme.font.xl,
+    fontWeight: "900",
+  },
+  filterRow: {
+    maxHeight: 40,
+  },
+  filterContent: {
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.md,
+  },
+  filterPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: theme.radius.full,
+  },
+  filterPillActive: {
+    backgroundColor: theme.colors.green,
+  },
+  filterPillInactive: {
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 16,
-    gap: 14,
+    borderColor: "rgba(255,255,255,0.1)",
   },
-  offerTop: { flexDirection: "row", gap: 12 },
-  offerBadge: { color: tapCashTheme.colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.4 },
-  offerTitle: { color: tapCashTheme.colors.text, fontSize: 20, fontWeight: "900", marginTop: 6 },
-  offerDesc: { color: tapCashTheme.colors.muted, fontSize: 13, lineHeight: 19, marginTop: 8 },
-  offerPayout: {
-    minWidth: 104,
-    borderRadius: tapCashTheme.radius.lg,
-    backgroundColor: tapCashTheme.colors.surfaceAlt,
-    padding: 12,
-    alignItems: "flex-end",
-    justifyContent: "center",
+  filterText: {
+    fontSize: theme.font.sm,
+    fontWeight: "700",
   },
-  offerPayoutLabel: { color: tapCashTheme.colors.muted, fontSize: 10, fontWeight: "800", textTransform: "uppercase" },
-  offerPayoutValue: { color: tapCashTheme.colors.text, fontSize: 18, fontWeight: "900", marginTop: 6 },
-  offerBottom: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  offerMeta: { color: tapCashTheme.colors.muted, fontSize: 12 },
-  offerCta: { color: tapCashTheme.colors.accent, fontSize: 12, fontWeight: "800" },
+  filterTextActive: {
+    color: theme.colors.bg,
+  },
+  filterTextInactive: {
+    color: "rgba(255,255,255,0.5)",
+  },
+  list: {
+    gap: theme.spacing.md,
+  },
 });

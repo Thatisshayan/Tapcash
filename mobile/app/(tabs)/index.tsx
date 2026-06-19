@@ -1,126 +1,115 @@
-import { useEffect, useState } from "react";
-import { ScrollView, View, Text, StyleSheet } from "react-native";
-import { ScreenFrame } from "../../src/components/ScreenFrame";
-import { loadActivity, loadLeaderboard, loadOffers } from "../../src/lib/api";
-import { subscribeToBalance, type BalanceState } from "../../src/lib/firestore";
-import { tapCashTheme } from "../../src/theme";
-import { formatCadFromCoins, formatCoins, tapCashLedgerSummary, tapCashOffers } from "../../../shared/tapcash-content";
-import { useAuth } from "../../src/auth/AuthContext";
+import { useCallback } from "react";
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { theme } from "../../src/theme";
+import { GlassCard } from "../../src/components/GlassCard";
+import { PulsingDot } from "../../src/components/PulsingDot";
+import { OfferCard } from "../../src/components/OfferCard";
+import { tapCashOffers } from "../../../shared/tapcash-content";
+
+const CASHPATH = ["Choose", "Tracking", "Pending", "Approved", "Cashed Out"];
+const ACTIVE = 2;
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({
-    offers: 0,
-    leaderboard: 0,
-    activity: 0,
-  });
-  const [balance, setBalance] = useState<BalanceState>({ balanceCoins: tapCashLedgerSummary.balanceCoins, pendingCoins: tapCashLedgerSummary.pendingCoins });
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      const [offers, leaderboard, activity] = await Promise.all([loadOffers(), loadLeaderboard(), loadActivity()]);
-      if (mounted) {
-        setStats({ offers: offers.length, leaderboard: leaderboard.length, activity: activity.length });
-      }
-    }
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const unsubscribe = subscribeToBalance(user.uid, (state) => {
-      setBalance(state);
-    });
-
-    return unsubscribe;
-  }, [user?.uid]);
+  const insets = useSafeAreaInsets();
+  const h = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const bal = 12.5, minW = 20, prog = Math.min((bal / minW) * 100, 100);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <ScreenFrame
-        eyebrow="TapCash mobile"
-        title="A cleaner rewards shell on iPhone."
-        description="The app reuses the same payout clarity and live-proof content model as the web surface."
-      >
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Ledger balance</Text>
-          <Text style={styles.heroValue}>{formatCoins(balance.balanceCoins)}</Text>
-          <Text style={styles.heroSub}>{formatCadFromCoins(balance.balanceCoins)} available</Text>
-          {balance.pendingCoins > 0 && (
-            <Text style={styles.pendingText}>{formatCoins(balance.pendingCoins)} pending</Text>
-          )}
+    <ScrollView style={[styles.screen, { paddingTop: insets.top + 12 }]} contentContainerStyle={styles.content}>
+      <View style={styles.headerRow}>
+        <Text style={styles.logoText}>TapCash</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={h} style={styles.iconBtn}><Ionicons name="notifications-outline" size={22} color={theme.colors.text} /></TouchableOpacity>
+          <View style={styles.avatar}><Text style={styles.avatarText}>U</Text></View>
         </View>
+      </View>
 
-        <View style={styles.metricGrid}>
-          {[
-            { label: "Offers", value: stats.offers || tapCashOffers.length },
-            { label: "Leaderboard", value: stats.leaderboard || 4 },
-            { label: "Activity", value: stats.activity || 4 },
-          ].map((item) => (
-            <View key={item.label} style={styles.metricCard}>
-              <Text style={styles.metricLabel}>{item.label}</Text>
-              <Text style={styles.metricValue}>{item.value}</Text>
-            </View>
-          ))}
+      <GlassCard>
+        <View style={styles.balHead}>
+          <Text style={styles.balLabel}>YOUR BALANCE</Text>
+          <Ionicons name="wallet-outline" size={20} color={theme.colors.green} />
         </View>
+        <View style={styles.balRow}>
+          <Text style={styles.balAmt}>$12.50</Text>
+          <Text style={styles.balToday}>+$4.20 today</Text>
+        </View>
+        <View style={styles.track}><View style={[styles.fill, { width: prog + "%" }]} /></View>
+        <Text style={styles.balMeta}>Min. $20 to withdraw · $12.50 / $20</Text>
+      </GlassCard>
 
-        <View style={styles.surface}>
-          <Text style={styles.surfaceLabel}>What is active</Text>
-          <View style={styles.list}>
-            <Text style={styles.listItem}>Live proof and payout clarity stay visible.</Text>
-            <Text style={styles.listItem}>The same content language drives web and iOS.</Text>
-            <Text style={styles.listItem}>Auth and provider calls remain server-controlled.</Text>
+      <GlassCard>
+        <View style={styles.liveHead}>
+          <Text style={styles.liveLabel}>LIVE PAYOUT</Text>
+          <PulsingDot size={8} />
+        </View>
+        <View style={styles.liveRow}>
+          <View style={styles.liveIcon}><Text style={styles.liveIconText}>P</Text></View>
+          <View style={styles.liveInfo}>
+            <Text style={styles.liveName}>Emma W. cashed out</Text>
+            <Text style={styles.liveAmt}>$125.00</Text>
+            <Text style={styles.liveMeta}>via PayPal · Just now</Text>
           </View>
         </View>
-      </ScreenFrame>
+      </GlassCard>
+
+      <View style={styles.pathRow}>{CASHPATH.map((s, i) => {
+        const c = i < ACTIVE, a = i === ACTIVE;
+        return <View key={s} style={styles.pathItem}>{i > 0 && <View style={[styles.pathLine, { backgroundColor: c || a ? theme.colors.green : theme.colors.border }]} />}<View style={[styles.pathDot, { backgroundColor: c || a ? theme.colors.green : "transparent", borderColor: c || a ? theme.colors.green : theme.colors.muted }]} /><Text style={[styles.pathText, { color: c || a ? theme.colors.green : theme.colors.muted }]}>{s}</Text></View>;
+      })}</View>
+
+      <View style={styles.secHead}>
+        <Text style={styles.secTitle}>Top Offers</Text>
+        <TouchableOpacity onPress={h}><Text style={styles.secLink}>View all →</Text></TouchableOpacity>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.offScroll}>
+        {tapCashOffers.slice(0, 3).map((o, i) => <OfferCard key={o.id} offer={o} index={i} />)}
+      </ScrollView>
+
+      <View style={styles.statRow}>{[{l:"Users",v:"50K+"},{l:"Paid",v:"$2.5M+"},{l:"Verified",v:"98%"}].map(s => <GlassCard key={s.l} style={styles.statCard}><Text style={styles.statLabel}>{s.l}</Text><Text style={styles.statValue}>{s.v}</Text></GlassCard>)}</View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tapCashTheme.colors.background },
-  content: { paddingBottom: 28 },
-  heroCard: {
-    borderRadius: tapCashTheme.radius.xl,
-    backgroundColor: tapCashTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 18,
-    gap: 6,
-  },
-  heroLabel: { color: tapCashTheme.colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.8 },
-  heroValue: { color: tapCashTheme.colors.text, fontSize: 34, fontWeight: "900" },
-  heroSub: { color: tapCashTheme.colors.muted, fontSize: 13 },
-  pendingText: { color: tapCashTheme.colors.accent, fontSize: 13, fontWeight: "600" },
-  metricGrid: { flexDirection: "row", gap: 10 },
-  metricCard: {
-    flex: 1,
-    borderRadius: tapCashTheme.radius.lg,
-    backgroundColor: tapCashTheme.colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 14,
-    gap: 6,
-  },
-  metricLabel: { color: tapCashTheme.colors.muted, fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5 },
-  metricValue: { color: tapCashTheme.colors.text, fontSize: 28, fontWeight: "900" },
-  surface: {
-    borderRadius: tapCashTheme.radius.xl,
-    backgroundColor: tapCashTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 18,
-    gap: 10,
-  },
-  surfaceLabel: { color: "#f5c842", fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.8 },
-  list: { gap: 10 },
-  listItem: { color: tapCashTheme.colors.text, fontSize: 14, lineHeight: 20 },
+  screen: { flex: 1, backgroundColor: theme.colors.bg },
+  content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm },
+  logoText: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "bold" },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
+  iconBtn: { width: 36, height: 36, borderRadius: theme.radius.full, backgroundColor: theme.colors.card, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 36, height: 36, borderRadius: theme.radius.full, backgroundColor: theme.colors.purple, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: theme.colors.text, fontWeight: "bold", fontSize: theme.font.sm },
+  balHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm },
+  balLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
+  balRow: { flexDirection: "row", alignItems: "baseline", gap: theme.spacing.sm, marginBottom: theme.spacing.sm },
+  balAmt: { color: theme.colors.text, fontSize: theme.font.xxl, fontWeight: "900" },
+  balToday: { color: theme.colors.green, fontSize: theme.font.sm, fontWeight: "600" },
+  track: { height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: theme.spacing.xs },
+  fill: { height: "100%", borderRadius: 2, backgroundColor: theme.colors.green },
+  balMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
+  liveHead: { flexDirection: "row", alignItems: "center", gap: theme.spacing.xs, marginBottom: theme.spacing.sm },
+  liveLabel: { color: theme.colors.text, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
+  liveRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
+  liveIcon: { width: 32, height: 32, borderRadius: theme.radius.full, backgroundColor: theme.colors.purple, alignItems: "center", justifyContent: "center" },
+  liveIconText: { color: theme.colors.text, fontWeight: "bold", fontSize: theme.font.sm },
+  liveInfo: { flex: 1 },
+  liveName: { color: theme.colors.text, fontSize: theme.font.md, fontWeight: "600" },
+  liveAmt: { color: theme.colors.green, fontSize: theme.font.lg, fontWeight: "900" },
+  liveMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
+  pathRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: theme.spacing.md },
+  pathItem: { flex: 1, alignItems: "center", position: "relative" },
+  pathLine: { position: "absolute", top: 8, left: "-50%", width: "100%", height: 2, zIndex: 0 },
+  pathDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, zIndex: 1, marginBottom: theme.spacing.xs },
+  pathText: { fontSize: theme.font.xs, fontWeight: "600", textAlign: "center" },
+  secHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
+  secTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "bold" },
+  secLink: { color: theme.colors.green, fontSize: theme.font.md, fontWeight: "600" },
+  offScroll: { marginBottom: theme.spacing.md },
+  statRow: { flexDirection: "row", gap: theme.spacing.sm },
+  statCard: { flex: 1, padding: theme.spacing.md, alignItems: "center", justifyContent: "center" },
+  statLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "600", textTransform: "uppercase", marginBottom: theme.spacing.xs },
+  statValue: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "900" },
 });
