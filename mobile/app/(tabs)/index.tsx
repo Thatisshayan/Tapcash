@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { loadActivity, loadLeaderboard, loadOffers } from "../../src/lib/api";
+import { subscribeToBalance, type BalanceState } from "../../src/lib/firestore";
 import { tapCashTheme } from "../../src/theme";
 import { formatCadFromCoins, formatCoins, tapCashLedgerSummary, tapCashOffers } from "../../../shared/tapcash-content";
+import { useAuth } from "../../src/auth/AuthContext";
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     offers: 0,
     leaderboard: 0,
     activity: 0,
   });
+  const [balance, setBalance] = useState<BalanceState>({ balanceCoins: tapCashLedgerSummary.balanceCoins, pendingCoins: tapCashLedgerSummary.pendingCoins });
 
   useEffect(() => {
     let mounted = true;
@@ -29,6 +33,16 @@ export default function HomeScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = subscribeToBalance(user.uid, (state) => {
+      setBalance(state);
+    });
+
+    return unsubscribe;
+  }, [user?.uid]);
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenFrame
@@ -38,8 +52,11 @@ export default function HomeScreen() {
       >
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Ledger balance</Text>
-          <Text style={styles.heroValue}>{formatCoins(tapCashLedgerSummary.balanceCoins)}</Text>
-          <Text style={styles.heroSub}>{formatCadFromCoins(tapCashLedgerSummary.balanceCoins)} available</Text>
+          <Text style={styles.heroValue}>{formatCoins(balance.balanceCoins)}</Text>
+          <Text style={styles.heroSub}>{formatCadFromCoins(balance.balanceCoins)} available</Text>
+          {balance.pendingCoins > 0 && (
+            <Text style={styles.pendingText}>{formatCoins(balance.pendingCoins)} pending</Text>
+          )}
         </View>
 
         <View style={styles.metricGrid}>
@@ -82,6 +99,7 @@ const styles = StyleSheet.create({
   heroLabel: { color: tapCashTheme.colors.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.8 },
   heroValue: { color: tapCashTheme.colors.text, fontSize: 34, fontWeight: "900" },
   heroSub: { color: tapCashTheme.colors.muted, fontSize: 13 },
+  pendingText: { color: tapCashTheme.colors.accent, fontSize: 13, fontWeight: "600" },
   metricGrid: { flexDirection: "row", gap: 10 },
   metricCard: {
     flex: 1,

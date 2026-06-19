@@ -1,5 +1,7 @@
 import { Link, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { ScreenFrame } from "../../src/components/ScreenFrame";
 import { tapCashTheme } from "../../src/theme";
 
@@ -11,9 +13,10 @@ const steps = [
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.screen, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
       <ScreenFrame
         eyebrow="TapCash access"
         title="A cleaner rewards app starts here."
@@ -37,7 +40,7 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.buttonRow}>
-          <Pressable onPress={() => router.push("/(auth)/signup")} style={styles.primaryButton}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(auth)/signup"); }} style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>Create account</Text>
           </Pressable>
           <Link href="/(auth)/signin" asChild>
@@ -62,7 +65,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tapCashTheme.colors.background },
   content: { paddingBottom: 28 },
   heroCard: {
-    borderRadius: tapCashTheme.radius.xl,
+    borderRadius: 20,
     backgroundColor: tapCashTheme.colors.surface,
     borderWidth: 1,
     borderColor: tapCashTheme.colors.border,
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
   },
   heroValue: { color: tapCashTheme.colors.text, fontSize: 20, lineHeight: 28, fontWeight: "900" },
   card: {
-    borderRadius: tapCashTheme.radius.xl,
+    borderRadius: 20,
     backgroundColor: tapCashTheme.colors.surface,
     borderWidth: 1,
     borderColor: tapCashTheme.colors.border,
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
   buttonRow: { gap: 10 },
   primaryButton: {
     minHeight: 50,
-    borderRadius: tapCashTheme.radius.lg,
+    borderRadius: 12,
     backgroundColor: tapCashTheme.colors.accent,
     alignItems: "center",
     justifyContent: "center",
@@ -119,7 +122,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     minHeight: 50,
-    borderRadius: tapCashTheme.radius.lg,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: tapCashTheme.colors.border,
     backgroundColor: tapCashTheme.colors.surfaceAlt,
