@@ -1,4 +1,4 @@
-import type { Variants, SpringOptions } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
@@ -23,11 +23,7 @@ export const scaleIn: Variants = {
   },
 };
 
-export const tiltSpring: SpringOptions = {
-  type: 'spring',
-  stiffness: 280,
-  damping: 28,
-};
+export const tiltSpring = { stiffness: 280, damping: 28 } as const;
 
 export const wordReveal: Variants = {
   hidden: { opacity: 0, y: 60, filter: 'blur(8px)' },
