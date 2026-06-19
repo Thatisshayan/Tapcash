@@ -26,11 +26,10 @@ export const scaleIn: Variants = {
 export const tiltSpring = { stiffness: 280, damping: 28 } as const;
 
 export const wordReveal: Variants = {
-  hidden: { opacity: 0, y: 60, filter: 'blur(8px)' },
+  hidden: { opacity: 0, y: 60 },
   show: {
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
   },
 };
