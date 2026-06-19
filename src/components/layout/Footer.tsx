@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Twitter, Github, Linkedin, Mail, Shield } from 'lucide-react';
+import { ExternalLink, Code2, Rss, Mail, Shield } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
 const LINKS = {
@@ -26,9 +26,9 @@ const LINKS = {
 };
 
 const SOCIALS = [
-  { icon: Twitter, label: 'X / Twitter', href: '#' },
-  { icon: Github, label: 'GitHub', href: '#' },
-  { icon: Linkedin, label: 'LinkedIn', href: '#' },
+  { icon: ExternalLink, label: 'X / Twitter', href: '#' },
+  { icon: Code2, label: 'GitHub', href: '#' },
+  { icon: Rss, label: 'LinkedIn', href: '#' },
   { icon: Mail, label: 'Email', href: 'mailto:hello@tapcash.online' },
 ];
 
