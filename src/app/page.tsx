@@ -1,37 +1,36 @@
-import PremiumHeader from '@/components/layout/PremiumHeader';
-import PremiumFooter from '@/components/layout/PremiumFooter';
-import HeroPremium from '@/components/landing/HeroPremium';
-import TopOffersPremium from '@/components/landing/TopOffersPremium';
-import CashPathLivePremium from '@/components/landing/CashPathLivePremium';
-import AppPreview from '@/components/landing/AppPreview';
-import TapScoreSectionPremium from '@/components/landing/TapScoreSectionPremium';
-import TrustStripPremium from '@/components/landing/TrustStripPremium';
 import type { Metadata } from 'next';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { HeroSection } from '@/components/sections/HeroSection';
+import { OffersSection } from '@/components/sections/OffersSection';
+import { CashPathSection } from '@/components/sections/CashPathSection';
+import { TruthModeSection } from '@/components/sections/TruthModeSection';
+import { AppShowcaseSection } from '@/components/sections/AppShowcaseSection';
+import { TrustStripSection } from '@/components/sections/TrustStripSection';
 
 export const metadata: Metadata = {
-  title: 'TapCash | Play. Earn. Cash Out.',
-  description: 'Complete verified offers. Track every step. Cash out when rewards clear. Premium rewards platform with ledger-backed balances.',
+  title: 'TapCash — Play Games. Earn Cash. Cash Out.',
+  description:
+    "Canada's premium gaming rewards platform. Complete verified offers, track every step, cash out fast. Real payouts, zero hidden fees.",
   openGraph: {
-    title: 'TapCash | Play. Earn. Cash Out.',
-    description: 'Complete verified offers and cash out when rewards clear.',
+    title: 'TapCash — Play Games. Earn Cash. Cash Out.',
+    description: "Canada's premium gaming rewards platform. Real offers. Real payouts.",
   },
 };
 
 export default function HomePage() {
   return (
     <>
-      <PremiumHeader />
-      
+      <Navbar />
       <main>
-        <HeroPremium />
-        <TopOffersPremium />
-        <CashPathLivePremium />
-        <AppPreview />
-        <TapScoreSectionPremium />
-        <TrustStripPremium />
+        <HeroSection />
+        <OffersSection />
+        <CashPathSection />
+        <TruthModeSection />
+        <AppShowcaseSection />
+        <TrustStripSection />
       </main>
-
-      <PremiumFooter />
+      <Footer />
     </>
   );
 }

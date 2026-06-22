@@ -1,14 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
-import { Text, View, StyleSheet } from "react-native";
 import { useAuth } from "../../src/auth/AuthContext";
-
-function TabMark({ label, color }: { label: string; color: string }) {
-  return (
-    <View style={[styles.mark, { borderColor: color }]}>
-      <Text style={[styles.markText, { color }]}>{label}</Text>
-    </View>
-  );
-}
+import { Ionicons } from "@expo/vector-icons";
+import { theme } from "../../src/theme";
 
 export default function TabsLayout() {
   const { user, verified, loading } = useAuth();
@@ -29,13 +22,15 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#00e6c3",
-        tabBarInactiveTintColor: "#94a3b8",
+        tabBarActiveTintColor: theme.colors.green,
+        tabBarInactiveTintColor: "rgba(255,255,255,0.3)",
         tabBarStyle: {
-          backgroundColor: "#07111d",
-          borderTopColor: "rgba(255,255,255,0.08)",
-          height: 64,
-          paddingTop: 6,
+          backgroundColor: theme.colors.bg,
+          borderTopColor: theme.colors.border,
+          borderTopWidth: 0.5,
+          height: 80,
+          paddingBottom: 16,
+          paddingTop: 10,
         },
       }}
     >
@@ -43,53 +38,37 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabMark label="H" color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size ?? 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="earn"
         options={{
           title: "Earn",
-          tabBarIcon: ({ color }) => <TabMark label="E" color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="flash" size={size ?? 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="cashout"
         options={{
           title: "Cashout",
-          tabBarIcon: ({ color }) => <TabMark label="C" color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="wallet" size={size ?? 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="activity"
         options={{
           title: "Activity",
-          tabBarIcon: ({ color }) => <TabMark label="A" color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size ?? 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: "Account",
-          tabBarIcon: ({ color }) => <TabMark label="M" color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size ?? 24} color={color} />,
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  mark: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  markText: {
-    fontSize: 11,
-    fontWeight: "800",
-  },
-});

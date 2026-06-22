@@ -3,6 +3,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "../src/auth/AuthContext";
+import { setupNotificationHandlers } from "../src/lib/notifications";
+
+setupNotificationHandlers();
 
 export default function RootLayout() {
   return (

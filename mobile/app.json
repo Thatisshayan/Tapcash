@@ -2,27 +2,26 @@
   "expo": {
     "name": "TapCash",
     "slug": "tapcash-mobile",
+    "version": "1.0.0",
     "scheme": "tapcash",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android"],
     "plugins": [
-      "expo-router"
+      "expo-router",
+      ["expo-notifications", { "icon": "./assets/icon.png", "color": "#00FF85", "sounds": [] }],
+      "expo-secure-store"
     ],
-    "android": {
-      "package": "com.tapcash.mobile"
-    },
     "ios": {
-      "supportsTablet": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "1c561a9d-ac22-47db-b376-921c6e4b5086"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tapcash.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Used for fast secure sign-in.",
+        "NSCameraUsageDescription": "Used for profile photos.",
+        "NSPhotoLibraryUsageDescription": "Used for profile photos."
       }
     },
+    "android": { "package": "com.tapcash.mobile", "versionCode": 1 },
+    "extra": { "router": {}, "eas": { "projectId": "1c561a9d-ac22-47db-b376-921c6e4b5086" } },
     "owner": "obsidianmedia"
   }
 }

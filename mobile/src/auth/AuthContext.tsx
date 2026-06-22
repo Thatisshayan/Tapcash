@@ -12,6 +12,7 @@ import {
 import { auth } from "../lib/firebase";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
+import { registerPushToken } from "../lib/notifications";
 
 type AuthContextValue = {
   user: User | null;
@@ -102,6 +103,11 @@ const refreshSession = async () => {
     return syncCurrentUser(auth.currentUser);
   };
 
+  const handleAuthSuccess = useCallback(async () => {
+    await refreshSession();
+    await registerPushToken();
+  }, []);
+
   const [biometricAvailable, setBiometricAvailable] = useState(false);
 
   useEffect(() => {
@@ -144,12 +150,12 @@ const value: AuthContextValue = {
     signIn: async (email, password) => {
       await signInWithEmailAndPassword(auth, email, password);
       await SecureStore.setItemAsync("tapcash_creds", JSON.stringify({ email, password }));
-      await refreshSession();
+      await handleAuthSuccess();
     },
     signUp: async (email, password) => {
       await createUserWithEmailAndPassword(auth, email, password);
       await SecureStore.setItemAsync("tapcash_creds", JSON.stringify({ email, password }));
-      await refreshSession();
+      await handleAuthSuccess();
     },
     resendVerificationEmail,
     refreshSession,
