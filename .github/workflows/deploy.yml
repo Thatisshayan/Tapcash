@@ -173,10 +173,12 @@ jobs:
 
       - name: Comment PR with preview URL
         if: steps.vercel-deploy.outputs.preview-url != ''
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
-            github.rest.issues.createComment({
+            const { getOctokit } = require('@actions/github-script');
+            const octokit = getOctokit();
+            await octokit.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -285,7 +287,7 @@ jobs:
         continue-on-error: true
 
       - name: Send email notification
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v17
         with:
           server_address: smtp.gmail.com
           server_port: 465
@@ -293,7 +295,7 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: TapCash Deployment ${{ job.status }}
           to: team@tapcash.com
-          from: ci@tapcash.com
+          from: "TapCash CI <ci@tapcash.com>"
           body: |
             Deployment Status: ${{ job.status }}
             Commit: ${{ github.sha }}
