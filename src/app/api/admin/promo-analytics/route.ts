@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     .where("source", "==", "promo_code")
     .get();
 
-  const stats: Record<string, { redemptions: number; coinsIssued: number; users: Set<string> }> = {};
+  const stats: Record<string, { redemptions: number; coinsIssued: number; users: number }> = {};
 
   for (const doc of snap.docs) {
     const data = doc.data();

@@ -4,9 +4,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lootably.com" },

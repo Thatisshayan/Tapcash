@@ -6,38 +6,41 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function formatPrivateKey(key: string): string {
+  let cleaned = key;
+  try {
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      const parsed: unknown = JSON.parse(cleaned);
+      if (typeof parsed === "string") cleaned = parsed;
+    }
+  } catch { /* keep original */ }
+
+  cleaned = cleaned.replace(/^['"]|['"]$/g, "");
+  cleaned = cleaned.replace(/\\\\n/g, "\n").replace(/\\n/g, "\n");
+  cleaned = cleaned.trim();
+
+  if (!cleaned.includes("-----BEGIN PRIVATE KEY-----")) {
+    const raw = cleaned.replace(/\s+/g, "");
+    const lines = raw.match(/.{1,64}/g)?.join("\n") || raw;
+    cleaned = `-----BEGIN PRIVATE KEY-----\n${lines}\n-----END PRIVATE KEY-----\n`;
+  }
+  return cleaned;
+}
+
 export let firebaseAdminReady = false;
 export let firebaseAdminMode: FirebaseAdminMode = "fallback";
 export let firebaseAdminError: string | null = null;
 
-if (!admin.apps.length) {
+function log(level: "error" | "warn", message: string) {
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
-  const isProduction = process.env.NODE_ENV === "production";
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  if (privateKey) {
-    try {
-      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        const parsedPrivateKey: unknown = JSON.parse(privateKey);
-        if (typeof parsedPrivateKey === "string") {
-          privateKey = parsedPrivateKey;
-        }
-      }
-    } catch {
-      // Keep the original environment value if it cannot be parsed as JSON.
-    }
-
-    if (typeof privateKey === "string") {
-      privateKey = privateKey.replace(/^['"]|['"]$/g, "");
-      privateKey = privateKey.replace(/\\\\n/g, "\n").replace(/\\n/g, "\n");
-      privateKey = privateKey.trim();
-
-      if (!privateKey.includes("-----BEGIN PRIVATE KEY-----")) {
-        const cleanKey = privateKey.replace(/\s+/g, '');
-        const formattedKey = cleanKey.match(/.{1,64}/g)?.join('\n') || cleanKey;
-        privateKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----\n`;
-      }
-    }
+  if (!isBuildPhase) {
+    console[level](`[FirebaseAdmin] ${message}`);
   }
+}
+
+if (!admin.apps.length) {
+  const isProduction = process.env.NODE_ENV === "production";
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY ? formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY) : null;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -48,31 +51,25 @@ if (!admin.apps.length) {
       });
       firebaseAdminReady = true;
       firebaseAdminMode = "real";
-    } catch (error: unknown) {
-      firebaseAdminError = getErrorMessage(error, "Firebase Admin Initialization Error");
-      if (isProduction && !isBuildPhase) {
-        console.error("Firebase Admin Initialization Error:", firebaseAdminError);
-      } else if (!isBuildPhase) {
-        console.warn("Firebase Admin Initialization Error:", firebaseAdminError);
-      }
+    } catch (error) {
+      firebaseAdminError = `Initialization failed: ${getErrorMessage(error, "Unknown error")}`;
+      log("error", firebaseAdminError);
     }
   } else {
     firebaseAdminError = "Missing FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, or FIREBASE_PROJECT_ID.";
-    if (isProduction && !isBuildPhase) {
-      console.error("Firebase Admin unavailable:", firebaseAdminError);
-    } else if (!isBuildPhase) {
-      console.warn("Firebase Admin unavailable:", firebaseAdminError);
-    }
+    log(isProduction ? "error" : "warn", firebaseAdminError);
   }
 
-  // Fallback keeps the module importable during builds and local work, but the
-  // exported status flag makes the misconfiguration visible to callers.
+  // In production, never fall back — fail loudly if Firebase Admin isn't configured.
+  // In dev/test, initialize a minimal app so the module is importable.
   if (!admin.apps.length) {
-    if (!isBuildPhase) {
-      console.warn("Initializing fallback Firebase app. Firebase-dependent routes should check firebaseAdminReady before using live data.");
+    if (isProduction) {
+      log("error", "Firebase Admin unavailable in production — credentials are required.");
+    } else {
+      admin.initializeApp({ projectId: projectId || "tapcash-dev" });
+      firebaseAdminMode = "fallback";
+      log("warn", "Using fallback Firebase app. Real credentials required for production.");
     }
-    admin.initializeApp({ projectId: projectId || "demo-project" });
-    firebaseAdminMode = "fallback";
   }
 }
 
