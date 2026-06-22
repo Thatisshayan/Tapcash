@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { tapCashLeaderboardSeed } from "@shared/tapcash-content";
 
 export const runtime = "nodejs";
-export const revalidate = 300; // Cache for 5 minutes
+export const revalidate = 300;
 
 interface LeaderboardEntry {
   rank: number;
@@ -11,7 +12,6 @@ interface LeaderboardEntry {
   coins: number;
 }
 
-// Cache for 5 minutes — leaderboard doesn't need to be real-time
 let cache: { data: LeaderboardEntry[]; ts: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -28,11 +28,14 @@ export async function GET() {
       );
     }
 
-    // Aggregate balances from ledger_transactions per user
     const snapshot = await adminDb
       .collection("ledger_transactions")
       .select("userId", "balanceEffectCoins")
       .get();
+
+    if (snapshot.empty) {
+      return NextResponse.json({ leaderboard: tapCashLeaderboardSeed, source: "seed" });
+    }
 
     const totals = new Map<string, number>();
     snapshot.forEach((doc) => {
@@ -41,12 +44,10 @@ export async function GET() {
       totals.set(userId, (totals.get(userId) ?? 0) + Number(balanceEffectCoins || 0));
     });
 
-    // Sort descending, keep top 10
     const sorted = [...totals.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
 
-    // Fetch display names for top users
     const leaderboard = await Promise.all(
       sorted.map(async ([userId, coins], idx) => {
         try {
@@ -61,7 +62,7 @@ export async function GET() {
 
     cache = { data: leaderboard, ts: Date.now() };
     return NextResponse.json(
-      { leaderboard },
+      { leaderboard, source: "firestore" },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
@@ -69,7 +70,7 @@ export async function GET() {
       }
     );
   } catch (err) {
-    console.error("Leaderboard error:", err);
-    return NextResponse.json({ leaderboard: [] }, { status: 200 });
+    console.error("Leaderboard fallback to seed:", err);
+    return NextResponse.json({ leaderboard: tapCashLeaderboardSeed, source: "seed" }, { status: 200 });
   }
 }

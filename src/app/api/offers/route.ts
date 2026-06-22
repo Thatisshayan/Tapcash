@@ -1,6 +1,7 @@
 // src/app/api/offers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Offer } from '@/types/offer';
+import { tapCashOffers } from '@shared/tapcash-content';
 
 interface RapidoReachSurvey {
   SurveyNumber: string;
@@ -89,8 +90,16 @@ export async function GET(request: NextRequest) {
   const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID;
   const appKey = process.env.RAPIDOREACH_APP_KEY;
   if (!appId || !appKey) {
-    console.error("RapidoReach credentials are not configured");
-    return NextResponse.json({ error: "Offers provider is temporarily unavailable" }, { status: 503 });
+    const offers: Offer[] = tapCashOffers.map((o) => ({
+      id: o.id,
+      title: o.title,
+      description: o.description,
+      payout: o.payoutCoins,
+      clickUrl: "",
+      provider: o.provider,
+      category: o.category,
+    }));
+    return NextResponse.json({ offers, source: "seed" });
   }
   
   const userIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
@@ -136,18 +145,24 @@ export async function GET(request: NextRequest) {
         }
       );
     } else if ((json as { Errors?: unknown }).Errors) {
-       // Handle explicit RapidoReach API errors gracefully
        console.error("RapidoReach API Error Object:", (json as { Errors?: unknown }).Errors);
        return NextResponse.json({ offers: [], source: 'rapidoreach' }, { status: 200 });
     } else {
-      console.warn('RapidoReach API returned no survey list. Falling back to empty offer array.', {
+      console.warn('RapidoReach API returned no survey list. Falling back to seed offers.', {
         responseKeys: typeof json === 'object' && json ? Object.keys(json as Record<string, unknown>) : [],
       });
-      return NextResponse.json({ offers: [], source: 'rapidoreach' }, { status: 200 });
+      const offers: Offer[] = tapCashOffers.map((o) => ({
+        id: o.id, title: o.title, description: o.description,
+        payout: o.payoutCoins, clickUrl: "", provider: o.provider, category: o.category,
+      }));
+      return NextResponse.json({ offers, source: 'seed' }, { status: 200 });
     }
   } catch (error) {
     console.error('RapidoReach API fetch error:', error);
-    // Return empty array on API failure so dashboard doesn't break
-    return NextResponse.json({ offers: [], source: 'rapidoreach' }, { status: 200 });
+    const offers: Offer[] = tapCashOffers.map((o) => ({
+      id: o.id, title: o.title, description: o.description,
+      payout: o.payoutCoins, clickUrl: "", provider: o.provider, category: o.category,
+    }));
+    return NextResponse.json({ offers, source: 'seed' }, { status: 200 });
   }
 }
