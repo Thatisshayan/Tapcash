@@ -2,8 +2,8 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles, Wallet } from "lucide-react";
-import PremiumHeader from "@/components/layout/PremiumHeader";
-import PremiumFooter from "@/components/layout/PremiumFooter";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { accentClass, formatCoins, tapCashPayoutMethods } from "@shared/tapcash-content";
 import { CTAButton, MotionWrap, PageShell } from "@/components/PremiumUi";
 import { useMemo } from "react";
@@ -22,7 +22,7 @@ export default function PayoutsPage() {
 
   return (
     <div className="min-h-screen bg-[#040913] text-white">
-      <PremiumHeader />
+      <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
           <section className="rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(245,200,66,0.08),transparent_30%),linear-gradient(180deg,rgba(8,15,25,0.96),rgba(5,8,16,0.98))] p-6 sm:p-8">
@@ -97,7 +97,7 @@ export default function PayoutsPage() {
           </section>
         </div>
       </main>
-      <PremiumFooter />
+      <Footer />
     </div>
   );
 }

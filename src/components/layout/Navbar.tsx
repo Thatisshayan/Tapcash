@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NAV_ITEMS = [
   { label: 'Games', href: '/games' },
@@ -14,43 +14,42 @@ const NAV_ITEMS = [
   { label: 'Blog', href: '/blog' },
 ];
 
-const AVATAR_COLORS = ['#7B5CF0', '#00FF85', '#00D4FF'];
-const AVATAR_INITIALS = ['A', 'J', 'S'];
-
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-        <polygon points="14,2 26,24 2,24" fill="#7B5CF0" opacity="0.9" />
-        <polygon points="14,8 24,26 4,26" fill="#00FF85" opacity="0.75" />
-      </svg>
-      <span
-        className="text-[17px] font-bold tracking-wide text-white"
-        style={{ fontFamily: 'var(--font-syne), Syne, sans-serif' }}
-      >
-        TAP<span className="text-white">CASH</span>
+    <Link href="/" className="flex items-center gap-2 group">
+      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#31F06F] to-[#18D9FF] flex items-center justify-center font-black text-white text-sm group-hover:scale-105 transition-transform">
+        TC
+      </div>
+      <span className="text-xl font-black tracking-tight">
+        <span className="text-white">TAP</span>
+        <span className="text-[#31F06F]">CASH</span>
       </span>
-    </div>
+    </Link>
   );
 }
 
-function AvatarStack() {
+function AvatarGroup() {
   return (
-    <div className="hidden lg:flex items-center gap-2.5">
-      <div className="flex items-center">
-        {AVATAR_COLORS.map((color, i) => (
-          <div
-            key={i}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-[#0d0d1a]"
-            style={{ background: color, marginLeft: i > 0 ? '-6px' : '0' }}
-          >
-            {AVATAR_INITIALS[i]}
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#00FF85] animate-breathe-dot" />
-        <span className="text-[12px] text-white/50">2,847+ cashed out today</span>
+    <div className="flex items-center -space-x-2">
+      {[
+        'from-[#31F06F] to-[#18D9FF]',
+        'from-[#7C3DFF] to-[#18D9FF]',
+        'from-[#31F06F] to-[#7C3DFF]'
+      ].map((gradient, idx) => (
+        <motion.div
+          key={idx}
+          className={`w-7 h-7 rounded-full border-2 border-[#050813] bg-gradient-to-br ${gradient}`}
+          animate={{ y: [0, -3, 0] }}
+          transition={{ delay: idx * 0.1, duration: 3, repeat: Infinity }}
+        />
+      ))}
+      <div className="ml-3 flex items-center gap-1.5">
+        <motion.span
+          className="w-1.5 h-1.5 rounded-full bg-[#31F06F]"
+          animate={{ scale: [1, 1.3, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <span className="text-xs text-white/50">2.3K+ cashed out today</span>
       </div>
     </div>
   );
@@ -70,13 +69,11 @@ function NavScrollShell({ children }: { children: React.ReactNode }) {
     <header
       className={[
         'sticky top-0 z-50 transition-all duration-300',
-        scrolled
-          ? 'backdrop-blur-[12px] border-b'
-          : '',
+        scrolled ? 'backdrop-blur-xl border-b' : '',
       ].join(' ')}
       style={{
-        backgroundColor: scrolled ? 'rgba(13,13,26,0.9)' : '#0d0d1a',
-        borderColor: 'rgba(255,255,255,0.07)',
+        backgroundColor: scrolled ? 'rgba(5,8,19,0.85)' : '#050813',
+        borderColor: 'rgba(150,190,255,0.1)',
       }}
     >
       {children}
@@ -86,53 +83,73 @@ function NavScrollShell({ children }: { children: React.ReactNode }) {
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
-  const prefersReduced = useReducedMotion();
+
+  const close = useCallback(() => setOpen(false), []);
 
   return (
     <NavScrollShell>
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
-        <Link href="/" className="shrink-0 focus-visible:ring-2 focus-visible:ring-[#00FF85] rounded-md outline-none">
-          <Logo />
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
+        <Logo />
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-6">
-          {NAV_ITEMS.map((item) => (
-            <Link
+        <nav className="hidden lg:flex items-center gap-8 flex-1 ml-4">
+          {NAV_ITEMS.map((item, idx) => (
+            <motion.div
               key={item.href}
-              href={item.href}
-              className="flex items-center gap-1.5 text-[14px] font-medium text-white/60 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-[#00FF85] rounded outline-none"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + idx * 0.05 }}
             >
-              {item.label}
-              {item.badge && (
-                <span className="text-[9px] font-bold text-black bg-[#00FF85] rounded-full px-1.5 py-0.5 tracking-wide">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+              <Link
+                href={item.href}
+                className="flex items-center gap-1.5 text-sm font-semibold text-white/60 hover:text-[#18D9FF] transition-colors relative group focus-visible:ring-2 focus-visible:ring-[#31F06F] rounded outline-none"
+              >
+                {item.label}
+                {item.badge && (
+                  <span className="text-[9px] font-bold text-black bg-[#31F06F] rounded-full px-1.5 py-0.5 tracking-wide">
+                    {item.badge}
+                  </span>
+                )}
+                <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-[#18D9FF] to-[#31F06F] group-hover:w-full transition-all duration-300" />
+              </Link>
+            </motion.div>
           ))}
         </nav>
 
-        {/* Right */}
-        <div className="hidden lg:flex items-center gap-4">
-          <AvatarStack />
-          <Link
-            href="/auth/login"
-            className="text-[14px] font-medium text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.1] hover:border-white/20 focus-visible:ring-2 focus-visible:ring-[#00FF85] outline-none"
+        {/* Right side */}
+        <div className="hidden lg:flex items-center gap-3">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[rgba(150,190,255,0.1)]"
           >
-            Log In
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="text-[13px] font-bold px-4 py-2 rounded-xl text-black btn-gradient focus-visible:ring-2 focus-visible:ring-[#00FF85] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d1a] outline-none"
+            <AvatarGroup />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center gap-2"
           >
-            Sign Up Free
-          </Link>
+            <Link
+              href="/auth/signin"
+              className="text-sm font-semibold text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.1] hover:border-white/20 focus-visible:ring-2 focus-visible:ring-[#31F06F] outline-none"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="text-sm font-bold px-4 py-2 rounded-xl bg-gradient-to-br from-[#31F06F] to-[#18D9FF] text-black hover:opacity-90 transition-opacity focus-visible:ring-2 focus-visible:ring-[#31F06F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050813] outline-none"
+            >
+              Sign Up Free
+            </Link>
+          </motion.div>
         </div>
 
         {/* Mobile hamburger */}
         <button
-          className="lg:hidden text-white/70 hover:text-white p-2 focus-visible:ring-2 focus-visible:ring-[#00FF85] rounded outline-none"
+          className="lg:hidden text-white/70 hover:text-white p-2 focus-visible:ring-2 focus-visible:ring-[#31F06F] rounded outline-none"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? 'Close menu' : 'Open menu'}
         >
@@ -145,41 +162,40 @@ export function Navbar() {
         {open && (
           <motion.div
             key="mobile-menu"
-            initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="lg:hidden fixed inset-0 top-16 z-40 flex flex-col px-6 pt-8 pb-12 gap-6"
-            style={{ backgroundColor: '#0d0d1a' }}
+            className="lg:hidden fixed inset-0 top-16 z-40 flex flex-col px-6 pt-8 pb-12 gap-6 overflow-y-auto"
+            style={{ backgroundColor: '#050813' }}
           >
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setOpen(false)}
+                onClick={close}
                 className="flex items-center gap-2 text-2xl font-bold text-white/80 hover:text-white transition-colors"
-                style={{ fontFamily: 'var(--font-syne), Syne, sans-serif' }}
               >
                 {item.label}
                 {item.badge && (
-                  <span className="text-[10px] font-bold text-black bg-[#00FF85] rounded-full px-2 py-0.5">
+                  <span className="text-[10px] font-bold text-black bg-[#31F06F] rounded-full px-2 py-0.5">
                     {item.badge}
                   </span>
                 )}
               </Link>
             ))}
-            <div className="border-t pt-6 flex flex-col gap-3" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+            <div className="border-t pt-6 flex flex-col gap-3" style={{ borderColor: 'rgba(150,190,255,0.1)' }}>
               <Link
-                href="/auth/login"
-                onClick={() => setOpen(false)}
-                className="w-full text-center py-3 rounded-xl border border-white/[0.1] text-white/70 font-medium"
+                href="/auth/signin"
+                onClick={close}
+                className="w-full text-center py-3 rounded-xl border border-white/[0.1] text-white/70 font-semibold hover:text-white transition-colors"
               >
                 Log In
               </Link>
               <Link
                 href="/auth/signup"
-                onClick={() => setOpen(false)}
-                className="w-full text-center py-3 rounded-xl btn-gradient text-black font-bold"
+                onClick={close}
+                className="w-full text-center py-3 rounded-xl bg-gradient-to-br from-[#31F06F] to-[#18D9FF] text-black font-bold"
               >
                 Sign Up Free
               </Link>

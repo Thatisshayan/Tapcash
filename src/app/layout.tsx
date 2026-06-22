@@ -1,24 +1,22 @@
 import type { Metadata } from 'next';
-import { Syne, Inter, JetBrains_Mono } from 'next/font/google';
+import { Space_Grotesk, Manrope, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import '../styles/premium.css';
 import { AuthProvider } from '../context/AuthContext';
 import { ABTestProvider } from '../context/ABTestContext';
 import GlobalNotificationListener from '@/components/GlobalNotificationListener';
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
 import VercelAnalytics from '@/components/VercelAnalytics';
 
-const syne = Syne({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: ['700'],
-  variable: '--font-syne',
+  variable: '--font-space-grotesk',
   display: 'swap',
   preload: true,
 });
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-manrope',
   display: 'swap',
   preload: true,
 });
@@ -63,11 +61,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
+      className={`${spaceGrotesk.variable} ${manrope.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
       <body
         className="min-h-full flex flex-col text-white"
-        style={{ backgroundColor: '#0a0f0d', fontFamily: 'var(--font-inter), Inter, sans-serif' }}
+        style={{ backgroundColor: '#0a0f0d', fontFamily: 'var(--font-manrope), Manrope, sans-serif' }}
       >
         <ABTestProvider>
           <AuthProvider>

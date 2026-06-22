@@ -1,8 +1,8 @@
 // src/app/cookies/page.tsx
 "use client";
 
-import PremiumHeader from "@/components/layout/PremiumHeader";
-import PremiumFooter from "@/components/layout/PremiumFooter";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -155,7 +155,7 @@ export default function CookiePolicyPage() {
 
   return (
     <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
-      <PremiumHeader />
+      <Navbar />
 
       {/* Background radial glows */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[120px] pointer-events-none" />
@@ -265,7 +265,7 @@ export default function CookiePolicyPage() {
           </p>
         </div>
       </main>
-      <PremiumFooter />
+      <Footer />
 
       <footer className="border-t border-zinc-900 bg-[#080808] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-zinc-600 uppercase tracking-widest">

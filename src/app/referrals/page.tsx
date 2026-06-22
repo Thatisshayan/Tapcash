@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import PremiumHeader from "@/components/layout/PremiumHeader";
-import PremiumFooter from "@/components/layout/PremiumFooter";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
 import { Copy, Check, Users, ArrowUpRight, Loader2, AlertTriangle, Coins, Sparkles, ArrowRight, BadgeCheck } from "lucide-react";
 import Link from "next/link";
@@ -75,7 +75,7 @@ export default function ReferralsPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#040913] text-white flex flex-col">
-        <PremiumHeader />
+        <Navbar />
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
           <ConversionStrip
             eyebrow="Invite growth"
@@ -103,14 +103,14 @@ export default function ReferralsPage() {
             </PageShell>
           </MotionWrap>
         </main>
-      <PremiumFooter />
+      <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#040913] text-white flex flex-col relative overflow-x-hidden">
-      <PremiumHeader />
+      <Navbar />
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
         <ConversionStrip
@@ -203,7 +203,7 @@ export default function ReferralsPage() {
           </MotionWrap>
         </div>
       </main>
-      <PremiumFooter />
+      <Footer />
     </div>
   );
 }

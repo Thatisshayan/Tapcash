@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { BadgeCheck, Coins, Loader2, Sparkles, Wallet } from "lucide-react";
-import PremiumHeader from "@/components/layout/PremiumHeader";
-import PremiumFooter from "@/components/layout/PremiumFooter";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { accentClass, formatCoins, formatCadFromCoins, tapCashPayoutMethods } from "@shared/tapcash-content";
 import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
@@ -72,7 +72,7 @@ export default function CashoutPage() {
   if (authLoading || (user && loading && !summary)) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <PremiumHeader />
+        <Navbar />
         <div className="flex min-h-[70vh] items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
         </div>
@@ -83,7 +83,7 @@ export default function CashoutPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
-        <PremiumHeader />
+        <Navbar />
         <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
           <MotionWrap>
             <PageShell eyebrow="Payout store" title="Sign in to review cashout options" description="The payout store is private because the balance and withdrawal queue are user-specific.">
@@ -94,14 +94,14 @@ export default function CashoutPage() {
             </PageShell>
           </MotionWrap>
         </main>
-        <PremiumFooter />
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#040913] text-white">
-      <PremiumHeader />
+      <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MotionWrap>
           <PageShell
@@ -171,7 +171,7 @@ export default function CashoutPage() {
           </div>
         </MotionWrap>
       </main>
-      <PremiumFooter />
+      <Footer />
     </div>
   );
 }
