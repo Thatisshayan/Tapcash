@@ -11,24 +11,24 @@ import Link from "next/link";
 interface Payout {
   id: string;
   amountCoins: number;
-  amountCad: number;
+  amountCents: number;
   method: string;
   destination: string;
-  status: "pending" | "under_review" | "approved" | "sent" | "rejected";
+  status: "pending_review" | "approved" | "rejected" | "processing" | "sent";
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
-  adminNotes?: string;
+  adminNote?: string;
 }
 
 const STATUS_META: Record<Payout["status"], { label: string; color: string; icon: React.ReactNode; step: number }> = {
-  pending:      { label: "Submitted",    color: "#94a3b8", icon: <Clock className="w-4 h-4" />,        step: 1 },
-  under_review: { label: "Under Review", color: "#f5c842", icon: <Loader2 className="w-4 h-4 animate-spin" />, step: 2 },
-  approved:     { label: "Approved",     color: "#00e6c3", icon: <CheckCircle2 className="w-4 h-4" />, step: 3 },
-  sent:         { label: "Sent",         color: "#3a7bff", icon: <CheckCircle2 className="w-4 h-4" />, step: 4 },
-  rejected:     { label: "Rejected",     color: "#ef4444", icon: <AlertCircle className="w-4 h-4" />,  step: 0 },
+  pending_review: { label: "Submitted",     color: "#94a3b8", icon: <Clock className="w-4 h-4" />,                 step: 1 },
+  processing:     { label: "Processing",    color: "#f5c842", icon: <Loader2 className="w-4 h-4 animate-spin" />,   step: 2 },
+  approved:       { label: "Approved",      color: "#00e6c3", icon: <CheckCircle2 className="w-4 h-4" />,          step: 3 },
+  sent:           { label: "Sent",          color: "#3a7bff", icon: <CheckCircle2 className="w-4 h-4" />,          step: 4 },
+  rejected:       { label: "Rejected",      color: "#ef4444", icon: <AlertCircle className="w-4 h-4" />,           step: 0 },
 };
 
-const LIFECYCLE_STEPS = ["pending", "under_review", "approved", "sent"] as const;
+const LIFECYCLE_STEPS = ["pending_review", "processing", "approved", "sent"] as const;
 
 function fmt(ts: Timestamp | null) {
   if (!ts) return "—";
@@ -53,7 +53,7 @@ export default function PayoutStatusPage() {
   useEffect(() => {
     if (!user) return;
     const q = query(
-      collection(db, "payouts"),
+      collection(db, "cashout_requests"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
@@ -122,7 +122,7 @@ export default function PayoutStatusPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-black text-sm" style={{ color: meta.color }}>{meta.label}</p>
-                      <p className="text-xs text-zinc-400">${p.amountCad?.toFixed(2) || (p.amountCoins / 1000).toFixed(2)} CAD</p>
+                      <p className="text-xs text-zinc-400">${(p.amountCents / 100).toFixed(2) || (p.amountCoins / 1000).toFixed(2)} CAD</p>
                     </div>
                   </div>
 
@@ -170,13 +170,13 @@ export default function PayoutStatusPage() {
                             <div className="flex justify-between"><span className="text-zinc-500">Destination</span><span className="text-white font-semibold">{p.destination}</span></div>
                             <div className="flex justify-between"><span className="text-zinc-500">Coins deducted</span><span className="text-white font-semibold">{p.amountCoins?.toLocaleString()}</span></div>
                             {p.updatedAt && <div className="flex justify-between"><span className="text-zinc-500">Last updated</span><span className="text-white font-semibold">{fmt(p.updatedAt)}</span></div>}
-                            {p.adminNotes && <div className="pt-2 border-t border-white/5"><p className="text-zinc-500 text-xs mb-1">Admin note</p><p className="text-yellow-300 text-xs">{p.adminNotes}</p></div>}
+                            {p.adminNote && <div className="pt-2 border-t border-white/5"><p className="text-zinc-500 text-xs mb-1">Admin note</p><p className="text-yellow-300 text-xs">{p.adminNote}</p></div>}
                           </div>
 
                           {p.status === "rejected" && (
                             <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-300">
                               Payout was rejected. Coins have been returned to your wallet.
-                              {p.adminNotes && <span> Reason: {p.adminNotes}</span>}
+                              {p.adminNote && <span> Reason: {p.adminNote}</span>}
                             </div>
                           )}
                         </div>
