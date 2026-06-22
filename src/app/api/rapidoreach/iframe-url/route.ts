@@ -20,8 +20,11 @@ export async function GET(request: NextRequest) {
   const appId = process.env.RAPIDOREACH_APP_ID || process.env.NEXT_PUBLIC_RAPIDOREACH_APP_ID;
   const appKey = process.env.RAPIDOREACH_APP_KEY;
   if (!appId || !appKey) {
-    console.error("RapidoReach credentials are not configured");
-    return NextResponse.json({ error: "Offerwall is temporarily unavailable" }, { status: 503 });
+    return NextResponse.json({
+      error: "RapidoReach credentials are not configured",
+      code: "CREDENTIALS_MISSING",
+      hint: "Set RAPIDOREACH_APP_ID and RAPIDOREACH_APP_KEY in your environment variables.",
+    }, { status: 501 });
   }
 
   // RapidoReach expects a three-part UID:

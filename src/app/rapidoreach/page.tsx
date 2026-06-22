@@ -30,14 +30,19 @@ export default function RapidoReachPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) throw new Error(`RapidoReach returned ${response.status}`);
-        const data = (await response.json()) as { iframeUrl?: string };
+        const data = (await response.json()) as { iframeUrl?: string; code?: string; error?: string };
+        if (!response.ok) {
+          if (data.code === "CREDENTIALS_MISSING") {
+            throw new Error("RapidoReach is not configured. Set RAPIDOREACH_APP_ID and RAPIDOREACH_APP_KEY to enable the offerwall.");
+          }
+          throw new Error(data.error || `RapidoReach returned ${response.status}`);
+        }
         if (!cancelled) setIframeUrl(data.iframeUrl ?? null);
       } catch (loadError) {
         console.error("RapidoReach load failed:", loadError);
         if (!cancelled) {
           setIframeUrl(null);
-          setError("The offerwall could not be loaded right now.");
+          setError(loadError instanceof Error ? loadError.message : "The offerwall could not be loaded right now.");
         }
       } finally {
         if (!cancelled) setFetching(false);
