@@ -5,6 +5,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { ABTestProvider } from '../context/ABTestContext';
 import GlobalNotificationListener from '@/components/GlobalNotificationListener';
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
+import SessionManager from '@/components/SessionManager';
 import VercelAnalytics from '@/components/VercelAnalytics';
 
 const spaceGrotesk = Space_Grotesk({
@@ -71,6 +72,7 @@ export default function RootLayout({
           <AuthProvider>
             <GlobalNotificationListener />
             <ServiceWorkerRegistrar />
+            <SessionManager />
             <VercelAnalytics />
             {children}
           </AuthProvider>

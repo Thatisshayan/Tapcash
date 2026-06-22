@@ -53,6 +53,13 @@ export default function SignInPage() {
         return;
       }
 
+      const token = await userCredential.user.getIdToken();
+      await fetch("/api/auth/session/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      });
+
       router.push("/dashboard");
     } catch (err: unknown) {
       console.error("Sign in error:", err);

@@ -31,13 +31,20 @@ export default function GoogleSignInButton({ redirectTo = "/dashboard", label = 
         : undefined;
       const referredBy = refCookie ? decodeURIComponent(refCookie) : null;
 
-      // Ensure server-side profile exists (idempotent)
       const token = await user.getIdToken();
-      await fetch("/api/auth/google-sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ referredBy }),
-      });
+
+      await Promise.all([
+        fetch("/api/auth/google-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ referredBy }),
+        }),
+        fetch("/api/auth/session/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: token }),
+        }),
+      ]);
 
       router.push(redirectTo);
     } catch (err: unknown) {
