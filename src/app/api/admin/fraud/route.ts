@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
     await adminDb.collection('admin_logs').add({
       adminId: decodedToken.uid,
       adminEmail: decodedToken.email,
-      action: 'view_fraud_alerts',
+      action: 'view_fraud_flags',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
     });
 
     // Fetch fraud alerts
-    const alertsSnapshot = await adminDb.collection('fraud_alerts')
+    const alertsSnapshot = await adminDb.collection('fraud_flags')
       .orderBy('timestamp', 'desc')
       .limit(500)
       .get();
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const alertDoc = await adminDb.collection('fraud_alerts').doc(alertId).get();
+    const alertDoc = await adminDb.collection('fraud_flags').doc(alertId).get();
     const alertData = alertDoc.data();
 
     if (!alertData) {
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update alert status
-    await adminDb.collection('fraud_alerts').doc(alertId).update({
+    await adminDb.collection('fraud_flags').doc(alertId).update({
       status,
       notes,
       reviewedBy: decodedToken.uid,
@@ -178,3 +178,4 @@ export async function POST(request: NextRequest) {
 }
 
 // Made with Bob
+

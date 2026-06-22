@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "../../../../lib/firebaseAdmin";
+import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";

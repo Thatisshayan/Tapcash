@@ -14,7 +14,7 @@ async function requireAdmin(request: NextRequest) {
   const decodedToken = await admin.auth().verifyIdToken(idToken);
   const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
 
-  if (!userDoc.exists || !userDoc.data()?.admin) {
+  if (!userDoc.exists || !userDoc.data()?.isAdmin) {
     return { error: NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 }) } as const;
   }
 

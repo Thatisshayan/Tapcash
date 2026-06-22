@@ -41,7 +41,7 @@ interface PayoutRequest {
  * Convert coins to dollars
  */
 function coinsToDollars(coins: number): number {
-  return coins / 100;
+  return coins / 1000; // 1000 coins = $1.00 CAD
 }
 
 /**
@@ -261,7 +261,7 @@ export async function POST(req: NextRequest) {
     // Update user document with payout info
     await adminDb.collection("users").doc(userId).update({
       lastPayoutAt: new Date().toISOString(),
-      totalPayouts: (await adminDb.collection("users").doc(userId).get()).data()?.totalPayouts || 0 + 1,
+      totalPayouts: ((await adminDb.collection("users").doc(userId).get()).data()?.totalPayouts ?? 0) + 1,
       updatedAt: new Date().toISOString(),
     });
 

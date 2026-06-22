@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
 
     // Collect all user data from related collections
     const [ledgerSnapshot, transactionsSnapshot, activitiesSnapshot] = await Promise.all([
-      adminDb.collection("ledger").where("userId", "==", decodedToken.uid).get(),
+      adminDb.collection("ledger_transactions").where("userId", "==", decodedToken.uid).get(),
       adminDb.collection("transactions").where("userId", "==", decodedToken.uid).get(),
-      adminDb.collection("user_activities").where("userId", "==", decodedToken.uid).limit(100).get(),
+      adminDb.collection("ledger_transactions").where("userId", "==", decodedToken.uid).limit(100).get(),
     ]);
 
     const userData = userDoc.data();
