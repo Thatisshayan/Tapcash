@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebaseAdmin";
-import { sendPayoutApprovedEmail, sendPayoutRejectedEmail } from "@/lib/email";
+import { sendPayoutApprovedEmail, sendPayoutRejectedEmail, sendPayoutSentEmail } from "@/lib/email";
 import { logAdminAction } from "@/lib/audit";
 
 async function requireAdmin(request: NextRequest) {
@@ -34,19 +34,21 @@ export async function GET(request: NextRequest) {
       flagsSnap,
       usersCountSnap,
       pendingCountSnap,
+      manualCountSnap,
       postbacks24hCountSnap,
     ] = await Promise.all([
-      adminDb.collection("cashout_requests").where("status", "==", "pending_review").orderBy("createdAt", "desc").limit(20).get(),
+      adminDb.collection("cashout_requests").where("status", "in", ["pending_review", "manual_required"]).orderBy("createdAt", "desc").limit(20).get(),
       adminDb.collection("offer_postbacks").orderBy("createdAt", "desc").limit(20).get(),
       adminDb.collection("fraud_flags").orderBy("createdAt", "desc").limit(10).get(),
       adminDb.collection("users").count().get(),
       adminDb.collection("cashout_requests").where("status", "==", "pending_review").count().get(),
+      adminDb.collection("cashout_requests").where("status", "==", "manual_required").count().get(),
       adminDb.collection("offer_postbacks").where("createdAt", ">=", oneDayAgo).count().get(),
     ]);
 
     const stats = {
       users: Number(usersCountSnap.data().count || 0),
-      pending: Number(pendingCountSnap.data().count || 0),
+      pending: Number(pendingCountSnap.data().count || 0) + Number(manualCountSnap.data().count || 0),
       postbacks24h: Number(postbacks24hCountSnap.data().count || 0),
     };
 
@@ -70,18 +72,19 @@ export async function POST(request: NextRequest) {
     const adminUid = auth.uid;
     const adminEmail = auth.email;
     const body = await request.json();
-    const { withdrawalId, action, adminNote } = body as {
+    const { withdrawalId, action, adminNote, referenceNumber } = body as {
       withdrawalId: string;
-      action: "approve" | "reject";
+      action: "approve" | "reject" | "mark_sent";
       adminNote?: string;
+      referenceNumber?: string;
     };
 
     if (!withdrawalId || !action) {
       return NextResponse.json({ error: "Missing required fields: withdrawalId and action" }, { status: 400 });
     }
 
-    if (!["approve", "reject"].includes(action)) {
-      return NextResponse.json({ error: 'Invalid action. Must be "approve" or "reject"' }, { status: 400 });
+    if (!["approve", "reject", "mark_sent"].includes(action)) {
+      return NextResponse.json({ error: 'Invalid action. Must be "approve", "reject", or "mark_sent"' }, { status: 400 });
     }
 
     const withdrawalRef = adminDb.collection("cashout_requests").doc(withdrawalId);
@@ -91,11 +94,61 @@ export async function POST(request: NextRequest) {
     }
 
     const withdrawalData = withdrawalSnap.data()!;
-    if (withdrawalData.status !== "pending_review") {
+    if (action === "mark_sent") {
+      if (withdrawalData.status !== "manual_required") {
+        return NextResponse.json({ error: `Cannot mark as sent. Current status: ${withdrawalData.status}` }, { status: 400 });
+      }
+    } else if (withdrawalData.status !== "pending_review") {
       return NextResponse.json({ error: `Withdrawal already ${withdrawalData.status}` }, { status: 400 });
     }
 
     const ledgerRef = adminDb.collection("ledger_transactions").doc();
+
+    if (action === "mark_sent") {
+      await adminDb.runTransaction(async (transaction) => {
+        transaction.update(withdrawalRef, {
+          status: "sent",
+          referenceNumber: referenceNumber || null,
+          processedBy: adminUid,
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        transaction.set(ledgerRef, {
+          id: ledgerRef.id,
+          userId: withdrawalData.userId,
+          type: "cashout_paid",
+          amountCoins: withdrawalData.amountCoins,
+          balanceEffectCoins: 0,
+          status: "paid",
+          source: "cashout_admin_manual",
+          referenceId: withdrawalId,
+          metadata: {
+            method: withdrawalData.method,
+            destination: withdrawalData.destination,
+            referenceNumber: referenceNumber || null,
+            adminNote: adminNote || null,
+          },
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+
+      await logAdminAction({
+        action: "cashout_marked_sent",
+        actorUserId: adminUid,
+        actorEmail: adminEmail,
+        targetType: "cashout_request",
+        targetId: withdrawalId,
+        metadata: { referenceNumber: referenceNumber || null, amountCoins: withdrawalData.amountCoins },
+      });
+
+      if (withdrawalData.destination && String(withdrawalData.destination).includes("@")) {
+        await sendPayoutSentEmail(withdrawalData.destination, (withdrawalData.amountCents || withdrawalData.amountCoins / 10) / 100, withdrawalData.method, referenceNumber);
+      }
+
+      return NextResponse.json({ success: true, action: "mark_sent" });
+    }
 
     if (action === "approve") {
       await adminDb.runTransaction(async (transaction) => {

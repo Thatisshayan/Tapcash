@@ -6,7 +6,8 @@ import { createTremendousOrder } from "@/lib/tremendous";
 import { logAdminAction } from "@/lib/audit";
 import * as admin from "firebase-admin";
 
-type PayoutProvider = "paypal" | "interac" | "tremendous";
+const automatedProviders = ["paypal", "tremendous"];
+const manualProviders = ["interac", "bitcoin", "litecoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
 
 interface ProcessRequest {
   cashoutRequestId: string;
@@ -20,7 +21,7 @@ function coinsToDollars(coins: number): number {
 }
 
 async function processPayoutWithProvider(
-  provider: PayoutProvider,
+  provider: string,
   amountCoins: number,
   destination: string,
   userId: string,
@@ -29,6 +30,13 @@ async function processPayoutWithProvider(
 ): Promise<{ success: boolean; transactionId: string }> {
   const amountDollars = coinsToDollars(amountCoins);
   const batchId = `TC-${provider.toUpperCase()}-${Date.now()}-${userId.substring(0, 8)}`;
+
+  if (manualProviders.includes(provider)) {
+    return {
+      success: true,
+      transactionId: `manual-${Date.now()}-${userId.substring(0, 8)}`,
+    };
+  }
 
   switch (provider) {
     case "paypal": {
@@ -42,21 +50,6 @@ async function processPayoutWithProvider(
       return {
         success: true,
         transactionId: result.batch_header?.payout_batch_id || batchId,
-      };
-    }
-
-    case "interac": {
-      const result = await createInteracTransfer({
-        email: destination,
-        amount: amountDollars,
-        recipientName: "TapCash User",
-        referenceNumber: batchId,
-        securityQuestion: interacSecurityQuestion!,
-        securityAnswer: interacSecurityAnswer!,
-      });
-      return {
-        success: true,
-        transactionId: result.transferId,
       };
     }
 
@@ -117,10 +110,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Cashout request is ${cashoutData.status}, expected "approved"` }, { status: 400 });
     }
 
-    const provider = cashoutData.method as PayoutProvider;
-    if (!["paypal", "interac", "tremendous"].includes(provider)) {
+    const provider = cashoutData.method as string;
+
+    if (![...automatedProviders, ...manualProviders].includes(provider)) {
       return NextResponse.json({
-        error: `Provider "${provider}" is not supported for automated processing. Mark as sent manually.`,
+        error: `Provider "${provider}" is not supported.`,
       }, { status: 400 });
     }
 
@@ -174,6 +168,43 @@ export async function POST(req: NextRequest) {
         hint: "Provider credentials may not be configured. Mark the request as sent manually.",
         configured: available,
       }, { status: 502 });
+    }
+
+    if (manualProviders.includes(provider)) {
+      const updateData: Record<string, unknown> = {
+        status: "manual_required",
+        transactionId: payoutResult.transactionId,
+        processedBy: decodedToken.uid,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        adminNote: adminNote || null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (provider === "interac") {
+        updateData.interacSecurityQuestion = body.interacSecurityQuestion || null;
+        updateData.interacSecurityAnswer = body.interacSecurityAnswer || null;
+      }
+
+      await cashoutRef.update(updateData);
+
+      await logAdminAction({
+        action: "cashout_manual_required",
+        actorUserId: decodedToken.uid,
+        targetType: "cashout_request",
+        targetId: cashoutRequestId,
+        metadata: {
+          provider,
+          transactionId: payoutResult.transactionId,
+          amountCoins: cashoutData.amountCoins,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        transactionId: payoutResult.transactionId,
+        status: "manual_required",
+        message: `${provider} payout requires manual processing. Admin must send and mark as sent.`,
+      });
     }
 
     await cashoutRef.update({

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, useMotionValue, animate, useReducedMotion, useInView } from 'framer-motion';
 import { BadgeCheck } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -12,13 +12,6 @@ interface Stat {
   label: string;
   display: string;
 }
-
-const STATS: Stat[] = [
-  { value: 50000, suffix: '+', label: 'Users active', display: '50,000+' },
-  { value: 2.5, suffix: 'M+', label: 'Total paid out', display: '$2.5M+' },
-  { value: 98, suffix: '%', label: 'Offer verification rate', display: '98%' },
-  { value: 4.8, suffix: '', label: 'User satisfaction', display: '4.8 / 5' },
-];
 
 function StatCard({ stat }: { stat: Stat }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -78,8 +71,49 @@ function StatCard({ stat }: { stat: Stat }) {
   );
 }
 
+function parseDisplay(display: string): { value: number; suffix: string } {
+  const num = parseFloat(display.replace(/[^0-9.]/g, ''));
+  const suffix = display.replace(/[0-9.,]/g, '');
+  return { value: isNaN(num) ? 0 : num, suffix };
+}
+
 export function StatsSection() {
   const prefersReduced = useReducedMotion();
+  const [stats, setStats] = useState<Stat[]>([
+    { value: 50000, suffix: '+', label: 'Users active', display: '50,000+' },
+    { value: 2.5, suffix: 'M+', label: 'Total paid out', display: '$2.5M+' },
+    { value: 98, suffix: '%', label: 'Offer verification rate', display: '98%' },
+    { value: 4.8, suffix: '', label: 'User satisfaction', display: '4.8 / 5' },
+  ]);
+
+  useEffect(() => {
+    fetch('/api/stats/platform')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.stats) {
+          const s = data.stats;
+          const live: Stat[] = [];
+          if (s.activeEarners) {
+            const p = parseDisplay(s.activeEarners);
+            live.push({ value: p.value, suffix: p.suffix, label: 'Users active', display: s.activeEarners });
+          }
+          if (s.totalPaidOut) {
+            const num = parseFloat(s.totalPaidOut.replace(/[^0-9.]/g, ''));
+            const sfx = s.totalPaidOut.includes('M') ? 'M+' : s.totalPaidOut.includes('K') ? 'K+' : '+';
+            live.push({ value: isNaN(num) ? 0 : num, suffix: sfx, label: 'Total paid out', display: s.totalPaidOut });
+          }
+          if (s.verifiedCompletions) {
+            const p = parseDisplay(s.verifiedCompletions);
+            live.push({ value: p.value, suffix: p.suffix, label: 'Offer verification rate', display: s.verifiedCompletions });
+          }
+          if (s.avgPayoutWindow) {
+            live.push({ value: 0, suffix: '', label: 'Avg payout window', display: s.avgPayoutWindow });
+          }
+          if (live.length > 0) setStats(live);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="py-24 lg:py-32" style={{ backgroundColor: '#0e1a15' }}>
@@ -107,7 +141,7 @@ export function StatsSection() {
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATS.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} stat={stat} />
           ))}
         </div>

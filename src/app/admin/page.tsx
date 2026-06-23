@@ -6,7 +6,7 @@ import ConversionStrip from "@/components/ConversionStrip";
 import Link from "next/link";
 import { ShieldCheck, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { MotionWrap, PageShell, StatCard, CTAButton } from "@/components/PremiumUi";
-import { tapCashAdminStats } from "@shared/tapcash-content";
+
 
 type TimestampLike = { toDate: () => Date } | string | number | Date | null | undefined;
 
@@ -53,6 +53,11 @@ export default function AdminPage() {
   const [adjAmount, setAdjAmount] = useState("");
   const [adjReason, setAdjReason] = useState("");
   const [adjSubmitting, setAdjSubmitting] = useState(false);
+
+  // Mark as Sent modal state
+  const [markSentModal, setMarkSentModal] = useState<{ withdrawalId: string; method: string } | null>(null);
+  const [markSentRef, setMarkSentRef] = useState("");
+  const [markSentSubmitting, setMarkSentSubmitting] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -159,13 +164,18 @@ export default function AdminPage() {
   }
 
   async function handleWithdrawal(withdrawalId: string, action: "approve" | "reject") {
+    let adminNote: string | undefined;
+    if (action === "reject") {
+      adminNote = window.prompt("Enter rejection reason (visible to user):");
+      if (adminNote === null) return;
+    }
     setActionLoading(withdrawalId + action);
     try {
       const token = await user!.getIdToken();
       const res = await fetch("/api/admin/withdrawals", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ withdrawalId, action }),
+        body: JSON.stringify({ withdrawalId, action, adminNote }),
       });
       const data = await res.json();
       if (data.success) {
@@ -178,6 +188,34 @@ export default function AdminPage() {
       setMessage({ text: "Network error", type: "error" });
     } finally {
       setActionLoading(null);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  }
+
+  async function handleMarkSent(withdrawalId: string) {
+    setActionLoading(withdrawalId + "mark_sent");
+    setMarkSentSubmitting(true);
+    try {
+      const token = await user!.getIdToken();
+      const res = await fetch("/api/admin/withdrawals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ withdrawalId, action: "mark_sent", referenceNumber: markSentRef.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ text: "Marked as sent successfully", type: "success" });
+        setWithdrawals(prev => prev.filter(w => w.id !== withdrawalId));
+        setMarkSentModal(null);
+        setMarkSentRef("");
+      } else {
+        setMessage({ text: data.error || "Action failed", type: "error" });
+      }
+    } catch {
+      setMessage({ text: "Network error", type: "error" });
+    } finally {
+      setActionLoading(null);
+      setMarkSentSubmitting(false);
       setTimeout(() => setMessage(null), 3000);
     }
   }
@@ -273,13 +311,26 @@ export default function AdminPage() {
                 <p className="mt-2 text-sm text-zinc-400">This view is locked behind auth and noindex.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {tapCashAdminStats.map((item) => (
-                  <div key={item.label} className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">{item.label}</p>
-                    <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
-                    <p className="mt-1 text-xs text-zinc-400">{item.detail}</p>
-                  </div>
-                ))}
+                <div className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Total Users</p>
+                  <p className="mt-2 text-2xl font-black text-white">{stats.users.toLocaleString()}</p>
+                  <p className="mt-1 text-xs text-zinc-400">Registered accounts</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Pending</p>
+                  <p className="mt-2 text-2xl font-black text-white">{stats.pending}</p>
+                  <p className="mt-1 text-xs text-zinc-400">Awaiting review or manual send</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Postbacks (24h)</p>
+                  <p className="mt-2 text-2xl font-black text-white">{stats.postbacks24h}</p>
+                  <p className="mt-1 text-xs text-zinc-400">Offer completions today</p>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/8 bg-white/[0.04] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Flagged Alerts</p>
+                  <p className="mt-2 text-2xl font-black text-white">{flagged.length}</p>
+                  <p className="mt-1 text-xs text-zinc-400">Open security flags</p>
+                </div>
               </div>
             </div>
           </div>
@@ -400,33 +451,52 @@ export default function AdminPage() {
                               <span className="text-[#8cf8e9] font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
                             </td>
                             <td className="px-6 py-4">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                  w.method?.toLowerCase() === "paypal"
-                                    ? "border-[#2f4f8f]/60 text-[#9ec1ff] bg-[#0f1728]"
-                                    : "border-[#5d4a15]/60 text-[#f5c842] bg-[#1a1608]"
-                                }`}
-                              >
-                                {w.method || "Unknown"}
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                w.method?.toLowerCase() === "paypal"
+                                  ? "border-[#2f4f8f]/60 text-[#9ec1ff] bg-[#0f1728]"
+                                  : "border-[#5d4a15]/60 text-[#f5c842] bg-[#1a1608]"
+                              }`}
+                            >
+                              {w.method || "Unknown"}
+                            </span>
+                            {w.status === "manual_required" && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-yellow-500/40 text-yellow-400 bg-yellow-500/10">
+                                Manual
                               </span>
+                            )}
+                          </div>
                             </td>
                             <td className="px-6 py-4 text-[10px] font-bold text-zinc-500">{fmt(w.createdAt)}</td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex gap-2 justify-end">
-                                <button
-                                  onClick={() => handleWithdrawal(w.id, "approve")}
-                                  disabled={!!actionLoading}
-                                  className="px-4 py-2 rounded-xl bg-[#00e6c3] text-[#050816] text-[10px] font-black uppercase tracking-widest hover:bg-[#26edd1] transition-all active:scale-95 disabled:opacity-40"
-                                >
-                                  {actionLoading === w.id + "approve" ? "..." : "Approve"}
-                                </button>
-                                <button
-                                  onClick={() => handleWithdrawal(w.id, "reject")}
-                                  disabled={!!actionLoading}
-                                  className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-40"
-                                >
-                                  Reject
-                                </button>
+                                {w.status === "manual_required" ? (
+                                  <button
+                                    onClick={() => setMarkSentModal({ withdrawalId: w.id, method: w.method })}
+                                    disabled={!!actionLoading}
+                                    className="px-4 py-2 rounded-xl bg-[#3a7bff] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#2a5fcc] transition-all active:scale-95 disabled:opacity-40"
+                                  >
+                                    {actionLoading === w.id + "mark_sent" ? "..." : "Mark Sent"}
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleWithdrawal(w.id, "approve")}
+                                      disabled={!!actionLoading}
+                                      className="px-4 py-2 rounded-xl bg-[#00e6c3] text-[#050816] text-[10px] font-black uppercase tracking-widest hover:bg-[#26edd1] transition-all active:scale-95 disabled:opacity-40"
+                                    >
+                                      {actionLoading === w.id + "approve" ? "..." : "Approve"}
+                                    </button>
+                                    <button
+                                      onClick={() => handleWithdrawal(w.id, "reject")}
+                                      disabled={!!actionLoading}
+                                      className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-40"
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -579,6 +649,50 @@ export default function AdminPage() {
                 className="flex-1 py-2.5 rounded-2xl bg-[#00e6c3] text-[#050816] text-xs font-black uppercase disabled:opacity-40 hover:bg-[#26edd1] transition-colors"
               >
                 {adjSubmitting ? "Saving..." : "Confirm Adjustment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark as Sent Modal */}
+      {markSentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6 shadow-2xl space-y-5">
+            <div>
+              <h3 className="text-lg font-black text-white">Mark Payout as Sent</h3>
+              <p className="text-xs text-zinc-400 mt-1">Confirm you have sent the {markSentModal.method} payout manually.</p>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Bank Reference Number (optional)</span>
+                <input
+                  type="text"
+                  value={markSentRef}
+                  onChange={(e) => setMarkSentRef(e.target.value)}
+                  placeholder="e.g. e-Transfer reference or transaction ID"
+                  className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                />
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => {
+                  setMarkSentModal(null);
+                  setMarkSentRef("");
+                }}
+                className="flex-1 py-2.5 rounded-2xl border border-white/6 text-zinc-300 text-xs font-black uppercase hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleMarkSent(markSentModal.withdrawalId)}
+                disabled={markSentSubmitting}
+                className="flex-1 py-2.5 rounded-2xl bg-[#3a7bff] text-white text-xs font-black uppercase disabled:opacity-40 hover:bg-[#2a5fcc] transition-colors"
+              >
+                {markSentSubmitting ? "Saving..." : "Confirm Sent"}
               </button>
             </div>
           </div>

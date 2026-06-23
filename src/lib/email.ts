@@ -141,6 +141,36 @@ export async function sendPayoutApprovedEmail(to: string, amountCad: number, met
   }
 }
 
+export async function sendPayoutSentEmail(to: string, amountCad: number, method: string, referenceNumber?: string) {
+  const client = getEmailClient("sendPayoutSentEmail");
+  if (!client) return;
+
+  try {
+    await client.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: 'Your TapCash payout has been sent!',
+      html: wrap(`
+        <div style="text-align:center;margin-bottom:24px;">
+          <span style="font-size:52px;">Sent</span>
+          <h1 style="color:#3a7bff;font-size:26px;margin:12px 0 4px;">Payout Sent!</h1>
+          <p style="color:#64748b;font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;">Funds are on the way</p>
+        </div>
+        <div style="background:#080c1a;padding:20px;border-radius:12px;border:1px solid #1e2d4f;margin-bottom:20px;">
+          <p style="margin:6px 0;color:#94a3b8;font-size:14px;"><strong>Amount:</strong> <span style="color:#fff;">$${amountCad.toFixed(2)} CAD</span></p>
+          <p style="margin:6px 0;color:#94a3b8;font-size:14px;"><strong>Method:</strong> <span style="color:#fff;text-transform:capitalize;">${method}</span></p>
+          ${referenceNumber ? `<p style="margin:6px 0;color:#94a3b8;font-size:14px;"><strong>Reference:</strong> <span style="color:#f5c842;">${referenceNumber}</span></p>` : ''}
+          <p style="margin:12px 0 0;color:#475569;font-size:12px;">Check your payment method for the deposit. Contact support if it does not arrive within the expected window.</p>
+        </div>
+        ${BTN('https://tapcash.online/cashout/status', 'Track Payout', '#3a7bff')}
+      `),
+    });
+    console.log(`[EMAIL] Payout sent -> ${to}`);
+  } catch (err) {
+    console.error('[EMAIL] sendPayoutSentEmail:', err);
+  }
+}
+
 export async function sendPayoutRejectedEmail(to: string, amountCad: number, notes?: string) {
   const client = getEmailClient("sendPayoutRejectedEmail");
   if (!client) return;

@@ -65,14 +65,17 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className="mb-14 space-y-3">
           <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#00C97F]">
-            Recent Payouts
+            Sample Payouts
           </p>
           <h2
             className="font-bold text-white"
             style={{ fontFamily: 'var(--font-syne), Syne, sans-serif', fontSize: 'clamp(26px, 4vw, 40px)' }}
           >
-            Real users. Real money.
+            Example earnings from the platform.
           </h2>
+          <p className="text-sm text-white/40 max-w-xl">
+            Sample payout flows — real users shown with consent after launch.
+          </p>
         </div>
 
         {/* Grid */}
@@ -80,36 +83,6 @@ export function TestimonialsSection() {
           {PAYOUTS.map((p) => (
             <PayoutCard key={p.name + p.time} payout={p} />
           ))}
-        </div>
-
-        {/* Trustpilot placeholder */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              className="text-white font-bold text-lg"
-              style={{ fontFamily: 'var(--font-syne), Syne, sans-serif' }}
-            >
-              TrustPilot
-            </span>
-            <svg width="96" height="18" viewBox="0 0 96 18" aria-label="5 stars" role="img">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <polygon
-                  key={i}
-                  points="9,1 11.5,6.5 17.5,7.3 13,11.5 14.3,17.5 9,14.5 3.7,17.5 5,11.5 0.5,7.3 6.5,6.5"
-                  fill="#00B67A"
-                  transform={`translate(${i * 19}, 0)`}
-                />
-              ))}
-            </svg>
-          </div>
-          <a
-            href="https://trustpilot.com"
-            className="text-[13px] text-white/50 hover:text-white/80 transition-colors underline focus-visible:ring-2 focus-visible:ring-[#00C97F] rounded outline-none"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            See our reviews
-          </a>
         </div>
       </div>
     </section>

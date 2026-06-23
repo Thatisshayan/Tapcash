@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { ArrowRight, BadgeCheck, Loader2, Trophy } from "lucide-react";
@@ -163,7 +163,44 @@ export default function DashboardPage() {
   usePolling(refreshActivity, 30000, !!user);
   usePolling(refreshLeaderboard, 60000, !!user);
 
-  if (authLoading || (user && loading && !ledger)) {
+  function GDPRExportButton({ user }: { user: { getIdToken: () => Promise<string> } | null }) {
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    if (!user) return;
+    setExporting(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/gdpr/export", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tapcash-data-export-${new Date().toISOString().split("T")[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      console.error("GDPR export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+  return (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      className="mt-3 w-full rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors disabled:opacity-40"
+    >
+      {exporting ? "Exporting..." : "Download my data"}
+    </button>
+  );
+}
+
+if (authLoading || (user && loading && !ledger)) {
     return (
       <div className="min-h-screen bg-[#040913] text-white">
         <Navbar />
@@ -193,8 +230,8 @@ export default function DashboardPage() {
     );
   }
 
-  const balanceCoins = ledger?.balanceCoins ?? 24750;
-  const pendingCoins = ledger?.pendingCoins ?? 1200;
+  const balanceCoins = ledger?.balanceCoins ?? 0;
+  const pendingCoins = ledger?.pendingCoins ?? 0;
   const verificationState = ledger?.verificationState ?? "Verified";
   const filteredTransactions = transactions.filter((tx) => {
     if (filter === "all") return true;
@@ -373,6 +410,7 @@ export default function DashboardPage() {
               <CTAButton href="/rapidoreach" label="Open offerwall" />
               <CTAButton href="/cashout" label="Go to cashout" variant="secondary" />
             </div>
+            <GDPRExportButton user={user} />
           </div>
         </div>
       </main>
