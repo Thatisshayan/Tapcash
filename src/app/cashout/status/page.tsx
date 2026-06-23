@@ -49,9 +49,16 @@ export default function PayoutStatusPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Payout | null>(null);
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
     if (!user) return;
+
+    fetch("/api/ledger/summary", { headers: { Authorization: `Bearer ${user.uid}` } })
+      .then(r => r.json().catch(() => ({})))
+      .then(data => { if (data.balanceCoins != null) setBalance(data.balanceCoins); })
+      .catch(() => {});
+
     const q = query(
       collection(db, "cashout_requests"),
       where("userId", "==", user.uid),
@@ -90,9 +97,13 @@ export default function PayoutStatusPage() {
           <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-10 text-center space-y-3">
             <Wallet className="w-8 h-8 mx-auto text-zinc-600" />
             <p className="font-black text-zinc-400">No payouts yet</p>
-            <p className="text-sm text-zinc-600">Request a cashout from the cashout page.</p>
-            <Link href="/cashout" className="inline-block mt-2 px-6 py-2.5 rounded-full bg-[#00e6c3] text-[#050816] text-sm font-black hover:opacity-90 transition">
-              Request Cashout
+            <p className="text-sm text-zinc-600">
+              {balance >= 2000
+                ? "You haven't cashed out yet — request your first payout."
+                : "Complete offers to earn coins, then cash out."}
+            </p>
+            <Link href={balance >= 2000 ? "/cashout" : "/games"} className="inline-block mt-2 px-6 py-2.5 rounded-full bg-[#00e6c3] text-[#050816] text-sm font-black hover:opacity-90 transition">
+              {balance >= 2000 ? "Request Cashout" : "Start Earning"}
             </Link>
           </div>
         )}

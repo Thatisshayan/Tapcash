@@ -111,6 +111,36 @@ export async function sendCashoutNudgeEmail(to: string, name: string, coinBalanc
   }
 }
 
+export async function sendPayoutSubmittedEmail(to: string, amountCoins: number, method: string) {
+  const client = getEmailClient("sendPayoutSubmittedEmail");
+  if (!client) return;
+  const cadValue = (amountCoins / 1000).toFixed(2);
+
+  try {
+    await client.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `TapCash payout requested — $${cadValue} CAD via ${method}`,
+      html: wrap(`
+        <div style="text-align:center;margin-bottom:24px;">
+          <span style="font-size:52px;">Requested</span>
+          <h1 style="color:#00e6c3;font-size:26px;margin:12px 0 4px;">Payout Submitted!</h1>
+          <p style="color:#64748b;font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;">Your request is in the queue</p>
+        </div>
+        <div style="background:#080c1a;padding:20px;border-radius:12px;border:1px solid #1e2d4f;margin-bottom:20px;">
+          <p style="margin:6px 0;color:#94a3b8;font-size:14px;"><strong>Amount:</strong> <span style="color:#fff;">${amountCoins.toLocaleString()} coins ($${cadValue} CAD)</span></p>
+          <p style="margin:6px 0;color:#94a3b8;font-size:14px;"><strong>Method:</strong> <span style="color:#fff;text-transform:capitalize;">${method}</span></p>
+          <p style="margin:12px 0 0;color:#475569;font-size:12px;">An admin will review your payout shortly. You will receive an email when it is approved or if more information is needed.</p>
+        </div>
+        ${BTN('https://tapcash.online/cashout/status', 'Track Payout Status', '#00e6c3')}
+      `),
+    });
+    console.log(`[EMAIL] Payout submitted -> ${to}`);
+  } catch (err) {
+    console.error('[EMAIL] sendPayoutSubmittedEmail:', err);
+  }
+}
+
 export async function sendPayoutApprovedEmail(to: string, amountCad: number, method: string, notes?: string) {
   const client = getEmailClient("sendPayoutApprovedEmail");
   if (!client) return;

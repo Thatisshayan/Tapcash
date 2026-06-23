@@ -6,6 +6,7 @@ import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/
 import { withRateLimit } from "@/lib/rate-limit";
 import { logAdminAction } from "@/lib/audit";
 import { requireVerifiedUser } from "@/lib/verified-user";
+import { sendPayoutSubmittedEmail } from "@/lib/email";
 
 class RouteError extends Error {
   status: number;
@@ -296,6 +297,10 @@ export async function POST(request: NextRequest) {
       targetId: cashoutRef.id,
       metadata: { amountCoins: coinsNum, method, destination: cleanDest },
     });
+
+    if (userData.email && String(userData.email).includes("@")) {
+      sendPayoutSubmittedEmail(userData.email, coinsNum, method).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,

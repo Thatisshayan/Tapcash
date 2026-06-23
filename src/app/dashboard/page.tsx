@@ -357,10 +357,27 @@ if (authLoading || (user && loading && !ledger)) {
           </div>
 
           {filteredTransactions.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <Loader2 className="mx-auto h-10 w-10 text-zinc-700" />
-              <p className="mt-4 text-sm font-semibold text-white">No matching transactions yet</p>
-              <p className="mt-2 text-sm text-zinc-500">Complete offers or request a payout to populate the ledger.</p>
+            <div className="px-6 py-12 text-center space-y-4">
+              <Trophy className="mx-auto h-10 w-10 text-zinc-700" />
+              <div>
+                <p className="text-sm font-semibold text-white">No transactions yet</p>
+                <p className="mt-1 text-sm text-zinc-500">Complete offers to start earning, then cash out.</p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <Link
+                  href="/games"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00e6c3] text-[#050816] text-xs font-black uppercase tracking-widest hover:opacity-90 transition"
+                >
+                  Start Earning
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/cashout"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/8 text-zinc-300 text-xs font-black uppercase tracking-widest hover:text-white transition"
+                >
+                  Cash Out
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="grid gap-3 p-4 sm:p-5">
