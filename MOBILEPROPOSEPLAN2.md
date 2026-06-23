@@ -5,6 +5,46 @@
 
 ---
 
+## Implementation Progress (2026-06-23)
+
+### Completed
+- **1.1.1** — Token registration wired (`registerPushToken` → `/api/user/push-token`)
+- **1.1.2** — Permission denied handled gracefully (Earn screen banner + `Linking.openSettings()`)
+- **1.1.3** — Push token refresh listener added (`Notifications.addPushTokenListener`)
+- **1.3.1** — Notification tap deep-link handler in `app/_layout.tsx` (Activity & Cashout tabs)
+- **2.1.1** — Balance animation on Home screen when coins arrive (Animated + haptics)
+- **2.1.2** — Optimistic UI on cashout submit (immediate pending deduction, revert on error)
+- **3.1** — Offer detail screen fetches real data, click tracking, in-app browser
+- **3.2** — Click tracking POSTs to `/api/clicks` before opening offer URL
+- **3.3** — "Thanks for completing" banner shown on return from browser
+- **4.1.1** — Account screen loads profile, total earned/cashed out from Firestore ledger
+- **4.1.2** — Notification preferences toggle (enable/disable, remove token on disable)
+- **4.1.3** — Referral link displayed with Share button (`expo-sharing`)
+- **4.1.4** — Legal links (Privacy, Terms, Contact) open in `WebBrowser`
+- **4.2** — Delete account flow with confirmation modal → POST `/api/gdpr/delete`
+- **5.1.1** — Activity empty state with "Browse Offers" CTA
+- **5.1.2** — Earn screen skeleton loading + error state with pull-to-refresh
+- **5.1.3** — Cashout insufficient balance banner ("Earn at least $2.00 to unlock")
+- **5.2.1** — Error boundary (`ErrorBoundary` component) in root layout
+- **5.2.2** — Network banner (`@react-native-community/netinfo`) in root layout
+- **5.3.1** — Splash screen configured (`expo-splash-screen` + AuthContext coordination)
+- **1.2** — Backend push notifications added (`functions/src/index.ts`):
+  - `onOfferApproved` Firestore trigger → Expo push for offer approval
+  - `onCashoutSent` Firestore trigger → Expo push for cashout sent
+- **6.1** — EAS build profiles confirmed (development, preview, production)
+- **6.1.1** — `expo-splash-screen`, `expo-sharing`, `@react-native-community/netinfo` installed
+
+### Remaining
+- **1.2.2** — End-to-end device test of push notifications
+- **6.2** — Android production build + Internal Testing track
+- **6.3** — iOS build + TestFlight (if applicable)
+- **7.1** — Screenshots captured and framed
+- **7.2** — App Store metadata + demo account
+- **8.1** — Device matrix testing (2+ Android, 2+ iOS)
+- **8.3** — Sentry crash reporting initialized
+
+---
+
 ## PHASE 1 — Push Notifications: Full Pipeline
 
 ### Task 1.1 — Confirm Token Registration

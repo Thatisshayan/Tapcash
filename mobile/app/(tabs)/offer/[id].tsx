@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -31,6 +31,8 @@ export default function OfferDetailScreen() {
   const { user } = useAuth();
   const [offer, setOffer] = useState<ApiOfferDisplay | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showThanks, setShowThanks] = useState(false);
+  const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
 
   useEffect(() => {
     if (!id || !user?.uid) return;
@@ -39,6 +41,7 @@ export default function OfferDetailScreen() {
     loadOffers(user.uid)
       .then((items) => {
         if (!cancelled) {
+          setOffers(items);
           const found = items.find((o) => o.id === id);
           if (found) setOffer(found);
         }
@@ -71,6 +74,7 @@ export default function OfferDetailScreen() {
     if (displayOffer.clickUrl) {
       try {
         await WebBrowser.openBrowserAsync(displayOffer.clickUrl);
+        setShowThanks(true);
       } catch (e) {
         console.warn("Browser open failed:", e);
       }
@@ -117,6 +121,14 @@ export default function OfferDetailScreen() {
 
   return (
     <View style={styles.screen}>
+      {showThanks && (
+        <View style={styles.thanksBanner}>
+          <Ionicons name="checkmark-circle" size={20} color={theme.colors.green} />
+          <Text style={styles.thanksText}>
+            Thanks for completing the offer! Your coins will arrive within a few minutes.
+          </Text>
+        </View>
+      )}
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
         <View style={styles.heroWrap}>
           <Image source={img} style={styles.heroImg} resizeMode="cover" />
@@ -186,6 +198,26 @@ const styles = StyleSheet.create({
   backBtn: { position: "absolute", left: 16, width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center" },
   badge: { position: "absolute", top: 12, right: 12, backgroundColor: "#ff3b30", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   badgeText: { color: "#fff", fontSize: theme.font.xs, fontWeight: "800" },
+  thanksBanner: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 255, 133, 0.15)",
+    borderColor: "rgba(0, 255, 133, 0.4)",
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    zIndex: 10,
+  },
+  thanksText: {
+    color: theme.colors.green,
+    fontSize: theme.font.sm,
+    fontWeight: "600",
+    flex: 1,
+  },
   body: { paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md, gap: theme.spacing.md },
   title: { color: theme.colors.text, fontSize: 28, fontWeight: "800", lineHeight: 34 },
   tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },

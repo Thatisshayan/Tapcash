@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   ScrollView,
   View,
@@ -6,10 +6,12 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { theme } from "../../src/theme";
 import { OfferCard } from "../../src/components/OfferCard";
 import { loadOffers, recordClick, type ApiOfferDisplay } from "../../src/lib/api";
@@ -17,21 +19,50 @@ import { useAuth } from "../../src/auth/AuthContext";
 
 const FILTERS = ["All", "High Paying", "Fast Payout", "No Purchase", "Easy"];
 
+function SkeletonCard() {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulse]);
+
+  return (
+    <View style={styles.skeleton}>
+      <Animated.View
+        style={[
+          styles.skeletonInner,
+          { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.8] }) },
+        ]}
+      />
+    </View>
+  );
+}
+
 export default function EarnScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, notificationPermissionDenied, enableNotifications } = useAuth();
   const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchOffers = async () => {
     if (!user?.uid) return;
+    setFetchError(null);
     try {
       const items = await loadOffers(user.uid);
       setOffers(items);
     } catch (e) {
       console.warn("Failed to load offers:", e);
+      setFetchError("Couldn't load offers. Pull to refresh.");
     } finally {
       setLoading(false);
     }
@@ -81,6 +112,10 @@ export default function EarnScreen() {
     setFilter(f);
   };
 
+  const handleNotificationBannerPress = async () => {
+    await Linking.openSettings();
+  };
+
   return (
     <ScrollView
       style={[styles.screen, { paddingTop: insets.top + 12 }]}
@@ -90,6 +125,12 @@ export default function EarnScreen() {
       }
     >
       <Text style={styles.headerTitle}>Top Offers</Text>
+
+      {notificationPermissionDenied && (
+        <TouchableOpacity style={styles.notifBanner} onPress={handleNotificationBannerPress} activeOpacity={0.8}>
+          <Text style={styles.notifBannerText}>Enable notifications to know when your coins land</Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView
         horizontal
@@ -123,8 +164,14 @@ export default function EarnScreen() {
       </ScrollView>
 
       {loading ? (
+        <View style={styles.list}>
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </View>
+      ) : fetchError ? (
         <View style={styles.loadingWrap}>
-          <Text style={styles.loadingText}>Loading offers...</Text>
+          <Text style={styles.loadingText}>{fetchError}</Text>
         </View>
       ) : filteredOffers.length === 0 ? (
         <View style={styles.loadingWrap}>
@@ -161,6 +208,20 @@ const styles = StyleSheet.create({
     fontSize: theme.font.xl,
     fontWeight: "900",
   },
+  notifBanner: {
+    backgroundColor: "rgba(0, 255, 133, 0.1)",
+    borderColor: "rgba(0, 255, 133, 0.3)",
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    alignItems: "center",
+  },
+  notifBannerText: {
+    color: theme.colors.green,
+    fontSize: theme.font.sm,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   filterRow: {
     maxHeight: 40,
   },
@@ -193,6 +254,18 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: theme.spacing.md,
+  },
+  skeleton: {
+    height: 140,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: "hidden",
+  },
+  skeletonInner: {
+    flex: 1,
+    backgroundColor: theme.colors.elevated,
   },
   loadingWrap: {
     paddingVertical: theme.spacing.xl,

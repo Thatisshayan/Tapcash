@@ -9,11 +9,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
 import { tapCashTheme } from "../../src/theme";
 import { GlassCard } from "../../src/components/GlassCard";
-import { Ionicons } from "@expo/vector-icons";
 import { subscribeToTransactions, type Transaction } from "../../src/lib/firestore";
 import { useAuth } from "../../src/auth/AuthContext";
+import { useRouter } from "expo-router";
 
 const TABS = ["Today", "Week", "All Time"];
 
@@ -68,6 +69,7 @@ function txToActivityItem(tx: Transaction): ActivityItem {
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("Today");
   const [refreshing, setRefreshing] = useState(false);
@@ -101,8 +103,11 @@ export default function ActivityScreen() {
         <View style={styles.emptyState}>
           <Ionicons name="time-outline" size={48} color={tapCashTheme.colors.muted} />
           <Text style={styles.emptyText}>
-            No activity yet. Complete your first offer to see earnings here.
+            No activity yet. Complete your first offer to start earning.
           </Text>
+          <TouchableOpacity style={styles.emptyCta} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/earn"); }} activeOpacity={0.8}>
+            <Text style={styles.emptyCtaText}>Browse Offers</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
@@ -189,4 +194,6 @@ const styles = StyleSheet.create({
   itemProvider: { color: tapCashTheme.colors.muted, fontSize: 12 },
   emptyState: { alignItems: "center", justifyContent: "center", marginTop: tapCashTheme.spacing.xl },
   emptyText: { color: tapCashTheme.colors.muted, fontSize: tapCashTheme.font.md, textAlign: "center", marginTop: tapCashTheme.spacing.md, maxWidth: 260 },
+  emptyCta: { marginTop: tapCashTheme.spacing.md, paddingHorizontal: 20, paddingVertical: 12, borderRadius: tapCashTheme.radius.full, backgroundColor: tapCashTheme.colors.accent },
+  emptyCtaText: { color: tapCashTheme.colors.background, fontSize: tapCashTheme.font.md, fontWeight: "800" },
 });

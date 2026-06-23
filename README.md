@@ -47,7 +47,7 @@ For CI/CD to work, set these in **Settings > Secrets and variables > Actions**:
 | UI | Tailwind CSS v4, shadcn/ui, Framer Motion, Lucide React |
 | Testing | Jest (93 tests, 7 suites) |
 | CI/CD | GitHub Actions → Vercel |
-| Mobile | React Native / Expo (in /mobile/) — API wiring completed 2026-06-23 |
+| Mobile | React Native / Expo (in /mobile/) — Sprint 1 API wiring + Sprint 2 push notifications, polish, and backend triggers complete 2026-06-23 |
 
 ## Project Structure
 
@@ -82,6 +82,7 @@ docs/                # Full documentation
 - ✅ Session-based route protection (middleware.ts at root)
 - ✅ Firestore content APIs with 5-minute cache + seed-data fallback
 - ✅ 10 content pages (games, how-it-works, rewards, leaderboard, blog, about, careers, contact, help, faq)
+- ✅ Mobile: React Native / Expo with live backend API wiring, push notifications, balance animations, and account management
 
 ## Scripts
 

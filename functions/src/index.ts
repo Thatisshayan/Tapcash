@@ -6,6 +6,44 @@ initializeApp();
 
 const db = getFirestore();
 
+async function sendExpoPush(token: string, title: string, body: string, data: Record<string, string> = {}) {
+  try {
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        to: token,
+        title,
+        body,
+        data,
+        sound: "default",
+        priority: "high",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Expo push failed:", response.status, await response.text());
+    }
+  } catch (error) {
+    console.error("Expo push error:", error);
+  }
+}
+
+async function getUserPushTokens(uid: string): Promise<string[]> {
+  const tokens: string[] = [];
+  const snapshot = await db.collection("users").doc(uid).collection("pushTokens").get();
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    if (typeof data.token === "string") {
+      tokens.push(data.token);
+    }
+  });
+  return tokens;
+}
+
 // 1. Auth Hook: Initialize user profile on new signup
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   const userRef = db.collection("users").doc(user.uid);
@@ -154,3 +192,58 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
     throw new functions.https.HttpsError("internal", error.message || "Failed to process payout");
   }
 });
+
+// 4. Push notification on offer approval
+export const onOfferApproved = functions.firestore
+  .document("offer_postbacks/{postbackId}")
+  .onCreate(async (snap) => {
+    const data = snap.data();
+    if (!data || data.status !== "approved") return;
+
+    const uid = data.userId;
+    const amountCoins = Number(data.amountCoins || 0);
+    const offerId = data.offerId || "an offer";
+
+    const tokens = await getUserPushTokens(uid);
+    if (tokens.length === 0) return;
+
+    await Promise.all(
+      tokens.map((token) =>
+        sendExpoPush(
+          token,
+          "Coins earned!",
+          `You earned ${amountCoins} coins from ${offerId}!`,
+          { screen: "activity" }
+        )
+      )
+    );
+  });
+
+// 5. Push notification on cashout sent
+export const onCashoutSent = functions.firestore
+  .document("cashout_requests/{requestId}")
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
+
+    if (before.status !== "pending_review" || after.status !== "sent") return;
+
+    const uid = after.userId;
+    const amountCoins = Number(after.amountCoins || 0);
+    const method = after.method || "your account";
+
+    const tokens = await getUserPushTokens(uid);
+    if (tokens.length === 0) return;
+
+    await Promise.all(
+      tokens.map((token) =>
+        sendExpoPush(
+          token,
+          "Payout on the way!",
+          `Your ${method} payout of ${amountCoins} coins is on the way!`,
+          { screen: "cashout" }
+        )
+      )
+    );
+  });
