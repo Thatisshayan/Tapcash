@@ -19,7 +19,7 @@ Complete guide for developers working on TapCash.
 
 ## Project Overview
 
-TapCash is a reward platform built with Next.js 14, Firebase, and TypeScript. Users complete offers (games, surveys, shopping) to earn money, which they can cash out via PayPal, Interac, or gift cards.
+TapCash is a reward platform built with Next.js 16 (canary), Firebase, and TypeScript. Users complete offers via RapidoReach offerwall to earn coins, which they can cash out via PayPal, Interac e-Transfer, or Tremendous gift cards.
 
 ### Key Features
 
@@ -147,32 +147,36 @@ SENDGRID_API_KEY=your_sendgrid_key
 
 ```
 tapcash/
-├── .github/
-│   └── workflows/          # CI/CD pipelines
-├── public/
-│   ├── images/            # Static images
-│   └── manifest.json      # PWA manifest
+├── middleware.ts           # Root Edge middleware (session JWT verification)
 ├── src/
 │   ├── app/               # Next.js App Router
-│   │   ├── api/          # API routes
-│   │   ├── admin/        # Admin pages
-│   │   ├── dashboard/    # User dashboard
-│   │   └── layout.tsx    # Root layout
+│   │   ├── api/           # API routes (auth/session, payouts, postback, content, etc.)
+│   │   ├── admin/         # Admin panel (8 sections: dashboard, users, transactions, offers, fraud, multiplier, promo-analytics)
+│   │   ├── dashboard/     # User dashboard (polls live data via usePolling)
+│   │   ├── cashout/       # Cashout flow (status, request)
+│   │   ├── rapidoreach/   # Offerwall iframe
+│   │   ├── games/ how-it-works/ rewards/ leaderboard/ blog/ about/ careers/ contact/ help/ faq/
+│   │   └── layout.tsx     # Root layout
 │   ├── components/        # React components
-│   ├── context/          # React context
-│   ├── lib/              # Utilities & services
-│   │   ├── firebase.ts   # Firebase client
+│   │   ├── Navbar.tsx, Footer.tsx, SessionManager.tsx, PremiumUi.tsx
+│   │   └── ui/            # Button, Card, Badge, ProgressBar
+│   ├── hooks/             # Custom hooks
+│   │   └── usePolling.ts  # Generic polling hook (Sprint 10)
+│   ├── context/           # React context (AuthContext)
+│   ├── lib/               # Utilities & services
+│   │   ├── firebase.ts    # Firebase client
 │   │   ├── firebaseAdmin.ts
-│   │   ├── paypal.ts     # PayPal integration
-│   │   ├── interac.ts    # Interac integration
-│   │   ├── tremendous.ts # Gift card integration
-│   │   ├── antiFraud.ts  # Fraud detection
-│   │   ├── monitoring.ts # Monitoring service
-│   │   └── validation/   # Input validation
-│   └── middleware/        # Next.js middleware
-├── functions/             # Firebase Cloud Functions
-├── tests/                # Test files
-├── docs/                 # Documentation
+│   │   ├── rate-limit.ts  # Upstash + in-memory fallback
+│   │   ├── security-errors.ts
+│   │   ├── paypal.ts, interac.ts, tremendous.ts
+│   │   ├── antiFraud.ts
+│   │   └── __tests__/     # 42 lib tests (paypal, interac, tremendous, rate-limit, email, payout-flow)
+│   └── middleware/        # Legacy rate-limit (NOT the route protection — that's root middleware.ts)
+├── shared/
+│   └── tapcash-content.ts # Cross-platform seed data + types
+├── scripts/
+│   └── seed-firestore.ts  # Idempotent Firestore seed (6 collections)
+├── docs/                  # Documentation
 └── package.json
 ```
 
@@ -205,18 +209,19 @@ React Context providers:
 ## Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16.0.0-canary.5 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS v4 + globals.css (premium styles consolidated)
+- **UI Components**: Framer Motion, Lucide React, shadcn/ui
 - **State Management**: React Context + Hooks
 - **Forms**: React Hook Form + Zod validation
 
 ### Backend
 - **Runtime**: Node.js 18+
-- **API**: Next.js API Routes
+- **API**: Next.js API Routes (Edge + Serverless)
 - **Database**: Firebase Firestore
-- **Authentication**: Firebase Auth
-- **Cloud Functions**: Firebase Functions
+- **Authentication**: Firebase Auth (client) + Firebase Admin SDK (server) + jose session JWTs (middleware)
+- **Rate Limiting**: Upstash Redis + in-memory fallback
 
 ### Infrastructure
 - **Hosting**: Vercel
@@ -703,6 +708,10 @@ npm test
 
 ---
 
-**Last Updated**: 2026-06-07  
-**Version**: 1.0.0  
+**Last Updated**: 2026-06-22  
+**Version**: 2.0.0  
 **Maintained By**: TapCash Engineering Team
+
+---
+
+> **Updated for Sprint 1–10:** Route protection via root middleware.ts, 93 tests across 7 suites, real-time polling via usePolling hook, admin panel with 8 sections. See [GROUNDTRUTH.md](../GROUNDTRUTH.md) for source of truth.

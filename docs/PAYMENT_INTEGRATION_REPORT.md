@@ -179,72 +179,65 @@ TREMENDOUS_ENVIRONMENT=sandbox   # or 'production'
 
 **File:** `src/app/api/payout/route.ts`
 
+> **⚠️ Important update (Sprint 7):** `/api/payout` is now **admin-only**. End-user cashout requests go through `/api/payouts/request` (with anti-fraud). Admins process approved requests through `/api/payout`.
+
 #### Features Implemented
+- ✅ **Admin-only** payout processing (403 for non-admin users)
 - ✅ Multi-provider routing (PayPal, Interac, Tremendous)
-- ✅ User authentication via Firebase token
-- ✅ Balance validation before payout
-- ✅ Automatic ledger entry creation
-- ✅ Transaction rollback on failure
+- ✅ POST: Process approved cashout request (`approved` → `processing` → `sent`)
+- ✅ GET: List cashout requests with status filter
+- ✅ Automatic rollback on failure (reverts to `approved`)
+- ✅ Interac security Q&A validation
+- ✅ `processPayoutWithProvider` helper function
+- ✅ Audit logging for all operations
 - ✅ Provider-specific validation
 - ✅ Minimum/maximum amount enforcement
-- ✅ Comprehensive error handling
-- ✅ Payout history retrieval
 
 #### API Endpoints
 
-**POST /api/payout** - Create payout request
+**POST /api/payout** - Process approved payout (Admin only)
 
 Request:
 ```json
 {
+  "cashoutRequestId": "cashout_123"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "transactionId": "BATCH123",
   "provider": "paypal",
-  "amountCoins": 1000,
-  "recipientEmail": "user@example.com",
-  "recipientName": "John Doe",
-  "securityQuestion": "What is your favorite color?",
-  "securityAnswer": "blue123",
-  "productId": "PROD123"
+  "status": "sent",
+  "amountDollars": 10.00
 }
 ```
+
+**GET /api/payout** - List cashout requests (Admin only)
+
+Query parameters: `?status=pending_review`
 
 Response:
 ```json
 {
   "success": true,
-  "message": "Payout processed successfully",
-  "payout": {
-    "provider": "paypal",
-    "amountCoins": 1000,
-    "amountDollars": 10.00,
-    "transactionId": "BATCH123",
-    "status": "processing",
-    "createdAt": "2024-01-01T00:00:00Z"
-  },
-  "newBalance": 5000
-}
-```
-
-**GET /api/payout** - Get payout history
-
-Response:
-```json
-{
-  "success": true,
-  "payouts": [
+  "requests": [
     {
-      "id": "ledger123",
-      "type": "cashout_paid",
+      "id": "cashout_123",
+      "userId": "user_abc",
       "amountCoins": 1000,
       "amountDollars": 10.00,
-      "status": "paid",
-      "provider": "paypal",
-      "transactionId": "BATCH123",
-      "createdAt": "2024-01-01T00:00:00Z"
+      "method": "paypal",
+      "status": "pending_review",
+      "createdAt": "2026-06-22T00:00:00Z"
     }
-  ],
-  "total": 1
+  ]
 }
 ```
+
+**User-facing endpoint:** `POST /api/payouts/request` — submits cashout request with anti-fraud checks (rate limit, bot/IP/VPN, engagement lock, destination lock, Firestore RunTransaction).
 
 #### Minimum Payout Amounts
 - PayPal: $5.00 (500 coins)
@@ -258,17 +251,15 @@ Response:
 
 #### Flow Diagram
 ```
-User Request → Authentication → Balance Check → Provider Validation
+User → /api/payouts/request → pending_review
                                       ↓
-                              Ledger Entry (Deduct)
+                        Admin reviews in admin panel
                                       ↓
-                              Process with Provider
-                                   ↙     ↘
-                            Success      Failure
-                               ↓            ↓
-                    Ledger Entry (Paid)  Rollback (Refund)
-                               ↓            ↓
-                         Return Success  Return Error
+                        Admin → POST /api/payout { cashoutRequestId }
+                                      ↓
+                              approved → processing → sent
+                                      ↓
+                              On failure: revert to approved
 ```
 
 ---
@@ -312,7 +303,8 @@ User Request → Authentication → Balance Check → Provider Validation
 ### Implemented Security Features
 
 1. **Authentication**
-   - Firebase token verification for all payout requests
+   - Session cookie verification for admin payout processing
+   - Firebase token verification for user cashout requests
    - User ID validation
 
 2. **Validation**
@@ -454,9 +446,10 @@ TREMENDOUS_ENVIRONMENT=production
 
 All payment integrations are complete and production-ready. The system includes:
 - Three fully integrated payment providers
-- Comprehensive error handling and retry logic
+- Admin-only payout processing with audit trail
+- User-facing cashout requests with anti-fraud
 - Automatic transaction rollback on failures
-- Extensive test coverage (90%+)
+- Extensive test coverage (93 tests across 7 suites)
 - Detailed transaction logging
 - Security best practices
 
@@ -464,4 +457,4 @@ All payment integrations are complete and production-ready. The system includes:
 
 ---
 
-*Report generated on June 7, 2026*
+*Report updated on June 22, 2026*

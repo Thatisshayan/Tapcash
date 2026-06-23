@@ -1,5 +1,13 @@
 # 📡 TapCash API Documentation
 
+**Last Updated:** 2026-06-22
+
+> ⚠️ **Note:** This doc was originally written before Sprints 1–10. Key changes since then:
+> - Session auth uses jose-signed HTTP-only cookies (not Firebase ID tokens directly)
+> - `/api/payout` is now **admin-only** (user requests go through `/api/payouts/request`)
+> - New endpoints added: `/api/auth/session/user`, `/api/payouts/request`, `/api/postback/rapidoreach`, 6 Firestore content APIs, `/api/activity/live`, `/api/leaderboard/live`
+> - See [GROUNDTRUTH.md](../GROUNDTRUTH.md) for source-of-truth architecture
+
 Complete API reference for TapCash platform.
 
 ## Base URL
@@ -11,20 +19,15 @@ Development: http://localhost:3000/api
 
 ## Authentication
 
-Most endpoints require authentication using Firebase JWT tokens.
+Client-side uses Firebase Auth. Server-side uses either:
+1. Firebase ID tokens (legacy routes) — `Authorization: Bearer <firebase_jwt_token>`
+2. HTTP-only session JWTs (new middleware pattern) — via `session` cookie, created by `/api/auth/session/user`
 
 ### Headers
 
 ```http
 Authorization: Bearer <firebase_jwt_token>
 Content-Type: application/json
-```
-
-### Getting a Token
-
-```javascript
-// Client-side (Firebase)
-const token = await user.getIdToken();
 ```
 
 ---
@@ -39,6 +42,34 @@ const token = await user.getIdToken();
 6. [Admin Endpoints](#admin-endpoints)
 7. [Rate Limits](#rate-limits)
 8. [Error Codes](#error-codes)
+
+---
+
+## Session Auth Endpoint (New)
+
+### POST /api/auth/session/user
+
+Create a session JWT from a Firebase ID token. Sets an HTTP-only `session` cookie (7-day expiry).
+
+**Request Body:**
+```json
+{
+  "idToken": "<firebase_id_token>"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "uid": "firebase_uid"
+}
+```
+
+**Errors:**
+- `400` - Missing ID token
+- `401` - Invalid ID token
+- `500` - Session creation failed
 
 ---
 
@@ -345,25 +376,19 @@ Get specific transaction details.
 
 ### POST /api/payouts/request
 
-Request a payout.
+Submit a cashout request (user-facing, with anti-fraud).
 
 **Headers:** Requires authentication
 
 **Request Body:**
 ```json
 {
-  "amount": 25.00,
-  "method": "paypal", // paypal, interac, tremendous
-  "details": {
-    "email": "user@paypal.com" // for PayPal
-    // or
-    "email": "user@email.com", // for Interac
-    "securityQuestion": "What is your favorite color?",
-    "securityAnswer": "Blue"
-    // or
-    "giftCardType": "amazon", // for Tremendous
-    "recipientEmail": "user@email.com"
-  }
+  "amountCoins": 1000,
+  "method": "paypal",
+  "recipientEmail": "user@paypal.com",
+  "recipientName": "John Doe",
+  "securityQuestion": "What is your favorite color?",
+  "securityAnswer": "blue123"
 }
 ```
 
@@ -371,13 +396,17 @@ Request a payout.
 ```json
 {
   "success": true,
-  "payoutId": "payout_123",
-  "amount": 25.00,
+  "cashoutRequestId": "cashout_123",
+  "amountCoins": 1000,
+  "amountDollars": 10.00,
+  "fee": 150,
+  "netAmountCoins": 850,
   "method": "paypal",
-  "status": "pending",
-  "estimatedCompletion": "2026-06-08T22:00:00Z"
+  "status": "pending_review"
 }
 ```
+
+**Anti-fraud checks:** Rate limit, bot detection, IP reputation, VPN detection, engagement lock (min 7 days, 24h cooldown), destination lock (same email/account within 7 days).
 
 **Errors:**
 - `400` - Invalid amount or method
@@ -387,7 +416,61 @@ Request a payout.
 
 ---
 
-### GET /api/payouts
+### POST /api/payout (Admin Only)
+
+Process an approved cashout request through the provider. **403 for non-admin users.**
+
+**Headers:** Requires admin session (no Bearer token needed — uses session cookie)
+
+**Request Body:**
+```json
+{
+  "cashoutRequestId": "cashout_123"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "transactionId": "BATCH123",
+  "provider": "paypal",
+  "status": "sent",
+  "amountDollars": 10.00
+}
+```
+
+**Flow:** `approved` → `processing` → `sent` (reverts to `approved` on failure)
+
+---
+
+### GET /api/payout (Admin Only)
+
+List cashout requests. **403 for non-admin users.**
+
+**Query Parameters:**
+- `status` (optional): Filter by status (`pending_review`, `approved`, `rejected`)
+
+**Response:** `200 OK`
+```json
+{
+  "requests": [
+    {
+      "id": "cashout_123",
+      "userId": "user_abc",
+      "amountCoins": 1000,
+      "amountDollars": 10.00,
+      "method": "paypal",
+      "status": "pending_review",
+      "createdAt": "2026-06-22T00:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/payouts (Legacy)
 
 Get user payout history.
 
@@ -798,6 +881,64 @@ X-RateLimit-Reset: 1623456789
 - `ALREADY_COMPLETED` - Offer already completed
 - `FRAUD_DETECTED` - Suspicious activity detected
 - `ADMIN_REQUIRED` - Admin access required
+
+---
+
+## Content API Routes (Firestore-backed)
+
+These routes return Firestore data with seed-data fallback. All support 5-minute in-memory caching.
+
+### GET /api/stats
+Platform statistics (total users, active users, total earned, total paid out).
+
+### GET /api/faq
+Frequently asked questions and answers.
+
+### GET /api/payout-methods
+Available payout methods with descriptions and minimums.
+
+### GET /api/steps
+"How it works" step-by-step guide.
+
+### GET /api/trust-points
+Trust and security highlights.
+
+### GET /api/activities
+Recent platform activity feed.
+
+---
+
+## Live Endpoints (Polling)
+
+### GET /api/activity/live
+Recent platform activities for real-time display. Polled by dashboard every 30s.
+
+### GET /api/leaderboard
+Top earners leaderboard. Returns seed data when Firestore empty. Polled by leaderboard page every 60s.
+
+### GET /api/leaderboard/live
+Live leaderboard with cache refresh support.
+
+---
+
+## Offerwall Endpoints
+
+### GET /api/rapidoreach/iframe-url
+Generate signed RapidoReach offerwall iframe URL.
+
+**Query Parameters:**
+- `userId` (required): Authenticated user ID
+
+**Response (success):** `200 OK` — returns `{ url: "...", appId: "..." }`
+
+**Response (missing credentials):** `501` — returns `{ error: "CREDENTIALS_MISSING", code: 501, message: "..." }`
+
+### POST /api/postback/rapidoreach
+RapidoReach offer completion callback. IP-whitelisted (5 static IPs + localhost).
+
+**Supports event types:** `lead`, `conversion`, `payout`
+
+**Security:** MD5 hash verification, IP whitelist, duplicate detection.
 
 ---
 

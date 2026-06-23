@@ -183,14 +183,30 @@ INTERAC_API_SECRET=your_interac_secret
 
 #### Security
 ```bash
-JWT_SECRET=your_secure_random_string_min_32_chars
-ENCRYPTION_KEY=your_encryption_key_32_chars
+SESSION_SECRET=your_secure_random_string_min_32_chars
+ADMIN_UIDS=comma,separated,firebase,uids
+```
+
+#### Offerwall
+```bash
+RAPIDOREACH_APP_ID=your_app_id
+RAPIDOREACH_APP_KEY=your_app_key
+RAPIDOREACH_APP_SECRET=your_app_secret
+RAPIDOREACH_TRANSACTION_KEY=your_transaction_key
 ```
 
 #### Email Service
 ```bash
 SENDGRID_API_KEY=your_sendgrid_api_key
 FROM_EMAIL=noreply@tapcash.com
+# OR
+RESEND_API_KEY=your_resend_api_key
+```
+
+#### Rate Limiting (Optional — recommended for production)
+```bash
+UPSTASH_REDIS_REST_URL=your_upstash_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 ```
 
 #### Monitoring (Optional)
@@ -199,10 +215,7 @@ SENTRY_DSN=your_sentry_dsn
 SENTRY_AUTH_TOKEN=your_sentry_auth_token
 ```
 
-#### Redis (Optional - for rate limiting)
-```bash
-REDIS_URL=your_redis_url
-```
+*(rate limiting env vars are listed above under "Rate Limiting")*
 
 ### Setting Environment Variables
 
