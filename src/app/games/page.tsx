@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { tapCashOffers } from "@shared/tapcash-content";
 import { Clock, Sparkles } from "lucide-react";
 
-const CATEGORIES = ["All", "Survey", "Games", "Video", "Referral"] as const;
+const CATEGORIES = ["All", "Survey", "Video", "Referral"] as const;
 
 const CATEGORY_ICONS: Record<string, string> = {
   Survey: "📋",
@@ -31,7 +31,7 @@ export default function GamesPage() {
         <MotionWrap>
           <PageShell
             eyebrow="Start earning"
-            title="Games & Offers"
+            title="Offers & Surveys"
             description="Pick a task, complete it, and earn coins. Every offer is verified before payout."
             kicker={
               <div className="inline-flex items-center gap-2 rounded-full border border-[#31F06F]/20 bg-[#31F06F]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-[#31F06F]">
