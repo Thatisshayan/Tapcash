@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /mobile/node_modules
+/mobile/.expo
 /.pnp
 .pnp.js
 
@@ -86,4 +87,8 @@ desktop/
 
 # Electron build
 /src-electron/
+
+# Expo CNG - native code generated at build time
+/mobile/ios
+/mobile/android
 

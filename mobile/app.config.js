@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 export default {
   expo: {
     name: "TapCash",
@@ -9,6 +7,7 @@ export default {
     platforms: ["ios", "android"],
     plugins: [
       "expo-router",
+      "expo-font",
       ["expo-notifications", { icon: "./assets/icon.png", color: "#00FF85", sounds: [] }],
       "expo-secure-store"
     ],
