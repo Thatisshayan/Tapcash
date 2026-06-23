@@ -1,9 +1,8 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AppState } from "react-native";
-import { Device } from "expo-device";
+import { isDevice } from "expo-device";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
-import * as SplashScreen from "expo-splash-screen";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -132,8 +131,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
 
   useEffect(() => {
-    LocalAuthentication.isAvailableAsync().then((available) => {
-      setBiometricAvailable(available && Device.isDevice);
+    LocalAuthentication.hasHardwareAsync().then((hasHardware) => {
+      if (hasHardware) {
+        LocalAuthentication.supportedAuthenticationTypesAsync().then((types) => {
+          const hasSupported = types.length > 0;
+          setBiometricAvailable(hasSupported && isDevice);
+        });
+      }
     });
   }, []);
 
@@ -153,7 +157,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     try {
       const { email, password } = JSON.parse(savedCreds) as { email: string; password: string };
-      await LocalAuthentication.setAuthenticatedAsync(true);
       await signInWithEmailAndPassword(auth, email, password);
       await handleAuthSuccess();
       return true;

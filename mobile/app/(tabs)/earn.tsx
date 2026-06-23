@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ScrollView,
   View,
@@ -19,51 +19,25 @@ import { useAuth } from "../../src/auth/AuthContext";
 
 const FILTERS = ["All", "High Paying", "Fast Payout", "No Purchase", "Easy"];
 
-function SkeletonCard() {
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 800, useNativeDriver: true }),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [pulse]);
-
-  return (
-    <View style={styles.skeleton}>
-      <Animated.View
-        style={[
-          styles.skeletonInner,
-          { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.8] }) },
-        ]}
-      />
-    </View>
-  );
-}
-
 export default function EarnScreen() {
   const insets = useSafeAreaInsets();
-  const { user, notificationPermissionDenied, enableNotifications } = useAuth();
+  const { user, notificationPermissionDenied } = useAuth();
   const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const opacity = useState(new Animated.Value(1))[0];
 
   const fetchOffers = async () => {
     if (!user?.uid) return;
-    setFetchError(null);
+    Animated.timing(opacity, { toValue: 0, duration: 150, useNativeDriver: true }).start();
     try {
       const items = await loadOffers(user.uid);
       setOffers(items);
     } catch (e) {
       console.warn("Failed to load offers:", e);
-      setFetchError("Couldn't load offers. Pull to refresh.");
     } finally {
+      Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
       setLoading(false);
     }
   };
@@ -112,9 +86,68 @@ export default function EarnScreen() {
     setFilter(f);
   };
 
-  const handleNotificationBannerPress = async () => {
+  const handleEnableNotifications = async () => {
     await Linking.openSettings();
   };
+
+  if (loading) {
+    return (
+      <ScrollView
+        style={[styles.screen, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.green} />
+        }
+      >
+        <Text style={styles.headerTitle}>Top Offers</Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterRow}
+          contentContainerStyle={styles.filterContent}
+        >
+          {FILTERS.map((f) => {
+            const isActive = f === filter;
+            return (
+              <View
+                key={f}
+                style={[
+                  styles.filterPill,
+                  isActive ? styles.filterPillActive : styles.filterPillInactive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    isActive ? styles.filterTextActive : styles.filterTextInactive,
+                  ]}
+                >
+                  {f}
+                </Text>
+              </View>
+            );
+          })}
+        </ScrollView>
+
+        <Animated.View style={[styles.skeletonList, { opacity }]}>
+          {[1, 2, 3, 4].map((i) => (
+            <View key={i} style={styles.skeletonCard}>
+              <Animated.View style={styles.skeletonAccent} />
+              <View style={styles.skeletonContent}>
+                <View style={styles.skeletonTitle} />
+                <View style={styles.skeletonProvider} />
+                <View style={styles.skeletonRow}>
+                  <View style={styles.skeletonPrice} />
+                  <View style={styles.skeletonTag} />
+                </View>
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -127,9 +160,14 @@ export default function EarnScreen() {
       <Text style={styles.headerTitle}>Top Offers</Text>
 
       {notificationPermissionDenied && (
-        <TouchableOpacity style={styles.notifBanner} onPress={handleNotificationBannerPress} activeOpacity={0.8}>
-          <Text style={styles.notifBannerText}>Enable notifications to know when your coins land</Text>
-        </TouchableOpacity>
+        <View style={styles.permissionBanner}>
+          <Text style={styles.permissionText}>
+            Enable notifications to know when your coins land
+          </Text>
+          <TouchableOpacity onPress={handleEnableNotifications} style={styles.permissionBtn}>
+            <Text style={styles.permissionBtnText}>Enable</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <ScrollView
@@ -163,22 +201,12 @@ export default function EarnScreen() {
         })}
       </ScrollView>
 
-      {loading ? (
-        <View style={styles.list}>
-          {[1, 2, 3].map((i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </View>
-      ) : fetchError ? (
-        <View style={styles.loadingWrap}>
-          <Text style={styles.loadingText}>{fetchError}</Text>
-        </View>
-      ) : filteredOffers.length === 0 ? (
-        <View style={styles.loadingWrap}>
-          <Text style={styles.loadingText}>No offers available right now.</Text>
+      {filteredOffers.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No offers available right now. Pull to refresh.</Text>
         </View>
       ) : (
-        <View style={styles.list}>
+        <Animated.View style={[styles.list, { opacity }]}>
           {filteredOffers.map((offer, idx) => (
             <OfferCard
               key={offer.id}
@@ -187,7 +215,7 @@ export default function EarnScreen() {
               onPress={() => handleOfferPress(offer)}
             />
           ))}
-        </View>
+        </Animated.View>
       )}
     </ScrollView>
   );
@@ -208,19 +236,32 @@ const styles = StyleSheet.create({
     fontSize: theme.font.xl,
     fontWeight: "900",
   },
-  notifBanner: {
-    backgroundColor: "rgba(0, 255, 133, 0.1)",
-    borderColor: "rgba(0, 255, 133, 0.3)",
+  permissionBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255, 177, 0, 0.15)",
+    borderColor: "rgba(255, 177, 0, 0.3)",
     borderWidth: 1,
     borderRadius: theme.radius.md,
     padding: theme.spacing.md,
-    alignItems: "center",
+    gap: theme.spacing.sm,
   },
-  notifBannerText: {
-    color: theme.colors.green,
+  permissionText: {
+    color: theme.colors.text,
     fontSize: theme.font.sm,
-    fontWeight: "600",
-    textAlign: "center",
+    flex: 1,
+  },
+  permissionBtn: {
+    backgroundColor: theme.colors.gold,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+  },
+  permissionBtnText: {
+    color: theme.colors.bg,
+    fontSize: theme.font.sm,
+    fontWeight: "700",
   },
   filterRow: {
     maxHeight: 40,
@@ -255,24 +296,64 @@ const styles = StyleSheet.create({
   list: {
     gap: theme.spacing.md,
   },
-  skeleton: {
-    height: 140,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    overflow: "hidden",
-  },
-  skeletonInner: {
-    flex: 1,
-    backgroundColor: theme.colors.elevated,
-  },
-  loadingWrap: {
+  emptyState: {
     paddingVertical: theme.spacing.xl,
     alignItems: "center",
+    paddingHorizontal: theme.spacing.md,
   },
-  loadingText: {
+  emptyText: {
     color: theme.colors.muted,
     fontSize: theme.font.sm,
+    textAlign: "center",
+  },
+  skeletonList: {
+    gap: theme.spacing.md,
+  },
+  skeletonCard: {
+    width: "100%",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  skeletonAccent: {
+    height: 3,
+    backgroundColor: theme.colors.green,
+    opacity: 0.3,
+  },
+  skeletonContent: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  skeletonTitle: {
+    height: 18,
+    backgroundColor: theme.colors.elevated,
+    borderRadius: 4,
+    width: "80%",
+  },
+  skeletonProvider: {
+    height: 12,
+    backgroundColor: theme.colors.elevated,
+    borderRadius: 4,
+    width: "60%",
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: theme.spacing.xs,
+  },
+  skeletonPrice: {
+    height: 16,
+    backgroundColor: theme.colors.elevated,
+    borderRadius: 4,
+    width: 60,
+  },
+  skeletonTag: {
+    height: 20,
+    backgroundColor: theme.colors.elevated,
+    borderRadius: theme.radius.xs,
+    width: 80,
   },
 });

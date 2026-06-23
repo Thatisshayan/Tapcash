@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { theme } from "../theme";
-import type { TapCashOffer } from "@shared/tapcash-content";
+import type { ApiOfferDisplay } from "../lib/api";
 
 type OfferCardProps = {
-  offer: TapCashOffer;
+  offer: ApiOfferDisplay;
   index: number;
   onPress?: () => void;
 };

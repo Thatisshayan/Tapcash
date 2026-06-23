@@ -20,6 +20,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid push token" }, { status: 400 });
     }
 
+    const userRef = adminDb.collection("users").doc(uid);
+    
+    await userRef.set(
+      {
+        pushToken: pushToken,
+        pushTokenUpdatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
     await adminDb
       .collection("users")
       .doc(uid)

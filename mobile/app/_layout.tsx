@@ -8,7 +8,8 @@ import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { NetworkBanner } from "../src/components/NetworkBanner";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,6 +35,21 @@ function NotificationHandler() {
 }
 
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) {
+    return (
+      <View style={styles.splash}>
+        <Text style={styles.splashText}>TapCash</Text>
+      </View>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -49,3 +65,17 @@ export default function RootLayout() {
     </ErrorBoundary>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    flex: 1,
+    backgroundColor: "#040913",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  splashText: {
+    color: "#00FF85",
+    fontSize: 32,
+    fontWeight: "900",
+  },
+});

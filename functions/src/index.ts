@@ -193,16 +193,15 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
   }
 });
 
-// 4. Push notification on offer approval
+// 4. Push notification on offer approval (ledger transaction status change to approved)
 export const onOfferApproved = functions.firestore
-  .document("offer_postbacks/{postbackId}")
+  .document("ledger_transactions/{transactionId}")
   .onCreate(async (snap) => {
     const data = snap.data();
-    if (!data || data.status !== "approved") return;
+    if (!data || data.type !== "approved_credit" || data.status !== "approved") return;
 
     const uid = data.userId;
     const amountCoins = Number(data.amountCoins || 0);
-    const offerId = data.offerId || "an offer";
 
     const tokens = await getUserPushTokens(uid);
     if (tokens.length === 0) return;
@@ -211,8 +210,8 @@ export const onOfferApproved = functions.firestore
       tokens.map((token) =>
         sendExpoPush(
           token,
-          "Coins earned!",
-          `You earned ${amountCoins} coins from ${offerId}!`,
+          "🎉 You earned coins!",
+          `You earned ${amountCoins} coins from an offer!`,
           { screen: "activity" }
         )
       )
@@ -227,7 +226,7 @@ export const onCashoutSent = functions.firestore
     const after = change.after.data();
     if (!before || !after) return;
 
-    if (before.status !== "pending_review" || after.status !== "sent") return;
+    if (before.status !== "pending_review" && before.status !== "processing" && after.status !== "sent") return;
 
     const uid = after.userId;
     const amountCoins = Number(after.amountCoins || 0);
@@ -240,8 +239,40 @@ export const onCashoutSent = functions.firestore
       tokens.map((token) =>
         sendExpoPush(
           token,
-          "Payout on the way!",
+          "💸 Payout on the way!",
           `Your ${method} payout of ${amountCoins} coins is on the way!`,
+          { screen: "cashout" }
+        )
+      )
+    );
+  });
+
+// 6. Push notification on cashout rejected
+export const onCashoutRejected = functions.firestore
+  .document("cashout_requests/{requestId}")
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
+
+    if (before.status === after.status) return;
+
+    const wasApproved = before.status === "pending_review" || before.status === "processing";
+    const isRejected = after.status === "rejected" || after.status === "failed";
+
+    if (!wasApproved || !isRejected) return;
+
+    const uid = after.userId;
+
+    const tokens = await getUserPushTokens(uid);
+    if (tokens.length === 0) return;
+
+    await Promise.all(
+      tokens.map((token) =>
+        sendExpoPush(
+          token,
+          "Update on your cashout request",
+          "Your cashout was rejected. Tap to see details.",
           { screen: "cashout" }
         )
       )
