@@ -1,10 +1,10 @@
-import { View, StyleSheet, ViewStyle } from "react-native";
+import { View, StyleSheet, ViewStyle, type StyleProp } from "react-native";
 import { tapCashTheme } from "../theme";
 
 type GlassCardProps = {
   variant?: "default" | "elevated";
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function GlassCard({ variant = "default", children, style }: GlassCardProps) {

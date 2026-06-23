@@ -47,7 +47,7 @@ For CI/CD to work, set these in **Settings > Secrets and variables > Actions**:
 | UI | Tailwind CSS v4, shadcn/ui, Framer Motion, Lucide React |
 | Testing | Jest (93 tests, 7 suites) |
 | CI/CD | GitHub Actions → Vercel |
-| Mobile | React Native / Expo (in /mobile/) — not modified in Sprints 1–10 |
+| Mobile | React Native / Expo (in /mobile/) — API wiring completed 2026-06-23 |
 
 ## Project Structure
 

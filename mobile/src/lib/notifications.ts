@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { auth } from "./firebase";
-import * as SecureStore from "expo-secure-store";
+import { apiFetch } from "./api";
 
 export async function registerPushToken(): Promise<void> {
   if (!Device.isDevice) return;
@@ -15,16 +15,10 @@ export async function registerPushToken(): Promise<void> {
   const idToken = await auth.currentUser?.getIdToken();
   if (!idToken) return;
 
-  await fetch("https://tapcash.online/api/push/subscribe", {
+  await apiFetch("/api/user/push-token", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${idToken}`,
-    },
-    body: JSON.stringify({ subscription: { endpoint: token, keys: { p256dh: "", auth: "" } } }),
+    body: JSON.stringify({ pushToken: token }),
   }).catch(() => {});
-
-  await SecureStore.setItemAsync("push_token", token);
 }
 
 export function setupNotificationHandlers(): void {

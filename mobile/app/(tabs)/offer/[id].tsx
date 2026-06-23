@@ -1,13 +1,15 @@
-import { useMemo } from "react";
-import { View, Text, Image, StyleSheet, Pressable, ScrollView } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../../src/theme";
 import { GlassCard } from "../../../src/components/GlassCard";
 import { TapScoreRing } from "../../../src/components/TapScoreRing";
-import { tapCashOffers } from "../../../../shared/tapcash-content";
+import { loadOffers, recordClick, type ApiOfferDisplay } from "../../../src/lib/api";
+import { useAuth } from "../../../src/auth/AuthContext";
 
 const IMG: Record<number, ReturnType<typeof require>> = {
   0: require("../../../assets/offers/offer-1.png"),
@@ -26,13 +28,92 @@ export default function OfferDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const offer = useMemo(() => tapCashOffers.find((o) => o.id === id) ?? tapCashOffers[0], [id]);
-  const idx = useMemo(() => tapCashOffers.findIndex((o) => o.id === id), [id]);
-  const img = IMG[(idx >= 0 ? idx : 0) % 10];
-  const price = (offer.payoutCoins / 100).toFixed(2);
-  const tags = [offer.category]; if (offer.estimateMinutes <= 15) tags.push("Fast Payout"); tags.push("Easy");
+  const { user } = useAuth();
+  const [offer, setOffer] = useState<ApiOfferDisplay | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const onStart = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  useEffect(() => {
+    if (!id || !user?.uid) return;
+    let cancelled = false;
+    setLoading(true);
+    loadOffers(user.uid)
+      .then((items) => {
+        if (!cancelled) {
+          const found = items.find((o) => o.id === id);
+          if (found) setOffer(found);
+        }
+      })
+      .catch((e) => console.warn("Failed to load offer:", e))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user?.uid]);
+
+  const displayOffer = useMemo(() => offer, [offer]);
+  const idx = displayOffer ? 0 : 0;
+  const img = IMG[idx % 10];
+  const price = displayOffer ? (displayOffer.payoutCoins / 100).toFixed(2) : "0.00";
+  const tags = displayOffer ? [displayOffer.category] : [];
+  if (displayOffer && displayOffer.estimateMinutes <= 15) tags.push("Fast Payout");
+  if (displayOffer) tags.push("Easy");
+
+  const handleStart = useCallback(async () => {
+    if (!displayOffer || !user?.uid) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await recordClick(user.uid, displayOffer.id, displayOffer.provider);
+    } catch (e) {
+      console.warn("Click tracking failed:", e);
+    }
+    if (displayOffer.clickUrl) {
+      try {
+        await WebBrowser.openBrowserAsync(displayOffer.clickUrl);
+      } catch (e) {
+        console.warn("Browser open failed:", e);
+      }
+    }
+  }, [displayOffer, user?.uid]);
+
+  if (loading) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
+          <View style={styles.heroWrap}>
+            <Image source={img} style={styles.heroImg} resizeMode="cover" />
+            <Pressable style={[styles.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.body}>
+            <Text style={styles.title}>Loading...</Text>
+            <ActivityIndicator color={theme.colors.green} style={{ marginTop: theme.spacing.md }} />
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (!displayOffer) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
+          <View style={styles.heroWrap}>
+            <Image source={img} style={styles.heroImg} resizeMode="cover" />
+            <Pressable style={[styles.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.body}>
+            <Text style={styles.title}>Offer not found</Text>
+            <Text style={styles.sectionTitle}>This offer may have expired or been removed.</Text>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -40,18 +121,26 @@ export default function OfferDetailScreen() {
         <View style={styles.heroWrap}>
           <Image source={img} style={styles.heroImg} resizeMode="cover" />
           {idx < 3 && <View style={styles.badge}><Text style={styles.badgeText}>HOT</Text></View>}
-          <Pressable style={[styles.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}><Ionicons name="arrow-back" size={22} color={theme.colors.text} /></Pressable>
+          <Pressable style={[styles.backBtn, { top: insets.top + 12 }]} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
+          </Pressable>
         </View>
         <View style={styles.body}>
-          <Text style={styles.title}>{offer.title}</Text>
-          <View style={styles.tagsRow}>{tags.map(t => <View key={t} style={styles.tag}><Text style={styles.tagText}>{t}</Text></View>)}</View>
+          <Text style={styles.title}>{displayOffer.title}</Text>
+          <View style={styles.tagsRow}>
+            {tags.map((t) => (
+              <View key={t} style={styles.tag}>
+                <Text style={styles.tagText}>{t}</Text>
+              </View>
+            ))}
+          </View>
           <View style={styles.priceRow}>
             <TapScoreRing score={94} size={60} showLabel={false} />
             <Text style={styles.price}>${price}</Text>
           </View>
           <Text style={styles.sectionTitle}>Before You Start</Text>
           <GlassCard style={styles.infoCard}>
-            <InfoRow label="Estimated time" value={`${offer.estimateMinutes} min`} />
+            <InfoRow label="Estimated time" value={`${displayOffer.estimateMinutes} min`} />
             <InfoRow label="Purchase required" value="No" />
             <InfoRow label="Tracking confidence" value="High" />
             <InfoRow label="Approval time" value="1-3 days" />
@@ -59,7 +148,12 @@ export default function OfferDetailScreen() {
           </GlassCard>
           <Text style={styles.sectionTitle}>Common Failure Reasons</Text>
           <GlassCard style={styles.infoCard}>
-            {["VPN/Proxy", "AdBlock/Private DNS", "Tracking Disabled"].map(r => <View key={r} style={styles.failRow}><Ionicons name="close-circle" size={18} color="#ff3b30" /><Text style={styles.failText}>{r}</Text></View>)}
+            {["VPN/Proxy", "AdBlock/Private DNS", "Tracking Disabled"].map((r) => (
+              <View key={r} style={styles.failRow}>
+                <Ionicons name="close-circle" size={18} color="#ff3b30" />
+                <Text style={styles.failText}>{r}</Text>
+              </View>
+            ))}
           </GlassCard>
           <View style={styles.successRow}>
             <Ionicons name="checkmark-circle" size={18} color={theme.colors.green} />
@@ -68,14 +162,21 @@ export default function OfferDetailScreen() {
         </View>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) + 12 }]}>
-        <Pressable style={styles.startBtn} onPress={onStart}><Text style={styles.startText}>Start Offer</Text></Pressable>
+        <Pressable style={styles.startBtn} onPress={handleStart}>
+          <Text style={styles.startText}>Start Offer</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
-  return <View style={styles.infoRow}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>;
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

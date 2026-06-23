@@ -9,29 +9,37 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as WebBrowser from "expo-web-browser";
 import { theme } from "../../src/theme";
 import { OfferCard } from "../../src/components/OfferCard";
-import { loadOffers } from "../../src/lib/api";
-import { TapCashOffer, tapCashOffers } from "../../../shared/tapcash-content";
+import { loadOffers, recordClick, type ApiOfferDisplay } from "../../src/lib/api";
+import { useAuth } from "../../src/auth/AuthContext";
 
 const FILTERS = ["All", "High Paying", "Fast Payout", "No Purchase", "Easy"];
 
 export default function EarnScreen() {
   const insets = useSafeAreaInsets();
-  const [offers, setOffers] = useState<TapCashOffer[]>(tapCashOffers);
+  const { user } = useAuth();
+  const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchOffers = async () => {
-    const items = await loadOffers();
-    if (Array.isArray(items) && items.length > 0) {
-      setOffers(items as TapCashOffer[]);
+    if (!user?.uid) return;
+    try {
+      const items = await loadOffers(user.uid);
+      setOffers(items);
+    } catch (e) {
+      console.warn("Failed to load offers:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchOffers();
-  }, []);
+  }, [user?.uid]);
 
   const onRefresh = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -40,12 +48,31 @@ export default function EarnScreen() {
     setRefreshing(false);
   };
 
+  const handleOfferPress = useCallback(
+    async (offer: ApiOfferDisplay) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (user?.uid && offer.clickUrl) {
+        try {
+          await recordClick(user.uid, offer.id, offer.provider);
+        } catch (e) {
+          console.warn("Click tracking failed:", e);
+        }
+        try {
+          await WebBrowser.openBrowserAsync(offer.clickUrl);
+        } catch (e) {
+          console.warn("Browser open failed:", e);
+        }
+      }
+    },
+    [user?.uid]
+  );
+
   const filteredOffers = offers.filter((offer) => {
     if (filter === "All") return true;
     if (filter === "High Paying") return offer.payoutCoins >= 500;
-    if (filter === "Fast Payout") return offer.estimateMinutes <= 15;
-    if (filter === "No Purchase") return true; // Placeholder
-    if (filter === "Easy") return offer.estimateMinutes <= 10;
+    if (filter === "Fast Payout") return true;
+    if (filter === "No Purchase") return true;
+    if (filter === "Easy") return true;
     return true;
   });
 
@@ -95,11 +122,26 @@ export default function EarnScreen() {
         })}
       </ScrollView>
 
-      <View style={styles.list}>
-        {filteredOffers.map((offer, idx) => (
-          <OfferCard key={offer.id} offer={offer} index={idx} />
-        ))}
-      </View>
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <Text style={styles.loadingText}>Loading offers...</Text>
+        </View>
+      ) : filteredOffers.length === 0 ? (
+        <View style={styles.loadingWrap}>
+          <Text style={styles.loadingText}>No offers available right now.</Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {filteredOffers.map((offer, idx) => (
+            <OfferCard
+              key={offer.id}
+              offer={offer}
+              index={idx}
+              onPress={() => handleOfferPress(offer)}
+            />
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -151,5 +193,13 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: theme.spacing.md,
+  },
+  loadingWrap: {
+    paddingVertical: theme.spacing.xl,
+    alignItems: "center",
+  },
+  loadingText: {
+    color: theme.colors.muted,
+    fontSize: theme.font.sm,
   },
 });

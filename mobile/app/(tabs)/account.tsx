@@ -1,5 +1,12 @@
-import { useMemo, useState } from "react";
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useMemo, useEffect, useState } from "react";
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +14,8 @@ import { theme } from "../../src/theme";
 import { GlassCard } from "../../src/components/GlassCard";
 import { TapScoreRing } from "../../src/components/TapScoreRing";
 import { useAuth } from "../../src/auth/AuthContext";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../../src/lib/firebase";
 
 const SETTINGS = [
   { icon: "card-outline" as const, label: "Payout Settings" },
@@ -18,9 +27,24 @@ const SETTINGS = [
 
 export default function AccountScreen() {
   const insets = useSafeAreaInsets();
-  const { user, verified, loading, logout, resendVerificationEmail, refreshSession } = useAuth();
+  const { user, verified, loading, logout, resendVerificationEmail } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ createdAt?: Date; displayName?: string }>({});
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setProfile({
+          createdAt: data.createdAt?.toDate?.(),
+          displayName: data.displayName,
+        });
+      }
+    });
+    return unsub;
+  }, [user?.uid]);
 
   const statusLabel = useMemo(() => {
     if (loading) return "Checking session...";
@@ -33,10 +57,9 @@ export default function AccountScreen() {
     setSubmitting(true);
     setMessage(null);
     try {
-      const refreshedUser = await refreshSession();
-      setMessage(refreshedUser?.emailVerified ? "Verification confirmed." : "Still waiting on inbox verification.");
-    } catch (authError: unknown) {
-      console.error("Mobile account refresh error:", authError);
+      await user?.reload();
+      setMessage(user?.emailVerified ? "Verification confirmed." : "Still waiting on inbox verification.");
+    } catch {
       setMessage("Could not refresh the session right now.");
     } finally {
       setSubmitting(false);
@@ -49,8 +72,7 @@ export default function AccountScreen() {
     try {
       await resendVerificationEmail();
       setMessage("Verification email resent.");
-    } catch (authError: unknown) {
-      console.error("Mobile account resend error:", authError);
+    } catch {
       setMessage("Could not resend the verification email.");
     } finally {
       setSubmitting(false);
@@ -62,6 +84,10 @@ export default function AccountScreen() {
     logout();
   };
 
+  const displayName = profile.displayName || user?.displayName || "User";
+  const email = user?.email || "No email";
+  const joinDate = profile.createdAt?.toLocaleDateString() || "Unknown";
+
   return (
     <ScrollView
       style={[styles.screen, { paddingTop: insets.top + 12 }]}
@@ -70,11 +96,11 @@ export default function AccountScreen() {
       {/* Profile Header */}
       <View style={styles.profileRow}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.displayName?.[0] ?? "U"}</Text>
+          <Text style={styles.avatarText}>{displayName[0]?.toUpperCase() ?? "U"}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{user?.displayName ?? "User"}</Text>
-          <Text style={styles.profileEmail}>{user?.email ?? "No email"}</Text>
+          <Text style={styles.profileName}>{displayName}</Text>
+          <Text style={styles.profileEmail}>{email}</Text>
         </View>
         <View style={styles.tierBadge}>
           <Text style={styles.tierText}>Gold Tier</Text>
@@ -109,6 +135,7 @@ export default function AccountScreen() {
         <Text style={styles.cardBody}>
           {verified ? "Inbox verification complete." : "Email verification still required."}
         </Text>
+        <Text style={styles.cardBody}>Member since {joinDate}</Text>
         {message ? <Text style={styles.messageText}>{message}</Text> : null}
         <View style={styles.buttonStack}>
           <TouchableOpacity onPress={handleRefresh} style={styles.secondaryButton} disabled={submitting} activeOpacity={0.8}>

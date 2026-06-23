@@ -1,9 +1,9 @@
 import * as Notifications from "expo-notifications";
-import { Device } from "expo-device";
+import { isDevice } from "expo-device";
 import Constants from "expo-constants";
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
-  if (!Device.isDevice) {
+  if (!isDevice) {
     console.log("Must use physical device for push notifications");
     return null;
   }
@@ -20,7 +20,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 
   try {
-    const pushTokenData = await Notifications.getExpoPushPushTokenAsync();
+    const pushTokenData = await Notifications.getExpoPushTokenAsync();
     return pushTokenData.data;
   } catch (error: unknown) {
     console.error("Failed to get push token:", error);

@@ -24,6 +24,7 @@ interface ActivityItem {
   name: string;
   status: ActivityStatus;
   amount: string;
+  amountCoins: string;
   timestamp: string;
   provider: string;
 }
@@ -33,7 +34,7 @@ function getStatusColor(status: ActivityStatus) {
     case "paid":
       return tapCashTheme.colors.accent;
     case "pending":
-      return tapCashTheme.colors.accent;
+      return tapCashTheme.colors.muted;
     case "failed":
       return "#ff3b30";
   }
@@ -52,11 +53,14 @@ function formatTimestamp(createdAt: Date | null): string {
 }
 
 function txToActivityItem(tx: Transaction): ActivityItem {
+  const cad = (Math.abs(tx.amountCoins) / 1000).toFixed(2);
+  const sign = tx.amountCoins >= 0 ? "+" : "-";
   return {
     id: tx.id,
     name: tx.type || "Transaction",
     status: tx.status === "approved" ? "paid" : tx.status === "pending" ? "pending" : "failed",
-    amount: `${tx.amountCoins >= 0 ? "+" : ""}${tx.amountCoins} coins`,
+    amount: `${sign}${cad} CAD`,
+    amountCoins: `${sign}${tx.amountCoins} coins`,
     timestamp: formatTimestamp(tx.createdAt),
     provider: tx.source || "TapCash",
   };
@@ -135,12 +139,16 @@ export default function ActivityScreen() {
       <View style={styles.list}>
         {activities.map((item) => {
           const color = getStatusColor(item.status);
+          const isCredit = item.amountCoins.includes("+");
           return (
             <GlassCard key={item.id} style={[styles.itemCard, { borderLeftWidth: 3, borderLeftColor: color }]}>
               <View style={styles.itemRow}>
                 <View style={[styles.statusDot, { backgroundColor: color }]} />
                 <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={[styles.itemAmount, { color }]}>{item.amount}</Text>
+                <View style={styles.itemAmountCol}>
+                  <Text style={[styles.itemAmount, { color }]}>{item.amount}</Text>
+                  <Text style={[styles.itemAmountCoins, { color: isCredit ? tapCashTheme.colors.green : tapCashTheme.colors.gold }]}>{item.amountCoins}</Text>
+                </View>
               </View>
               <View style={styles.itemMetaRow}>
                 <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
@@ -171,7 +179,9 @@ const styles = StyleSheet.create({
   itemRow: { flexDirection: "row", alignItems: "center", gap: tapCashTheme.spacing.sm, marginBottom: tapCashTheme.spacing.xs },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   itemName: { flex: 1, color: tapCashTheme.colors.text, fontSize: 15, fontWeight: "600" },
+  itemAmountCol: { alignItems: "flex-end" },
   itemAmount: { fontSize: 14, fontWeight: "900" },
+  itemAmountCoins: { fontSize: 11, fontWeight: "700" },
   itemMetaRow: { flexDirection: "row", alignItems: "center", gap: tapCashTheme.spacing.sm, marginBottom: tapCashTheme.spacing.xs },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: tapCashTheme.radius.xs },
   statusBadgeText: { fontSize: tapCashTheme.font.xs, fontWeight: "800", textTransform: "uppercase" },

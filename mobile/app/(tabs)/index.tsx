@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,9 @@ import { theme } from "../../src/theme";
 import { GlassCard } from "../../src/components/GlassCard";
 import { PulsingDot } from "../../src/components/PulsingDot";
 import { OfferCard } from "../../src/components/OfferCard";
-import { tapCashOffers } from "../../../shared/tapcash-content";
+import { useAuth } from "../../src/auth/AuthContext";
+import { subscribeToBalance } from "../../src/lib/firestore";
+import { loadOffers, type ApiOfferDisplay } from "../../src/lib/api";
 
 const CASHPATH = ["Choose", "Tracking", "Pending", "Approved", "Cashed Out"];
 const ACTIVE = 2;
@@ -15,15 +17,58 @@ const ACTIVE = 2;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const h = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  const bal = 12.5, minW = 20, prog = Math.min((bal / minW) * 100, 100);
+  const { user } = useAuth();
+  const [balance, setBalance] = useState({ balanceCoins: 0, pendingCoins: 0 });
+  const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
+  const [loadingBalance, setLoadingBalance] = useState(true);
+  const [loadingOffers, setLoadingOffers] = useState(true);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setLoadingBalance(false);
+      setLoadingOffers(false);
+      return;
+    }
+
+    const unsubBalance = subscribeToBalance(user.uid, (state) => {
+      setBalance(state);
+      setLoadingBalance(false);
+    });
+
+    let cancelled = false;
+    setLoadingOffers(true);
+    loadOffers(user.uid)
+      .then((items) => {
+        if (!cancelled) setOffers(items);
+      })
+      .catch((e) => {
+        if (!cancelled) console.warn("Failed to load offers:", e);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingOffers(false);
+      });
+
+    return () => {
+      unsubBalance();
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  const balanceCad = (balance.balanceCoins / 1000).toFixed(2);
+  const minW = 20;
+  const prog = Math.min((balance.balanceCoins / (minW * 1000)) * 100, 100);
 
   return (
     <ScrollView style={[styles.screen, { paddingTop: insets.top + 12 }]} contentContainerStyle={styles.content}>
       <View style={styles.headerRow}>
         <Text style={styles.logoText}>TapCash</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={h} style={styles.iconBtn}><Ionicons name="notifications-outline" size={22} color={theme.colors.text} /></TouchableOpacity>
-          <View style={styles.avatar}><Text style={styles.avatarText}>U</Text></View>
+          <TouchableOpacity onPress={h} style={styles.iconBtn}>
+            <Ionicons name="notifications-outline" size={22} color={theme.colors.text} />
+          </TouchableOpacity>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>U</Text>
+          </View>
         </View>
       </View>
 
@@ -33,11 +78,19 @@ export default function HomeScreen() {
           <Ionicons name="wallet-outline" size={20} color={theme.colors.green} />
         </View>
         <View style={styles.balRow}>
-          <Text style={styles.balAmt}>$12.50</Text>
-          <Text style={styles.balToday}>+$4.20 today</Text>
+          {loadingBalance ? (
+            <Text style={styles.balAmt}>---</Text>
+          ) : (
+            <Text style={styles.balAmt}>${balanceCad}</Text>
+          )}
+          <Text style={styles.balToday}>
+            {balance.pendingCoins > 0 ? `+$${(balance.pendingCoins / 1000).toFixed(2)} pending` : "+$0.00 today"}
+          </Text>
         </View>
-        <View style={styles.track}><View style={[styles.fill, { width: prog + "%" }]} /></View>
-        <Text style={styles.balMeta}>Min. $20 to withdraw · $12.50 / $20</Text>
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${prog}%` as any }]} />
+        </View>
+        <Text style={styles.balMeta}>Min. $20 to withdraw · ${balanceCad} / $20.00</Text>
       </GlassCard>
 
       <GlassCard>
@@ -46,29 +99,83 @@ export default function HomeScreen() {
           <PulsingDot size={8} />
         </View>
         <View style={styles.liveRow}>
-          <View style={styles.liveIcon}><Text style={styles.liveIconText}>P</Text></View>
+          <View style={styles.liveIcon}>
+            <Text style={styles.liveIconText}>P</Text>
+          </View>
           <View style={styles.liveInfo}>
-            <Text style={styles.liveName}>Emma W. cashed out</Text>
-            <Text style={styles.liveAmt}>$125.00</Text>
-            <Text style={styles.liveMeta}>via PayPal · Just now</Text>
+            <Text style={styles.liveName}>Real-time payouts loading</Text>
+            <Text style={styles.liveAmt}>$0.00</Text>
+            <Text style={styles.liveMeta}>via Network · Just now</Text>
           </View>
         </View>
       </GlassCard>
 
-      <View style={styles.pathRow}>{CASHPATH.map((s, i) => {
-        const c = i < ACTIVE, a = i === ACTIVE;
-        return <View key={s} style={styles.pathItem}>{i > 0 && <View style={[styles.pathLine, { backgroundColor: c || a ? theme.colors.green : theme.colors.border }]} />}<View style={[styles.pathDot, { backgroundColor: c || a ? theme.colors.green : "transparent", borderColor: c || a ? theme.colors.green : theme.colors.muted }]} /><Text style={[styles.pathText, { color: c || a ? theme.colors.green : theme.colors.muted }]}>{s}</Text></View>;
-      })}</View>
+      <View style={styles.pathRow}>
+        {CASHPATH.map((s, i) => {
+          const c = i < ACTIVE;
+          const a = i === ACTIVE;
+          return (
+            <View key={s} style={styles.pathItem}>
+              {i > 0 && (
+                <View
+                  style={[
+                    styles.pathLine,
+                    { backgroundColor: c || a ? theme.colors.green : theme.colors.border },
+                  ]}
+                />
+              )}
+              <View
+                style={[
+                  styles.pathDot,
+                  {
+                    backgroundColor: c || a ? theme.colors.green : "transparent",
+                    borderColor: c || a ? theme.colors.green : theme.colors.muted,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.pathText,
+                  { color: c || a ? theme.colors.green : theme.colors.muted },
+                ]}
+              >
+                {s}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
 
       <View style={styles.secHead}>
         <Text style={styles.secTitle}>Top Offers</Text>
-        <TouchableOpacity onPress={h}><Text style={styles.secLink}>View all →</Text></TouchableOpacity>
+        <TouchableOpacity onPress={h}>
+          <Text style={styles.secLink}>View all →</Text>
+        </TouchableOpacity>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.offScroll}>
-        {tapCashOffers.slice(0, 3).map((o, i) => <OfferCard key={o.id} offer={o} index={i} />)}
-      </ScrollView>
+      {loadingOffers ? (
+        <View style={styles.loadingRow}>
+          <Text style={styles.loadingText}>Loading offers...</Text>
+        </View>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.offScroll}>
+          {offers.slice(0, 3).map((o, i) => (
+            <OfferCard key={o.id} offer={o} index={i} />
+          ))}
+        </ScrollView>
+      )}
 
-      <View style={styles.statRow}>{[{l:"Users",v:"50K+"},{l:"Paid",v:"$2.5M+"},{l:"Verified",v:"98%"}].map(s => <GlassCard key={s.l} style={styles.statCard}><Text style={styles.statLabel}>{s.l}</Text><Text style={styles.statValue}>{s.v}</Text></GlassCard>)}</View>
+      <View style={styles.statRow}>
+        {[
+          { l: "Users", v: "50K+" },
+          { l: "Paid", v: "$2.5M+" },
+          { l: "Verified", v: "98%" },
+        ].map((s) => (
+          <GlassCard key={s.l} style={styles.statCard}>
+            <Text style={styles.statLabel}>{s.l}</Text>
+            <Text style={styles.statValue}>{s.v}</Text>
+          </GlassCard>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -108,6 +215,8 @@ const styles = StyleSheet.create({
   secTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "bold" },
   secLink: { color: theme.colors.green, fontSize: theme.font.md, fontWeight: "600" },
   offScroll: { marginBottom: theme.spacing.md },
+  loadingRow: { paddingVertical: theme.spacing.md, alignItems: "center" },
+  loadingText: { color: theme.colors.muted, fontSize: theme.font.sm },
   statRow: { flexDirection: "row", gap: theme.spacing.sm },
   statCard: { flex: 1, padding: theme.spacing.md, alignItems: "center", justifyContent: "center" },
   statLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "600", textTransform: "uppercase", marginBottom: theme.spacing.xs },

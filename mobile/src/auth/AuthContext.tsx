@@ -134,7 +134,7 @@ const refreshSession = async () => {
       const { email, password } = JSON.parse(savedCreds) as { email: string; password: string };
       await LocalAuthentication.setAuthenticatedAsync(true);
       await signInWithEmailAndPassword(auth, email, password);
-      await refreshSession();
+      await handleAuthSuccess();
       return true;
     } catch (error: unknown) {
       console.error("Biometric sign-in failed:", error);
@@ -142,7 +142,13 @@ const refreshSession = async () => {
     }
   }, [biometricAvailable]);
 
-const value: AuthContextValue = {
+  const resendVerificationEmail = useCallback(async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    }
+  }, []);
+
+  const value: AuthContextValue = {
     user,
     verified: Boolean(user?.emailVerified),
     loading,
