@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { ArrowRight, BadgeCheck, CircleGauge, Loader2, Sparkles, ShieldCheck, Trophy, Wallet } from "lucide-react";
+import { ArrowRight, BadgeCheck, Loader2, Trophy } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { usePolling } from "@/hooks/usePolling";
 import { accentClass, formatCadFromCoins, formatCoins, tapCashActivity, tapCashLeaderboardSeed, tapCashOffers } from "@shared/tapcash-content";
 import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
 
@@ -34,6 +35,7 @@ export default function DashboardPage() {
   const [ledger, setLedger] = useState<LedgerSummaryResponse | null>(null);
   const [offers, setOffers] = useState(tapCashOffers);
   const [leaderboard, setLeaderboard] = useState(tapCashLeaderboardSeed);
+  const [liveActivity, setLiveActivity] = useState(tapCashActivity);
   const [transactions, setTransactions] = useState<LedgerTx[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,43 @@ export default function DashboardPage() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const refreshActivity = useCallback(async () => {
+    try {
+      const res = await fetch("/api/activity/live");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.activities) && data.activities.length > 0) {
+        setLiveActivity(
+          data.activities.map((a: { userName: string; type: string; offerTitle?: string; amount?: number }) => ({
+            label: a.userName,
+            detail: a.type === "offer_completed" ? `completed ${a.offerTitle || "an offer"}` : a.type === "cashout" ? "requested a payout" : "joined TapCash",
+            value: a.amount ? `+${a.amount} coins` : "",
+          })),
+        );
+      }
+    } catch {
+      // silent fallback stays at seed data
+    }
+  }, []);
+
+  const refreshLeaderboard = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/leaderboard/live", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.leaderboard) && data.leaderboard.length > 0) {
+        setLeaderboard(data.leaderboard.slice(0, 4));
+      }
+    } catch {
+      // silent fallback stays at seed data
+    }
+  }, [user]);
+
+  usePolling(refreshActivity, 30000, !!user);
+  usePolling(refreshLeaderboard, 60000, !!user);
 
   if (authLoading || (user && loading && !ledger)) {
     return (
@@ -252,7 +291,7 @@ export default function DashboardPage() {
 
             <PageShell eyebrow="Recent activity" title="What people are doing now" description="Live scan of the product loop.">
               <div className="space-y-3">
-                {tapCashActivity.map((item) => (
+                {liveActivity.map((item) => (
                   <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3">
                     <p className="text-sm font-semibold text-white">{item.label}</p>
                     <p className="mt-1 text-xs text-zinc-500">{item.detail}</p>

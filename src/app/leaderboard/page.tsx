@@ -1,17 +1,46 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MotionWrap, PageShell } from "@/components/PremiumUi";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { usePolling } from "@/hooks/usePolling";
 import { tapCashLeaderboardSeed } from "@shared/tapcash-content";
-import { Trophy, Medal, Sparkles } from "lucide-react";
+import { Trophy, Medal, Sparkles, Loader2 } from "lucide-react";
+
+interface LeaderboardRow {
+  rank: number;
+  displayName: string;
+  coins: number;
+}
 
 const RANK_COLORS = ["text-[#FFC442]", "text-[#C0C0C0]", "text-[#CD7F32]", "text-white/40"];
 const RANK_BG = ["bg-[#FFC442]/10", "bg-[#C0C0C0]/10", "bg-[#CD7F32]/10", "bg-white/[0.03]"];
 
 export default function LeaderboardPage() {
+  const [entries, setEntries] = useState<LeaderboardRow[]>(tapCashLeaderboardSeed);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/leaderboard");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.leaderboard) && data.leaderboard.length > 0) {
+        setEntries(data.leaderboard);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+  usePolling(refresh, 60000);
+
   return (
     <div className="min-h-screen bg-[#050813] text-white flex flex-col">
       <Navbar />
@@ -30,27 +59,31 @@ export default function LeaderboardPage() {
           />
         </MotionWrap>
 
-        <div className="mt-10 space-y-3">
-          {tapCashLeaderboardSeed.map((entry, i) => (
-            <MotionWrap key={entry.rank} delay={i * 0.08}>
-              <Card
-                variant={i < 3 ? "elevated" : "default"}
-                className={`flex items-center gap-4 ${i < 3 ? RANK_BG[i] : ""}`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${RANK_COLORS[i]}`}>
-                  {i === 0 ? <Trophy size={22} /> : i < 3 ? <Medal size={20} /> : `#${entry.rank}`}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-white">{entry.displayName}</p>
-                  <p className="text-xs text-white/40">{entry.coins.toLocaleString()} coins earned</p>
-                </div>
-                <Badge variant={i === 0 ? "gold" : i === 1 ? "purple" : "green"}>
-                  {entry.coins.toLocaleString()}
-                </Badge>
-              </Card>
-            </MotionWrap>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-[#00e6c3]" /></div>
+        ) : (
+          <div className="mt-10 space-y-3">
+            {entries.map((entry, i) => (
+              <MotionWrap key={entry.rank} delay={i * 0.08}>
+                <Card
+                  variant={i < 3 ? "elevated" : "default"}
+                  className={`flex items-center gap-4 ${i < 3 ? RANK_BG[i] : ""}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${RANK_COLORS[i]}`}>
+                    {i === 0 ? <Trophy size={22} /> : i < 3 ? <Medal size={20} /> : `#${entry.rank}`}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-white">{entry.displayName}</p>
+                    <p className="text-xs text-white/40">{entry.coins.toLocaleString()} coins earned</p>
+                  </div>
+                  <Badge variant={i === 0 ? "gold" : i === 1 ? "purple" : "green"}>
+                    {entry.coins.toLocaleString()}
+                  </Badge>
+                </Card>
+              </MotionWrap>
+            ))}
+          </div>
+        )}
 
         <MotionWrap className="mt-12 text-center">
           <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-8">
