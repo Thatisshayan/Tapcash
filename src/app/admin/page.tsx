@@ -26,6 +26,18 @@ interface Withdrawal {
   status: string;
   createdAt?: TimestampLike;
   payoutEmail?: string;
+  destination?: string;
+}
+
+const manualMethods = new Set(["interac", "bitcoin", "litecoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"]);
+const automatedMethods = new Set(["paypal", "tremendous"]);
+
+function isManualMethod(method?: string) {
+  return manualMethods.has(method?.toLowerCase() || "");
+}
+
+function isAutomatedMethod(method?: string) {
+  return automatedMethods.has(method?.toLowerCase() || "");
 }
 
 interface FlaggedTx {
@@ -179,8 +191,12 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage({ text: `Withdrawal ${action}d successfully ${data.automated ? '(Automated)' : '(Manual)'}`, type: "success" });
-        setWithdrawals(prev => prev.filter(w => w.id !== withdrawalId));
+        setMessage({ text: `Withdrawal ${action}d successfully`, type: "success" });
+        if (action === "approve") {
+          void loadData();
+        } else {
+          setWithdrawals(prev => prev.filter(w => w.id !== withdrawalId));
+        }
       } else {
         setMessage({ text: data.error || "Action failed", type: "error" });
       }
@@ -189,6 +205,43 @@ export default function AdminPage() {
     } finally {
       setActionLoading(null);
       setTimeout(() => setMessage(null), 3000);
+    }
+  }
+
+  async function handleApproveAndPay(withdrawalId: string) {
+    setActionLoading(withdrawalId + "approve_pay");
+    try {
+      const token = await user!.getIdToken();
+      // Step 1: Approve
+      const approveRes = await fetch("/api/admin/withdrawals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ withdrawalId, action: "approve" }),
+      });
+      const approveData = await approveRes.json();
+      if (!approveData.success) {
+        setMessage({ text: approveData.error || "Approve failed", type: "error" });
+        return;
+      }
+      // Step 2: Process payout
+      const payoutRes = await fetch("/api/payout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cashoutRequestId: withdrawalId }),
+      });
+      const payoutData = await payoutRes.json();
+      if (payoutData.success) {
+        setMessage({ text: `Paid ✓ TX: ${payoutData.transactionId}`, type: "success" });
+        setWithdrawals(prev => prev.filter(w => w.id !== withdrawalId));
+      } else {
+        setMessage({ text: payoutData.error || payoutData.message || "Payout failed", type: "error" });
+        void loadData();
+      }
+    } catch {
+      setMessage({ text: "Network error during approve & pay", type: "error" });
+    } finally {
+      setActionLoading(null);
+      setTimeout(() => setMessage(null), 5000);
     }
   }
 
@@ -471,7 +524,7 @@ export default function AdminPage() {
                             <td className="px-6 py-4 text-[10px] font-bold text-zinc-500">{fmt(w.createdAt)}</td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex gap-2 justify-end">
-                                {w.status === "manual_required" ? (
+                                {w.status === "manual_required" || (w.status === "approved" && isManualMethod(w.method)) ? (
                                   <button
                                     onClick={() => setMarkSentModal({ withdrawalId: w.id, method: w.method })}
                                     disabled={!!actionLoading}
@@ -479,6 +532,23 @@ export default function AdminPage() {
                                   >
                                     {actionLoading === w.id + "mark_sent" ? "..." : "Mark Sent"}
                                   </button>
+                                ) : w.status === "approved" ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleApproveAndPay(w.id)}
+                                      disabled={!!actionLoading}
+                                      className="px-4 py-2 rounded-xl bg-[#3a7bff] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#2a5fcc] transition-all active:scale-95 disabled:opacity-40"
+                                    >
+                                      {actionLoading === w.id + "approve_pay" ? "..." : "Process Pay"}
+                                    </button>
+                                    <button
+                                      onClick={() => handleWithdrawal(w.id, "reject")}
+                                      disabled={!!actionLoading}
+                                      className="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-40"
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
                                 ) : (
                                   <>
                                     <button
@@ -487,6 +557,13 @@ export default function AdminPage() {
                                       className="px-4 py-2 rounded-xl bg-[#00e6c3] text-[#050816] text-[10px] font-black uppercase tracking-widest hover:bg-[#26edd1] transition-all active:scale-95 disabled:opacity-40"
                                     >
                                       {actionLoading === w.id + "approve" ? "..." : "Approve"}
+                                    </button>
+                                    <button
+                                      onClick={() => handleApproveAndPay(w.id)}
+                                      disabled={!!actionLoading}
+                                      className="px-4 py-2 rounded-xl bg-[#3a7bff] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#2a5fcc] transition-all active:scale-95 disabled:opacity-40"
+                                    >
+                                      {actionLoading === w.id + "approve_pay" ? "..." : "Approve & Pay"}
                                     </button>
                                     <button
                                       onClick={() => handleWithdrawal(w.id, "reject")}

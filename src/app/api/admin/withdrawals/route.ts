@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       manualCountSnap,
       postbacks24hCountSnap,
     ] = await Promise.all([
-      adminDb.collection("cashout_requests").where("status", "in", ["pending_review", "manual_required"]).orderBy("createdAt", "desc").limit(20).get(),
+      adminDb.collection("cashout_requests").where("status", "in", ["pending_review", "manual_required", "approved"]).orderBy("createdAt", "desc").limit(50).get(),
       adminDb.collection("offer_postbacks").orderBy("createdAt", "desc").limit(20).get(),
       adminDb.collection("fraud_flags").orderBy("createdAt", "desc").limit(10).get(),
       adminDb.collection("users").count().get(),

@@ -30,10 +30,19 @@ interface FraudStats {
   detectionRate: number;
 }
 
+interface BlockedIP {
+  id: string;
+  ip: string;
+  reason?: string;
+  blockedBy?: string;
+  timestamp?: Date;
+}
+
 export default function FraudDetection() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
+  const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
   const [stats, setStats] = useState<FraudStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +51,7 @@ export default function FraudDetection() {
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [selectedAlert, setSelectedAlert] = useState<FraudAlert | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [fraudTab, setFraudTab] = useState<'alerts' | 'blocked_ips'>('alerts');
 
   const loadFraudData = useCallback(async () => {
     try {
@@ -64,6 +74,7 @@ export default function FraudDetection() {
       const data = await response.json();
       setAlerts(data.alerts);
       setStats(data.stats);
+      if (data.blockedIPs) setBlockedIPs(data.blockedIPs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load fraud data');
     } finally {
@@ -104,6 +115,61 @@ export default function FraudDetection() {
       alert(err instanceof Error ? err.message : 'Failed to review alert');
     }
   };
+
+  const handleUnflagUser = async (alertId: string) => {
+    if (!window.confirm('Unflag this user? This will resolve the alert and reactivate the account if banned.')) return;
+    try {
+      const token = await user?.getIdToken();
+      const response = await fetch('/api/admin/fraud', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ alertId, action: 'unflag_user', notes: 'Unflagged by admin', status: 'resolved' })
+      });
+      if (!response.ok) throw new Error('Failed to unflag user');
+      await loadFraudData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to unflag user');
+    }
+  };
+
+  const handleUnblockIP = async (ipId: string) => {
+    if (!window.confirm('Unblock this IP address?')) return;
+    try {
+      const token = await user?.getIdToken();
+      const response = await fetch('/api/admin/fraud', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ipId, action: 'unblock_ip' })
+      });
+      if (!response.ok) throw new Error('Failed to unblock IP');
+      await loadFraudData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to unblock IP');
+    }
+  };
+
+  function exportCSV() {
+    const headers = ['ID', 'User', 'Email', 'Type', 'Severity', 'Status', 'Description', 'Timestamp'];
+    const rows = filteredAlerts.map(a => [
+      a.id, a.userName, a.userEmail, a.type, a.severity, a.status,
+      `"${a.description.replace(/"/g, '""')}"`,
+      new Date(a.timestamp).toISOString()
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fraud-alerts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const filteredAlerts = alerts.filter(alert => {
     const matchesType = typeFilter === 'all' || alert.type === typeFilter;
@@ -190,8 +256,37 @@ export default function FraudDetection() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setFraudTab('alerts')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition ${
+              fraudTab === 'alerts' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 shadow hover:bg-gray-50'
+            }`}
+          >
+            Alerts ({stats?.pendingAlerts || 0} pending)
+          </button>
+          <button
+            onClick={() => setFraudTab('blocked_ips')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition ${
+              fraudTab === 'blocked_ips' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 shadow hover:bg-gray-50'
+            }`}
+          >
+            Blocked IPs ({stats?.blockedIPs || 0})
+          </button>
+        </div>
+
+        {fraudTab === 'alerts' && (
+        <><div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Alert Filters</h2>
+            <button
+              onClick={exportCSV}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition"
+            >
+              Export CSV
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Alert Type</label>
@@ -303,15 +398,25 @@ export default function FraudDetection() {
                         {new Date(alert.timestamp).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => {
-                            setSelectedAlert(alert);
-                            setShowAlertModal(true);
-                          }}
-                          className="text-purple-600 hover:text-purple-900 font-medium"
-                        >
-                          Review
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedAlert(alert);
+                              setShowAlertModal(true);
+                            }}
+                            className="text-purple-600 hover:text-purple-900 font-medium"
+                          >
+                            Review
+                          </button>
+                          {alert.status === 'resolved' && (
+                            <button
+                              onClick={() => handleUnflagUser(alert.id)}
+                              className="text-green-600 hover:text-green-900 font-medium"
+                            >
+                              Unflag
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -322,22 +427,68 @@ export default function FraudDetection() {
         </div>
       </div>
 
-      {/* Alert Review Modal */}
+        </>) : (
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Blocked IP Addresses</h2>
+              <p className="text-sm text-gray-500 mt-1">IPs that have been blocked by the fraud detection system.</p>
+            </div>
+            {blockedIPs.length === 0 ? (
+              <div className="p-14 text-center text-gray-500 text-sm">No blocked IPs.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blocked At</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {blockedIPs.map((ip) => (
+                      <tr key={ip.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{ip.ip}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{ip.reason || '—'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {ip.timestamp ? new Date(ip.timestamp).toLocaleString() : '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <button
+                            onClick={() => handleUnblockIP(ip.id)}
+                            className="px-3 py-1.5 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200 transition"
+                          >
+                            Unblock
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Alert Review Modal */}
       {showAlertModal && selectedAlert && (
         <AlertModal
           alert={selectedAlert}
           onClose={() => setShowAlertModal(false)}
           onReview={handleReviewAlert}
+          onUnflag={handleUnflagUser}
         />
       )}
     </div>
   );
 }
 
-function AlertModal({ alert, onClose, onReview }: {
+function AlertModal({ alert, onClose, onReview, onUnflag }: {
   alert: FraudAlert;
   onClose: () => void;
   onReview: (alertId: string, status: string, notes: string, action?: 'ban' | 'suspend') => void;
+  onUnflag?: (alertId: string) => void;
 }) {
   const [notes, setNotes] = useState('');
   const [selectedAction, setSelectedAction] = useState<'ban' | 'suspend' | undefined>();
@@ -479,6 +630,17 @@ function AlertModal({ alert, onClose, onReview }: {
                 <p className="text-sm text-blue-900 mt-1">
                   <strong>Notes:</strong> {alert.notes}
                 </p>
+              )}
+              {onUnflag && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onUnflag(alert.id);
+                  }}
+                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                >
+                  Unflag User
+                </button>
               )}
             </div>
           )}

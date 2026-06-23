@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
-// GET - Fetch fraud alerts and stats
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -19,7 +18,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    // Log admin action
     await adminDb.collection('admin_logs').add({
       adminId: decodedToken.uid,
       adminEmail: decodedToken.email,
@@ -28,7 +26,6 @@ export async function GET(request: NextRequest) {
       ip: request.headers.get('x-forwarded-for') || 'unknown'
     });
 
-    // Fetch fraud alerts
     const alertsSnapshot = await adminDb.collection('fraud_flags')
       .orderBy('timestamp', 'desc')
       .limit(500)
@@ -58,22 +55,26 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Calculate fraud stats
     const totalAlerts = alerts.length;
     const pendingAlerts = alerts.filter(a => a.status === 'pending').length;
     const criticalAlerts = alerts.filter(a => a.severity === 'critical' && a.status === 'pending').length;
 
-    // Get banned users count
     const bannedUsersSnapshot = await adminDb.collection('users')
       .where('status', '==', 'banned')
       .get();
     const bannedUsers = bannedUsersSnapshot.size;
 
-    // Get blocked IPs count
-    const blockedIPsSnapshot = await adminDb.collection('blocked_ips').get();
-    const blockedIPs = blockedIPsSnapshot.size;
+    const blockedIPsSnapshot = await adminDb.collection('blocked_ips')
+      .orderBy('timestamp', 'desc')
+      .limit(200)
+      .get();
+    const blockedIPs = blockedIPsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate?.() || doc.data().timestamp,
+    }));
+    const blockedIPsCount = blockedIPsSnapshot.size;
 
-    // Calculate detection rate (resolved alerts / total alerts)
     const resolvedAlerts = alerts.filter(a => a.status === 'resolved').length;
     const detectionRate = totalAlerts > 0 ? (resolvedAlerts / totalAlerts) * 100 : 0;
 
@@ -82,11 +83,11 @@ export async function GET(request: NextRequest) {
       pendingAlerts,
       criticalAlerts,
       bannedUsers,
-      blockedIPs,
+      blockedIPs: blockedIPsCount,
       detectionRate
     };
 
-    return NextResponse.json({ alerts, stats });
+    return NextResponse.json({ alerts, stats, blockedIPs });
 
   } catch (error) {
     console.error('Admin fraud GET error:', error);
@@ -94,7 +95,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Review fraud alert
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -112,8 +112,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
-    const { alertId, status, notes, action } = await request.json();
+    const { alertId, status, notes, action, ipId } = await request.json();
 
+    // Handle unflag_user action
+    if (action === 'unflag_user') {
+      if (!alertId) {
+        return NextResponse.json({ error: 'Missing alertId for unflag_user' }, { status: 400 });
+      }
+      const alertDoc = await adminDb.collection('fraud_flags').doc(alertId).get();
+      const alertData = alertDoc.data();
+      if (!alertData) {
+        return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+      }
+
+      await adminDb.collection('fraud_flags').doc(alertId).update({
+        status: 'resolved',
+        notes: notes || 'Unflagged by admin',
+        reviewedBy: decodedToken.uid,
+        reviewedAt: new Date()
+      });
+
+      const targetUser = await adminDb.collection('users').doc(alertData.userId).get();
+      if (targetUser.exists && targetUser.data()?.status === 'banned') {
+        await adminDb.collection('users').doc(alertData.userId).update({
+          status: 'active',
+          updatedAt: new Date(),
+          actionReason: notes || 'Unflagged by admin',
+          actionBy: decodedToken.uid
+        });
+      }
+
+      await adminDb.collection('admin_logs').add({
+        adminId: decodedToken.uid,
+        adminEmail: decodedToken.email,
+        action: 'unflag_user',
+        targetAlertId: alertId,
+        targetUserId: alertData.userId,
+        timestamp: new Date(),
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      });
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle unblock_ip action
+    if (action === 'unblock_ip') {
+      if (!ipId) {
+        return NextResponse.json({ error: 'Missing ipId for unblock_ip' }, { status: 400 });
+      }
+      await adminDb.collection('blocked_ips').doc(ipId).delete();
+
+      await adminDb.collection('admin_logs').add({
+        adminId: decodedToken.uid,
+        adminEmail: decodedToken.email,
+        action: 'unblock_ip',
+        targetId: ipId,
+        timestamp: new Date(),
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      });
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Standard alert review
     if (!alertId || !status || !notes) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -125,7 +186,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
     }
 
-    // Update alert status
     await adminDb.collection('fraud_flags').doc(alertId).update({
       status,
       notes,
@@ -133,7 +193,6 @@ export async function POST(request: NextRequest) {
       reviewedAt: new Date()
     });
 
-    // Perform user action if specified
     if (action === 'ban' || action === 'suspend') {
       await adminDb.collection('users').doc(alertData.userId).update({
         status: action === 'ban' ? 'banned' : 'suspended',
@@ -142,7 +201,6 @@ export async function POST(request: NextRequest) {
         actionBy: decodedToken.uid
       });
 
-      // If banning, also block their IP
       if (action === 'ban' && alertData.metadata?.ip) {
         await adminDb.collection('blocked_ips').add({
           ip: alertData.metadata.ip,
@@ -153,7 +211,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Log admin action
     await adminDb.collection('admin_logs').add({
       adminId: decodedToken.uid,
       adminEmail: decodedToken.email,
@@ -173,9 +230,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Admin fraud POST error:', error);
-    return NextResponse.json({ error: 'Failed to review alert' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
-
-// Made with Bob
-

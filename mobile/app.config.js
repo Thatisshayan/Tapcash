@@ -19,7 +19,8 @@ export default {
       infoPlist: {
         NSFaceIDUsageDescription: "Used for fast secure sign-in.",
         NSCameraUsageDescription: "Used for profile photos.",
-        NSPhotoLibraryUsageDescription: "Used for profile photos."
+        NSPhotoLibraryUsageDescription: "Used for profile photos.",
+        ITSAppUsesNonExemptEncryption: false
       }
     },
     android: {
