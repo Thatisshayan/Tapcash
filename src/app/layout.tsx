@@ -7,6 +7,7 @@ import GlobalNotificationListener from '@/components/GlobalNotificationListener'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
 import SessionManager from '@/components/SessionManager';
 import VercelAnalytics from '@/components/VercelAnalytics';
+import CookieConsent from '@/components/CookieConsent';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -74,6 +75,7 @@ export default function RootLayout({
             <ServiceWorkerRegistrar />
             <SessionManager />
             <VercelAnalytics />
+            <CookieConsent />
             {children}
           </AuthProvider>
         </ABTestProvider>

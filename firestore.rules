@@ -86,5 +86,11 @@ service cloud.firestore {
     match /adminLogs/{document=**} {
       allow read, write: if false;
     }
+    match /admin_logs/{document=**} {
+      allow read, write: if false;
+    }
+    match /blocked_ips/{document=**} {
+      allow read, write: if false;
+    }
   }
 }
