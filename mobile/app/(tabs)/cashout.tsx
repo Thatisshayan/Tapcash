@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ScrollView,
   View,
@@ -36,6 +36,7 @@ export default function CashoutScreen() {
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [optimisticDeduction, setOptimisticDeduction] = useState(0);
   const [balance, setBalance] = useState({ balanceCoins: 0, pendingCoins: 0 });
   const [loadingBalance, setLoadingBalance] = useState(true);
 
@@ -83,35 +84,48 @@ export default function CashoutScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSubmitting(true);
+    setOptimisticDeduction(amountCoins);
+
     try {
       const result = await requestPayout(amountCoins, selected, destination.trim().toLowerCase());
       if (result.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert("Request submitted!", "Your cashout is under review.");
         setAmount("");
         setDestination("");
         setSecurityQuestion("");
         setSecurityAnswer("");
       } else {
+        setOptimisticDeduction(0);
         Alert.alert("Error", result.error || "Failed to submit cashout request.");
       }
     } catch (e) {
+      setOptimisticDeduction(0);
       Alert.alert("Error", e instanceof Error ? e.message : "Failed to submit cashout request.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const balanceCad = (balance.balanceCoins / 1000).toFixed(2);
+  const displayBalance = balance.balanceCoins - optimisticDeduction;
+  const balanceCad = (displayBalance / 1000).toFixed(2);
   const minW = 20;
-  const prog = Math.min((balance.balanceCoins / (minW * 1000)) * 100, 100);
-  const canCashout = balance.balanceCoins >= MIN_COINS && !submitting;
+  const prog = Math.min((displayBalance / (minW * 1000)) * 100, 100);
+  const canCashout = displayBalance >= MIN_COINS && !submitting;
 
   return (
     <ScrollView
       style={[styles.screen, { paddingTop: insets.top + 12 }]}
       contentContainerStyle={styles.content}
     >
-      {/* Balance Card */}
+      {displayBalance < MIN_COINS && !loadingBalance && (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>
+            Earn at least $2.00 in coins to unlock cashout. You're at ${(displayBalance / 1000).toFixed(2)} — keep going!
+          </Text>
+        </View>
+      )}
+
       <GlassCard>
         <Text style={styles.balanceLabel}>YOUR BALANCE</Text>
         <View style={styles.balanceRow}>
@@ -130,19 +144,21 @@ export default function CashoutScreen() {
         <Text style={styles.balanceMeta}>Min. $2.00 to withdraw · ${balanceCad} / $20.00</Text>
       </GlassCard>
 
-      {/* Withdraw to */}
       <Text style={styles.sectionTitle}>Withdraw to</Text>
       {methods.map((m) => {
         const isSelected = m.id === selected;
+        const isDisabled = displayBalance < MIN_COINS;
         return (
           <TouchableOpacity
             key={m.id}
             style={[
               styles.methodRow,
               { borderColor: isSelected ? theme.colors.green : theme.colors.border },
+              isDisabled && styles.methodRowDisabled,
             ]}
             onPress={() => handleMethodPress(m.id)}
             activeOpacity={0.8}
+            disabled={isDisabled}
           >
             <View style={[styles.methodIcon, { backgroundColor: theme.colors.elevated }]}>
               <Text style={[styles.methodIconText, { color: theme.colors.text }]}>{m.icon}</Text>
@@ -155,56 +171,56 @@ export default function CashoutScreen() {
         );
       })}
 
-      {/* Amount input */}
       <View style={styles.amountContainer}>
         <Text style={styles.amountPrefix}>$</Text>
         <TextInput
-          style={styles.amountInput}
+          style={[styles.amountInput, displayBalance < MIN_COINS && styles.inputDisabled]}
           value={amount}
           onChangeText={setAmount}
           placeholder="0.00"
           placeholderTextColor={theme.colors.dim}
           keyboardType="numeric"
+          editable={canCashout}
         />
       </View>
       <Text style={styles.minNotice}>Min. $2.00 required</Text>
 
-      {/* Destination input */}
       <Text style={styles.sectionTitle}>Destination</Text>
       <TextInput
-        style={styles.destinationInput}
+        style={[styles.destinationInput, displayBalance < MIN_COINS && styles.inputDisabled]}
         value={destination}
         onChangeText={setDestination}
         placeholder={selectedMethod.placeholder}
         placeholderTextColor={theme.colors.dim}
         keyboardType={selectedMethod.keyboard}
         autoCapitalize="none"
+        editable={canCashout}
       />
 
-      {/* Interac security fields */}
       {selected === "interac" && (
         <View style={styles.interacFields}>
           <Text style={styles.interacLabel}>Security Question</Text>
           <TextInput
-            style={styles.interacInput}
+            style={[styles.interacInput, displayBalance < MIN_COINS && styles.inputDisabled]}
             value={securityQuestion}
             onChangeText={setSecurityQuestion}
             placeholder="e.g., What is your pet's name?"
             placeholderTextColor={theme.colors.dim}
+            editable={canCashout}
           />
           <Text style={styles.interacLabel}>Security Answer</Text>
           <TextInput
-            style={styles.interacInput}
+            style={[styles.interacInput, displayBalance < MIN_COINS && styles.inputDisabled]}
             value={securityAnswer}
             onChangeText={setSecurityAnswer}
             placeholder="Your answer"
             placeholderTextColor={theme.colors.dim}
             autoCapitalize="none"
+            editable={canCashout}
           />
         </View>
       )}
 
-      {/* Cash out now */}
       <TouchableOpacity
         style={[styles.cashoutBtn, !canCashout && styles.cashoutBtnDisabled]}
         onPress={handleCashout}
@@ -215,7 +231,7 @@ export default function CashoutScreen() {
           <ActivityIndicator color={theme.colors.bg} />
         ) : (
           <Text style={styles.cashoutBtnText}>
-            {balance.balanceCoins < MIN_COINS ? `Earn $${MIN_COINS / 1000} to unlock` : "Cash Out Now"}
+            {displayBalance < MIN_COINS ? `Earn $${MIN_COINS / 1000} to unlock` : "Cash Out Now"}
           </Text>
         )}
       </TouchableOpacity>
@@ -226,6 +242,20 @@ export default function CashoutScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.bg },
   content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
+  banner: {
+    backgroundColor: "rgba(255, 177, 0, 0.1)",
+    borderColor: "rgba(255, 177, 0, 0.3)",
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  bannerText: {
+    color: theme.colors.gold,
+    fontSize: theme.font.sm,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   balanceLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: theme.spacing.sm },
   balanceRow: { flexDirection: "row", alignItems: "baseline", gap: theme.spacing.sm, marginBottom: theme.spacing.sm },
   balanceAmount: { color: theme.colors.text, fontSize: theme.font.xxl, fontWeight: "900" },
@@ -235,6 +265,7 @@ const styles = StyleSheet.create({
   balanceMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
   sectionTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "900", marginTop: theme.spacing.sm },
   methodRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, backgroundColor: theme.colors.card, borderRadius: theme.radius.md, borderWidth: 1, padding: theme.spacing.md },
+  methodRowDisabled: { opacity: 0.5 },
   methodIcon: { width: 36, height: 36, borderRadius: theme.radius.full, alignItems: "center", justifyContent: "center" },
   methodIconText: { fontWeight: "700", fontSize: theme.font.md },
   methodInfo: { flex: 1 },
@@ -243,6 +274,7 @@ const styles = StyleSheet.create({
   amountContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: theme.spacing.xs, marginTop: theme.spacing.md },
   amountPrefix: { color: theme.colors.green, fontSize: theme.font.xl, fontWeight: "900", fontFamily: "JetBrainsMono-Regular" },
   amountInput: { color: theme.colors.green, fontSize: theme.font.hero, fontWeight: "900", fontFamily: "JetBrainsMono-Regular", minWidth: 120, textAlign: "center" },
+  inputDisabled: { color: theme.colors.muted },
   minNotice: { color: theme.colors.muted, fontSize: theme.font.xs, textAlign: "center", marginTop: theme.spacing.xs },
   destinationInput: {
     backgroundColor: theme.colors.card,

@@ -4,6 +4,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "../src/auth/AuthContext";
 import { setupNotificationHandlers } from "../src/lib/notifications";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 setupNotificationHandlers();
 

@@ -21,7 +21,7 @@ export async function registerPushToken(): Promise<void> {
   }).catch(() => {});
 }
 
-export function setupNotificationHandlers(): void {
+export function setupNotificationHandlers(onTokenRefresh?: (token: string) => void): void {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -38,5 +38,10 @@ export function setupNotificationHandlers(): void {
 
   Notifications.addNotificationResponseReceivedListener((response) => {
     console.log("Notification tapped:", response.notification.request.content.data);
+  });
+
+  Notifications.addPushTokenListener(async (tokenData) => {
+    console.log("Push token refreshed:", tokenData.data);
+    onTokenRefresh?.(tokenData.data);
   });
 }

@@ -1,6 +1,9 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AppState } from "react-native";
 import { Device } from "expo-device";
+import * as Linking from "expo-linking";
+import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -12,19 +15,21 @@ import {
 import { auth } from "../lib/firebase";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
-import { registerPushToken } from "../lib/notifications";
+import { registerPushToken, setupNotificationHandlers } from "../lib/notifications";
 
 type AuthContextValue = {
   user: User | null;
   verified: boolean;
   loading: boolean;
   biometricAvailable: boolean;
+  notificationPermissionDenied: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshSession: () => Promise<User | null>;
   logout: () => Promise<void>;
   signInWithBiometrics: () => Promise<boolean>;
+  enableNotifications: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,6 +37,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notificationPermissionDenied, setNotificationPermissionDenied] = useState(false);
   const refreshTokenRef = useRef(0);
   const mountedRef = useRef(true);
 
@@ -62,8 +68,39 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return refreshedUser;
   };
 
+  const handleAuthSuccess = useCallback(async () => {
+    await refreshSession();
+    await registerPushToken();
+  }, []);
+
+  const refreshSession = async () => {
+    if (!auth.currentUser) {
+      refreshTokenRef.current += 1;
+      if (mountedRef.current) {
+        setUser(null);
+      }
+      return null;
+    }
+
+    return syncCurrentUser(auth.currentUser);
+  };
+
   useEffect(() => {
     let active = true;
+
+    setupNotificationHandlers(async (newToken) => {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (idToken) {
+        await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/api/user/push-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ pushToken: newToken }),
+        }).catch(() => {});
+      }
+    });
 
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
       if (!active) {
@@ -73,6 +110,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       void syncCurrentUser(nextUser).finally(() => {
         if (active) {
           setLoading(false);
+          SplashScreen.hideAsync().catch(() => {});
         }
       });
     });
@@ -89,23 +127,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       unsubscribe();
       subscription.remove();
     };
-  }, []);
-
-const refreshSession = async () => {
-    if (!auth.currentUser) {
-      refreshTokenRef.current += 1;
-      if (mountedRef.current) {
-        setUser(null);
-      }
-      return null;
-    }
-
-    return syncCurrentUser(auth.currentUser);
-  };
-
-  const handleAuthSuccess = useCallback(async () => {
-    await refreshSession();
-    await registerPushToken();
   }, []);
 
   const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -142,6 +163,25 @@ const refreshSession = async () => {
     }
   }, [biometricAvailable]);
 
+  const checkNotificationPermission = useCallback(async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    setNotificationPermissionDenied(status === "denied");
+  }, []);
+
+  useEffect(() => {
+    checkNotificationPermission();
+  }, [checkNotificationPermission]);
+
+  const enableNotifications = useCallback(async (): Promise<boolean> => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status === "granted") {
+      setNotificationPermissionDenied(false);
+      await registerPushToken();
+      return true;
+    }
+    return false;
+  }, []);
+
   const resendVerificationEmail = useCallback(async () => {
     if (auth.currentUser) {
       await sendEmailVerification(auth.currentUser);
@@ -153,6 +193,7 @@ const refreshSession = async () => {
     verified: Boolean(user?.emailVerified),
     loading,
     biometricAvailable,
+    notificationPermissionDenied,
     signIn: async (email, password) => {
       await signInWithEmailAndPassword(auth, email, password);
       await SecureStore.setItemAsync("tapcash_creds", JSON.stringify({ email, password }));
@@ -174,6 +215,7 @@ const refreshSession = async () => {
       }
     },
     signInWithBiometrics,
+    enableNotifications,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

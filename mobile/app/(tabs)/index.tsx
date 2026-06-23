@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -22,6 +22,8 @@ export default function HomeScreen() {
   const [offers, setOffers] = useState<ApiOfferDisplay[]>([]);
   const [loadingBalance, setLoadingBalance] = useState(true);
   const [loadingOffers, setLoadingOffers] = useState(true);
+  const balanceAnim = useRef(new Animated.Value(0)).current;
+  const prevBalanceRef = useRef(0);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -31,6 +33,23 @@ export default function HomeScreen() {
     }
 
     const unsubBalance = subscribeToBalance(user.uid, (state) => {
+      const newBalance = state.balanceCoins;
+      if (prevBalanceRef.current !== 0 && newBalance > prevBalanceRef.current) {
+        Animated.sequence([
+          Animated.timing(balanceAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(balanceAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      prevBalanceRef.current = newBalance;
       setBalance(state);
       setLoadingBalance(false);
     });
@@ -81,7 +100,9 @@ export default function HomeScreen() {
           {loadingBalance ? (
             <Text style={styles.balAmt}>---</Text>
           ) : (
-            <Text style={styles.balAmt}>${balanceCad}</Text>
+            <Animated.Text style={[styles.balAmt, { transform: [{ scale: balanceAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }] }]}>
+              ${balanceCad}
+            </Animated.Text>
           )}
           <Text style={styles.balToday}>
             {balance.pendingCoins > 0 ? `+$${(balance.pendingCoins / 1000).toFixed(2)} pending` : "+$0.00 today"}
