@@ -276,7 +276,7 @@ export default function FraudDetection() {
           </button>
         </div>
 
-        {fraudTab === 'alerts' && (
+        {fraudTab === 'alerts' ? (
         <><div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Alert Filters</h2>
@@ -426,8 +426,8 @@ export default function FraudDetection() {
           </div>
         </div>
       </div>
-
-        </>) : (
+</>
+        ) : fraudTab === 'blocked_ips' ? (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-bold text-gray-900">Blocked IP Addresses</h2>
@@ -468,8 +468,8 @@ export default function FraudDetection() {
                 </table>
               </div>
             )}
-          </div>
-        )}
+           </div>
+        ) : null}
 
         {/* Alert Review Modal */}
       {showAlertModal && selectedAlert && (
