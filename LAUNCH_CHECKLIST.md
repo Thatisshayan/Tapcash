@@ -30,6 +30,7 @@
 - [ ] ❌ Cashout validation rules — No max per-transaction, daily limit, 7-day hold, or fraud score gate
 - [x] ✅ User session system — httpOnly cookies with JWT + SecureStore (`middleware.ts` line 75)
 - [ ] ❌ Origin validation — No Origin header checks on any API route
+- [ ] ❌ npm dependency vulnerabilities — 28 Dependabot alerts (undici, xmldom, protobufjs, @babel/core, form-data). Run `npm audit fix`
 - [ ] ❌ Security audit — Not performed yet
 
 ### Backend (Sprint 2)
@@ -137,7 +138,7 @@
 
 ## REMAINING WORK SUMMARY
 
-### ❌ MUST FIX (12 items — Blocking Launch)
+### ❌ MUST FIX (13 items — Blocking Launch)
 
 | # | Item | Est. Time | Priority |
 |---|------|-----------|----------|
@@ -147,14 +148,15 @@
 | 4 | Add idempotency keys to cashout | 4h | P0 |
 | 5 | Add origin validation to API routes | 4h | P0 |
 | 6 | Add cashout validation rules (daily limit, 7-day hold, fraud gate) | 6h | P0 |
-| 7 | Create Zod env validation at build time | 4h | P1 |
-| 8 | Add age verification on signup | 2h | P1 |
-| 9 | Create mobile `.env` with `EXPO_PUBLIC_API_BASE_URL` | 1h | P1 |
-| 10 | Add daily streak backend tracking | 8h | P1 |
-| 11 | Build daily streak UI widget | 6h | P1 |
-| 12 | Add gift card bonus mechanic | 6h | P1 |
+| 7 | Fix npm dependency vulnerabilities (28 alerts) | 2h | P0 |
+| 8 | Create Zod env validation at build time | 4h | P1 |
+| 9 | Add age verification on signup | 2h | P1 |
+| 10 | Create mobile `.env` with `EXPO_PUBLIC_API_BASE_URL` | 1h | P1 |
+| 11 | Add daily streak backend tracking | 8h | P1 |
+| 12 | Build daily streak UI widget | 6h | P1 |
+| 13 | Add gift card bonus mechanic | 6h | P1 |
 
-**Total: ~53h**
+**Total: ~55h**
 
 ### ⚠️ SHOULD FIX (5 items — Important but not blocking)
 
@@ -186,14 +188,15 @@
 
 ## REVISED SPRINT PLAN
 
-### Sprint 1 — Security Criticals (3 days, ~30h)
-Focus: Items 1-6 (P0 security blockers)
+### Sprint 1 — Security Criticals (3 days, ~32h)
+Focus: Items 1-7 (P0 security blockers)
 - Purge key from git history
 - Rotate API keys
 - CSRF protection
 - Idempotency keys
 - Origin validation
 - Cashout validation rules
+- Fix npm dependency vulnerabilities (`npm audit fix`)
 
 ### Sprint 2 — Compliance & Backend (2 days, ~14h)
 Focus: Items 7-10 (P1 backend gaps)
@@ -225,7 +228,7 @@ Focus: Items 18-24 + launch prep
 - Performance measurement
 - Launch checklist review
 
-**Total Remaining: ~100h across 5 sprints (13 working days)**
+**Total Remaining: ~102h across 5 sprints (13 working days)**
 
 ---
 
@@ -345,6 +348,7 @@ Focus: Items 18-24 + launch prep
 |---------|------|---------|
 | 1.0 | 2026-07-06 | Initial creation |
 | 1.1 | 2026-07-06 | Post-audit cross-reference: 16 DONE, 5 PARTIAL, 7 MISSING. Revised sprint plan. |
+| 1.2 | 2026-07-06 | Added npm dependency vulnerabilities (28 Dependabot alerts). Updated sprint 1. |
 
 ---
 
