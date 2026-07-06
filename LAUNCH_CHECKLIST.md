@@ -73,12 +73,12 @@
 
 - [x] ✅ PremiumUi imports fixed — No PremiumUi references in mobile code
 - [x] ✅ EAS configuration created — `mobile/eas.json` with 3 build profiles
-- [ ] ❌ Expo account linked — Needs verification
-- [ ] ❌ Mobile .env file — `EXPO_PUBLIC_API_BASE_URL` referenced in code but no `.env` file exists
-- [ ] ❌ iOS build passing — Needs verification
-- [ ] ❌ Android build passing — Needs verification
-- [ ] ❌ iOS TestFlight build working — Needs build + submission
-- [ ] ❌ Android APK build working — Needs build + submission
+- [ ] ❌ Expo account linked — Needs `eas init` verification (documented in `MOBILE_BUILD_GUIDE.md`)
+- [x] ✅ Mobile .env file — `mobile/.env.example` created with all `EXPO_PUBLIC_*` vars, `api.ts` updated to use it
+- [ ] ❌ iOS build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
+- [ ] ❌ Android build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
+- [ ] ❌ iOS TestFlight build working — Needs build + submission (documented in `MOBILE_BUILD_GUIDE.md`)
+- [ ] ❌ Android APK build working — Needs build + submission (documented in `MOBILE_BUILD_GUIDE.md`)
 - [ ] ❌ Biometric auth working on both platforms — Code exists, needs real device testing
 - [ ] ❌ Push notifications working on both platforms — Code exists, needs real device testing
 - [ ] ❌ Offline Firestore persistence enabled — Needs verification
@@ -354,6 +354,7 @@ Focus: Items 18-24 + launch prep
 | 1.3 | 2026-07-06 | Sprint 1 Security Criticals completed: CSRF protection, origin validation, cashout validation rules, idempotency keys, npm audit fix. 5/7 P0 items resolved. Remaining 2 are manual ops (key purge + key rotation). |
 | 1.4 | 2026-07-06 | Sprint 2 Compliance & Backend completed: Zod env validation, age verification on signup, mobile .env, daily streak backend API, account deletion 30-day grace period scheduler. |
 | 1.5 | 2026-07-06 | Sprint 3 UI/UX Gaps completed: Daily streak UI widget on dashboard, gift card bonus mechanic (7 methods, 1-3% bonus), cashout methods strip on landing, FAQ section on landing. |
+| 1.6 | 2026-07-06 | Sprint 4 Mobile Build: Created comprehensive MOBILE_BUILD_GUIDE.md with build steps, testing checklist, and submission guide. Mobile .env already created in Sprint 2. Remaining items require physical devices and EAS account access. |
 
 ---
 
