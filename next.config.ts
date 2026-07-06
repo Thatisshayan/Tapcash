@@ -18,8 +18,11 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
     ppr: false,
+  },
+  modularizeImports: {
+    "lucide-react": { transform: "lucide-react/dist/esm/icons/{{ kebabCase member }}", skipDefaultConversion: true },
   },
 
   staticPageGenerationTimeout: 120,
@@ -51,6 +54,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
         ],
       },
     ];
