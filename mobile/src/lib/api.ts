@@ -1,6 +1,8 @@
 import { auth } from "./firebase";
 
-const API_BASE_URL = __DEV__ ? "http://localhost:3000" : "https://tapcash.online";
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (__DEV__ ? "http://localhost:3000" : "https://tapcash.online");
 
 export type ApiOffer = {
   id: string;

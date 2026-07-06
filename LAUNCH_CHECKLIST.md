@@ -37,12 +37,14 @@
 
 - [x] ✅ Firestore transactions — `runTransaction` used across 12+ route files for all financial operations
 - [ ] ❌ Firebase Functions v1→v2 — Still using `firebase-functions/v1` (`functions/src/index.ts` line 1)
-- [ ] ❌ Environment variables validated at build time — No Zod env schema, no build-time validation
-- [ ] ❌ No hardcoded fallback values — Needs audit (env vars used but no validation enforces presence)
+- [x] ✅ Environment variables validated at build time — Zod env schema with build-time validation (`src/lib/env.ts`, wired into `next.config.ts`)
+- [x] ✅ No hardcoded fallback values — Zod schema enforces presence of all required vars in production
 - [ ] ❌ Redis distributed cache — Not implemented, in-memory cache only
 - [x] ✅ GDPR data export endpoint — Full implementation at `src/app/api/gdpr/export/route.ts`
-- [ ] ⚠️ Account deletion with grace period — Soft delete exists (`src/app/api/gdpr/delete/route.ts`) but no scheduled job to permanently delete after 30 days
-- [ ] ❌ Age verification on signup — No age/DOB field in signup schema (`src/lib/validation/signupSchema.ts`)
+- [x] ✅ Account deletion with grace period — Soft delete + 30-day cron purge scheduler (`src/app/api/cron/purge-deleted/route.ts`, `vercel.json`)
+- [x] ✅ Age verification on signup — DOB field + min 13 validation + consent timestamps (`src/lib/validation/signupSchema.ts`, `src/app/api/auth/signup/route.ts`)
+- [x] ✅ Daily streak backend tracking — GET/POST `/api/streak` with 7-day cycle rewards + achievements integration (`src/app/api/streak/route.ts`)
+- [x] ✅ Mobile .env file — `mobile/.env.example` with `EXPO_PUBLIC_API_BASE_URL` + updated `mobile/src/lib/api.ts`
 - [x] ✅ Cookie consent banner — Implemented at `src/components/CookieConsent.tsx`
 - [x] ✅ Privacy policy page — Full implementation at `src/app/privacy/page.tsx` (271 lines)
 - [x] ✅ Terms of service page — Full implementation at `src/app/terms/page.tsx` (260 lines)
@@ -350,6 +352,7 @@ Focus: Items 18-24 + launch prep
 | 1.1 | 2026-07-06 | Post-audit cross-reference: 16 DONE, 5 PARTIAL, 7 MISSING. Revised sprint plan. |
 | 1.2 | 2026-07-06 | Added npm dependency vulnerabilities (28 Dependabot alerts). Updated sprint 1. |
 | 1.3 | 2026-07-06 | Sprint 1 Security Criticals completed: CSRF protection, origin validation, cashout validation rules, idempotency keys, npm audit fix. 5/7 P0 items resolved. Remaining 2 are manual ops (key purge + key rotation). |
+| 1.4 | 2026-07-06 | Sprint 2 Compliance & Backend completed: Zod env validation, age verification on signup, mobile .env, daily streak backend API, account deletion 30-day grace period scheduler. |
 
 ---
 
