@@ -7,6 +7,8 @@ import { CashPathSection } from '@/components/sections/CashPathSection';
 import { TruthModeSection } from '@/components/sections/TruthModeSection';
 import { AppShowcaseSection } from '@/components/sections/AppShowcaseSection';
 import { TrustStripSection } from '@/components/sections/TrustStripSection';
+import { CashoutMethodsSection } from '@/components/sections/CashoutMethodsSection';
+import { FAQSection } from '@/components/sections/FAQSection';
 
 export const metadata: Metadata = {
   title: 'TapCash — Play Games. Earn Cash. Cash Out.',
@@ -28,7 +30,9 @@ export default function HomePage() {
         <CashPathSection />
         <TruthModeSection />
         <AppShowcaseSection />
+        <CashoutMethodsSection />
         <TrustStripSection />
+        <FAQSection />
       </main>
       <Footer />
     </>

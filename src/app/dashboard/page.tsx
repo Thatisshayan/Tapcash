@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { usePolling } from "@/hooks/usePolling";
 import { accentClass, formatCadFromCoins, formatCoins, tapCashActivity, tapCashLeaderboardSeed, tapCashOffers } from "@shared/tapcash-content";
 import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
+import StreakWidget from "@/components/StreakWidget";
 
 type LedgerTx = {
   id: string;
@@ -259,6 +260,10 @@ if (authLoading || (user && loading && !ledger)) {
             </div>
           </PageShell>
         </MotionWrap>
+
+        <div className="mt-6">
+          <StreakWidget />
+        </div>
 
         {error && (
           <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">

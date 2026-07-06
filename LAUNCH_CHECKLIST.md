@@ -56,17 +56,17 @@
 - [x] ✅ Hero section with animated counters — `EarningsCounter` with framer-motion count-up (`src/components/sections/HeroSection.tsx`)
 - [x] ✅ Live feed widget — Backend at `/api/activity/live`, dashboard polls every 30s, landing has `LivePayoutCard`
 - [x] ✅ Social proof bar — StatsSection with animated stat cards (`src/components/sections/StatsSection.tsx`)
-- [ ] ❌ Cashout methods strip — Not implemented on landing page
-- [ ] ❌ FAQ section — Not implemented on landing page
+- [x] ✅ Cashout methods strip — 8 methods with bonus badges on landing page (`src/components/sections/CashoutMethodsSection.tsx`)
+- [x] ✅ FAQ section — Accordion-style FAQ on landing page with 6 questions (`src/components/sections/FAQSection.tsx`)
 - [ ] ⚠️ Dashboard gamification layer — Partial: has balance cards and stats, but missing streak and leaderboard
 - [x] ✅ Coin balance widget with animation — `BalanceCard.tsx` with animated balance + progress bar
-- [ ] ❌ Daily streak widget — Only in copy/marketing text, no backend tracking or UI widget
+- [x] ✅ Daily streak widget — `StreakWidget.tsx` with 7-day cycle, check-in button, achievements integration (`src/components/StreakWidget.tsx`)
 - [ ] ❌ Offer cards with difficulty badges — No difficulty badges on offer cards
 - [x] ✅ Mini feed of recent cashouts — Live activity feed in dashboard sidebar
 - [x] ✅ Stats panel — StatCard components showing Balance, Pending, Status, Cashout readiness
 - [ ] ❌ Leaderboard section — Not implemented
 - [ ] ❌ Cashout flow redesigned (single page) — Current flow is multi-page
-- [ ] ⚠️ Gift card bonus mechanic — Tremendous integration exists, gift card providers listed, but no bonus multiplier UI/logic
+- [x] ✅ Gift card bonus mechanic — Bonus percentages for 7 gift card methods (1-3%), integrated into cashout route (`src/lib/giftCardBonus.ts`)
 - [x] ✅ Legal pages linked from footer — Privacy, Terms, and Cookie policy pages exist
 
 ### Mobile (Sprint 4)
@@ -353,6 +353,7 @@ Focus: Items 18-24 + launch prep
 | 1.2 | 2026-07-06 | Added npm dependency vulnerabilities (28 Dependabot alerts). Updated sprint 1. |
 | 1.3 | 2026-07-06 | Sprint 1 Security Criticals completed: CSRF protection, origin validation, cashout validation rules, idempotency keys, npm audit fix. 5/7 P0 items resolved. Remaining 2 are manual ops (key purge + key rotation). |
 | 1.4 | 2026-07-06 | Sprint 2 Compliance & Backend completed: Zod env validation, age verification on signup, mobile .env, daily streak backend API, account deletion 30-day grace period scheduler. |
+| 1.5 | 2026-07-06 | Sprint 3 UI/UX Gaps completed: Daily streak UI widget on dashboard, gift card bonus mechanic (7 methods, 1-3% bonus), cashout methods strip on landing, FAQ section on landing. |
 
 ---
 

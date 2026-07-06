@@ -10,6 +10,7 @@ import { sendPayoutSubmittedEmail } from "@/lib/email";
 import { validateCsrf } from "@/lib/csrf";
 import { validateOrigin } from "@/lib/origin";
 import { checkIdempotency, storeIdempotencyResponse } from "@/lib/idempotency";
+import { applyBonus, getGiftCardBonus } from "@/lib/giftCardBonus";
 
 class RouteError extends Error {
   status: number;
@@ -301,6 +302,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const bonusInfo = applyBonus(coinsNum, method);
+      const bonusConfig = getGiftCardBonus(method);
+
       transaction.set(cashoutRef, {
         id: cashoutRef.id,
         userId: uid,
@@ -309,6 +313,9 @@ export async function POST(request: NextRequest) {
         method,
         destination: cleanDest,
         status: "pending_review",
+        bonusCoins: bonusInfo.bonus,
+        bonusPercent: bonusConfig?.bonusPercent ?? 0,
+        totalValueCoins: bonusInfo.total,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         ip,
@@ -376,11 +383,14 @@ export async function POST(request: NextRequest) {
       sendPayoutSubmittedEmail(userData.email, coinsNum, method).catch(() => {});
     }
 
+    const responseBonus = applyBonus(coinsNum, method);
     const successBody = {
       success: true,
       message: "Withdrawal request submitted successfully.",
       withdrawalId: cashoutRef.id,
       deducted: coinsNum,
+      bonusCoins: responseBonus.bonus,
+      totalValueCoins: responseBonus.total,
     };
 
     await storeIdempotencyResponse(uid, idempotency.key, 200, successBody);
