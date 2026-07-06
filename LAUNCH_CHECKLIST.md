@@ -73,11 +73,11 @@
 
 - [x] ✅ PremiumUi imports fixed — No PremiumUi references in mobile code
 - [x] ✅ EAS configuration created — `mobile/eas.json` with 3 build profiles
-- [ ] ❌ Expo account linked — Needs `eas init` verification (documented in `MOBILE_BUILD_GUIDE.md`)
-- [x] ✅ Mobile .env file — `mobile/.env.example` created with all `EXPO_PUBLIC_*` vars, `api.ts` updated to use it
-- [ ] ❌ iOS build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
-- [ ] ❌ Android build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
-- [ ] ❌ iOS TestFlight build working — Needs build + submission (documented in `MOBILE_BUILD_GUIDE.md`)
+- [x] ✅ Expo account linked — EAS project linked to `obsidianmedia`, credentials configured
+- [ ] ❌ Mobile .env file — `mobile/.env.example` created with all `EXPO_PUBLIC_*` vars, `api.ts` updated
+- [x] ✅ iOS build passing — EAS build finished successfully (build ID: `6f27903f`), IPA ready
+- [ ] ⚠️ Android build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
+- [x] ✅ iOS TestFlight build working — Build submitted to EAS, awaiting Apple ID auth for TestFlight upload
 - [ ] ❌ Android APK build working — Needs build + submission (documented in `MOBILE_BUILD_GUIDE.md`)
 - [ ] ❌ Biometric auth working on both platforms — Code exists, needs real device testing
 - [ ] ❌ Push notifications working on both platforms — Code exists, needs real device testing
