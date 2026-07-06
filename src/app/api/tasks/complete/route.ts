@@ -3,11 +3,17 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";
+import { validateCsrf } from "@/lib/csrf";
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await withRateLimit(request, { limit: 10, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
+
+    const csrfResult = validateCsrf(request);
+    if (!csrfResult.valid) {
+      return NextResponse.json({ error: `CSRF validation failed: ${csrfResult.error}` }, { status: 403 });
+    }
 
     const verifiedUser = await requireVerifiedUser(request);
     if ("response" in verifiedUser) return verifiedUser.response;

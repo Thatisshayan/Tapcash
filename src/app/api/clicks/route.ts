@@ -4,11 +4,17 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from '@/lib/antiFraud';
 import { withRateLimit } from '@/lib/rate-limit';
 import { logAdminAction } from '@/lib/audit';
+import { validateCsrf } from '@/lib/csrf';
 
 export async function POST(request: NextRequest) {
   try {
     const rateLimitResponse = await withRateLimit(request, { limit: 10, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
+
+    const csrfResult = validateCsrf(request);
+    if (!csrfResult.valid) {
+      return NextResponse.json({ error: `CSRF validation failed: ${csrfResult.error}` }, { status: 403 });
+    }
 
     const body = await request.json();
     const { userId, offerId, provider } = body;
