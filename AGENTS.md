@@ -1,3 +1,44 @@
+# TapCash — Agent Rules
+
+This file is the first-stop instruction set for any agent working in this repository.
+
+## Mandatory Read Order
+
+Before planning, editing, or reporting completion, every agent must read:
+
+1. **[Baseline Rules](#baseline)** — Foundational agent rules (adapted from RemoteCliControl)
+2. [README.md](./README.md)
+3. [AGENT_HANDOFF.md](./AGENT_HANDOFF.md) or equivalent handoff documentation
+4. [PHASE summaries](.) — latest completion sprint notes
+5. [Next.js-specific rules](#nextjs-specific-rules) below
+
+## Baseline
+
+All repositories follow the foundational agent rules established in the RemoteCliControl project:
+
+- Keep docs findable and current while work is in progress
+- Do not claim completion without verification
+- Do not silently skip requested steps
+- Record deferred work in appropriate documentation
+- Keep the repo stable, review existing failures, and report what was pre-existing
+- Code changes must be actually applied and tested
+- Documentation must be updated in the same pass as code changes
+- Verification must be run (or concrete blockers reported)
+
+For full details, see [RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md).
+
+## TapCash-Specific Context
+
+**Project**: Payment/e-commerce platform with Next.js 14, Firebase, and mobile support
+
+**Key Traits**:
+- Massive feature set with complex workflows
+- Multiple deployment phases completed
+- Mobile app (Expo) alongside web
+- Financial/payment operations (high-stakes correctness requirement)
+
+---
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
