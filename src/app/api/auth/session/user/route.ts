@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    const { token: csrfToken } = generateCsrfToken();
-    setCsrfCookie(response, csrfToken);
+    import { generateAndSetCsrfToken } from '@/lib/csrf';
+    generateAndSetCsrfToken(response);
 
     return response;
   } catch (error) {
