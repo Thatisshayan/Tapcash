@@ -9,6 +9,7 @@ import { theme } from "../../../src/theme";
 import { GlassCard } from "../../../src/components/GlassCard";
 import { TapScoreRing } from "../../../src/components/TapScoreRing";
 import { loadOffers, recordClick, type ApiOfferDisplay } from "../../../src/lib/api";
+import { formatCadFromCoins } from "../../../src/lib/currency";
 import { useAuth } from "../../../src/auth/AuthContext";
 
 const IMG: Record<number, ReturnType<typeof require>> = {
@@ -58,7 +59,7 @@ export default function OfferDetailScreen() {
   const displayOffer = useMemo(() => offer, [offer]);
   const idx = displayOffer ? 0 : 0;
   const img = IMG[idx % 10];
-  const price = displayOffer ? (displayOffer.payoutCoins / 100).toFixed(2) : "0.00";
+  const price = displayOffer ? formatCadFromCoins(displayOffer.payoutCoins) : "0.00";
   const tags = displayOffer ? [displayOffer.category] : [];
   if (displayOffer && displayOffer.estimateMinutes <= 15) tags.push("Fast Payout");
   if (displayOffer) tags.push("Easy");

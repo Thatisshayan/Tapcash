@@ -2,6 +2,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Offer } from '@/types/offer';
+import { formatCadFromCoins } from '@/lib/currency';
 import { Flame, CheckCircle, Zap, TrendingUp, Clock, Star, Target } from 'lucide-react';
 
 const InstructionModal = dynamic(() => import('./InstructionModal'), {
@@ -31,7 +32,7 @@ function getEstimatedTime(payout: number, category?: string): string {
 
 export default function OfferCard({ offer, onEarn, locked = false, featured = false }: OfferCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const cadValue = (offer.payout / 100).toFixed(2);
+  const cadValue = formatCadFromCoins(offer.payout);
   const difficulty = getDifficulty(offer.payout, offer.category);
   const estimatedTime = getEstimatedTime(offer.payout, offer.category);
   const DifficultyIcon = difficulty.icon;

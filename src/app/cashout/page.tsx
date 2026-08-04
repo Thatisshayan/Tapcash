@@ -231,8 +231,8 @@ export default function CashoutPage() {
     !amountError &&
     (selectedMethod !== "interac" || (interacQuestion.trim() && interacAnswer.trim() && !interacQuestionError && !interacAnswerError));
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!canSubmit || !user || submitting) return;
 
     const destErr = destConfig?.validate ? destConfig.validate(destination) : null;
@@ -504,7 +504,7 @@ export default function CashoutPage() {
                 {submitError?.status === 429 && (
                   <button
                     type="button"
-                    onClick={() => handleSubmit}
+                    onClick={() => { setSubmitError(null); void handleSubmit(); }}
                     className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline"
                   >
                     Retry
@@ -513,7 +513,7 @@ export default function CashoutPage() {
                 {submitError?.status === 500 && (
                   <button
                     type="button"
-                    onClick={() => { setSubmitError(null); handleSubmit; }}
+                    onClick={() => { setSubmitError(null); void handleSubmit(); }}
                     className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline"
                   >
                     Try again
