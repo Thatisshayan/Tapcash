@@ -37,27 +37,45 @@ if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
 # ---------------------------------------------------------------- 2. doc-freshness
 Write-Host "== doc-freshness =="
 if (-not (Test-Path (Join-Path $RepoRoot 'README.md'))) { Err "doc-freshness" "README.md missing" }
-$newest = Get-ChildItem -Path (Join-Path $RepoRoot 'audits') -Recurse -Filter *.md -ErrorAction SilentlyContinue |
-  Where-Object { $_.FullName -notmatch '[\\/]audits[\\/]private[\\/]' } |
-  Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $newest) { Err "doc-freshness" "no audit found under audits/" }
+$newest = $null
+foreach ($f in (Get-ChildItem -Path (Join-Path $RepoRoot 'audits') -Recurse -Filter *.md -ErrorAction SilentlyContinue)) {
+  if ($f.FullName -match '[\\/]audits[\\/]private[\\/]') { continue }
+  $d = [regex]::Match($f.Name, '[0-9]{4}-[0-9]{2}-[0-9]{2}') | ForEach-Object { $_.Value }
+  if (-not $d) { continue }
+  try { $dt = [datetime]::ParseExact($d, 'yyyy-MM-dd', $null) } catch { continue }
+  if ($null -eq $newest -or $dt -gt $newest) { $newest = $dt }
+}
+if ($null -eq $newest) { Err "doc-freshness" "no dated audit found under audits/ (expected YYYY-MM-DD in filename)" }
 else {
-  $age = ([datetime]::Now - $newest.LastWriteTime).Days
+  $age = ([datetime]::Now - $newest).Days
   if ($age -gt 30) { Err "doc-freshness" "newest audit is $age days old (>30)" }
 }
 $baselinePath = Join-Path $RepoRoot 'docs/_baseline.json'
 if (-not (Test-Path $baselinePath)) {
-  $cnt = (Get-ChildItem -Path (Join-Path $RepoRoot 'docs') -Recurse -Filter *.md -ErrorAction SilentlyContinue).Count
-  "{ `"md_count`": $cnt }" | Out-File $baselinePath -Encoding utf8
-  Notice "doc-freshness" "captured docs baseline md_count=$cnt"
-}
-$base = 0
-if (Test-Path $baselinePath) {
+  Err "doc-freshness" "docs/_baseline.json missing — commit it (or run a reviewed bootstrap) so deletions are detectable"
+} else {
+  $base = 0
   $m = (Get-Content $baselinePath) -match '"md_count":\s*(\d+)'
   if ($m) { $base = [int]($Matches[1]) }
+  $cur = (Get-ChildItem -Path (Join-Path $RepoRoot 'docs') -Recurse -Filter *.md -ErrorAction SilentlyContinue).Count
+  if ($cur -lt $base) { Err "doc-freshness" "docs md count $cur < baseline $base (deletion without approval)" }
 }
-$cur = (Get-ChildItem -Path (Join-Path $RepoRoot 'docs') -Recurse -Filter *.md -ErrorAction SilentlyContinue).Count
-if ($cur -lt $base) { Err "doc-freshness" "docs md count $cur < baseline $base (deletion without approval)" }
+# built-in relative-link check (no external dep): every relative .md link must resolve.
+$broken = $false
+foreach ($md in (Get-ChildItem -Path $RepoRoot -Recurse -Filter *.md -ErrorAction SilentlyContinue)) {
+  if ($md.FullName -match '[\\/](node_modules|\.git|audits[\\/]private)[\\/]') { continue }
+  $dir = $md.DirectoryName
+  foreach ($m in (Select-String -Path $md.FullName -Pattern '\]\(([^)]+)\)' -AllMatches)) {
+    $target = $m.Matches[0].Groups[1].Value -replace '#.*$',''
+    if ($target -notmatch '^\.\.?/') { continue }
+    $resolved = Join-Path $dir $target
+    if (-not (Test-Path $resolved)) {
+      Err "doc-freshness" "broken relative link in $($md.FullName) -> $target"
+      $broken = $true
+    }
+  }
+}
+if (-not $broken) { Notice "doc-freshness" "relative links ok" }
 
 # ---------------------------------------------------------------- 3. build / test (adaptive)
 Write-Host "== build / test =="
@@ -67,9 +85,13 @@ elseif (Test-Path (Join-Path $RepoRoot 'yarn.lock')) { $PM = 'yarn' }
 elseif (Test-Path (Join-Path $RepoRoot 'package-lock.json')) { $PM = 'npm' }
 
 function RunTimed($secs, $label, $cmd) {
-  $p = Start-Process -NoNewWindow -PassThru -Wait $cmd[0] $cmd[1..($cmd.Count-1)]
-  if ($p.ExitCode -eq 124) { Err $label "timed out after ${secs}s (likely network/install hang)" }
-  elseif ($p.ExitCode -ne 0) { Err $label "failed (rc=$($p.ExitCode))" }
+  $p = Start-Process -NoNewWindow -PassThru $cmd[0] $cmd[1..($cmd.Count-1)]
+  if (-not $p.WaitForExit($secs * 1000)) {
+    Err $label "timed out after ${secs}s (likely network/install hang)"
+    try { $p.Kill() } catch { }
+    return
+  }
+  if ($p.ExitCode -ne 0) { Err $label "failed (rc=$($p.ExitCode))" }
   else { Notice $label "ok" }
 }
 
@@ -133,10 +155,20 @@ if (-not (Test-Path $dirFile)) {
       Err "directive-lint" "orphan task (no traces-to): $($line.Substring(0, [Math]::Min(80,$line.Length)))"
       $orphans = $true
     } else {
-      $ref = ([regex]::Match($line, 'traces-to:([^|]*)')).Groups[1].Value.Trim() -split '/' | Select-Object -First 1
-      if ($defined -notcontains $ref) {
-        Err "directive-lint" "task references undefined id '$ref': $($line.Substring(0, [Math]::Min(80,$line.Length)))"
+      $ref = ([regex]::Match($line, 'traces-to:([^|]*)')).Groups[1].Value.Trim()
+      $ids = $ref -split '/'
+      $bad = $ids | Where-Object { $defined -notcontains $_ }
+      if ($bad) {
+        Err "directive-lint" "task references undefined id(s): $($bad -join ' ') : $($line.Substring(0, [Math]::Min(80,$line.Length)))"
         $orphans = $true
+      } else {
+        $hasP = ([regex]::Match($ref, '\bP[0-9]+')).Success
+        $hasS = ([regex]::Match($ref, '\bS[0-9]+')).Success
+        $hasE = ([regex]::Match($ref, '\bE[0-9]+')).Success
+        if (-not ($hasP -and $hasS -and $hasE)) {
+          Err "directive-lint" "task must trace to a Phase (P), Sprint (S) AND Epic (E): $($line.Substring(0, [Math]::Min(80,$line.Length)))"
+          $orphans = $true
+        }
       }
     }
   }

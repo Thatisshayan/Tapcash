@@ -39,32 +39,60 @@ fi
 # ---------------------------------------------------------------- 2. doc-freshness
 echo "== doc-freshness =="
 [ -f README.md ] || error "doc-freshness" "README.md missing"
-# link integrity (best-effort if tool present)
+# link integrity
+# (a) best-effort external tool if present
 if command -v markdown-link-check >/dev/null 2>&1; then
   find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' \
     -not -path './audits/private/*' -print0 2>/dev/null \
     | xargs -0 -r -n1 markdown-link-check || error "doc-freshness" "broken doc links"
 fi
-# audit age (≤ 30 days)
-newest=$(find audits -name '*.md' -not -path '*/private/*' -printf '%T@ %p\n' 2>/dev/null \
-  | sort -n | tail -1 | cut -d' ' -f1)
-if [ -z "$newest" ]; then
-  error "doc-freshness" "no audit found under audits/"
+# (b) built-in relative-link check (no external dep): every relative link
+#     to a .md/.md#frag must resolve to an existing file. Catches broken
+#     repo-relative paths like ../../audits/ from a subdir doc.
+link_broken=0
+while IFS= read -r md; do
+  dir=$(dirname "$md")
+  # match markdown links: [text](target) and bare <target>
+  for target in $(grep -oE '\]\([^)]+\)' "$md" | sed -E 's/^\]\(//; s/\)$//' \
+                 | grep -E '^\.{1,2}/' | sed 's/#.*$//'); do
+    resolved=$(cd "$dir" && readlink -f "$target" 2>/dev/null || true)
+    if [ -z "$resolved" ] || [ ! -e "$resolved" ]; then
+      error "doc-freshness" "broken relative link in $md -> $target"
+      link_broken=1
+    fi
+  done
+done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' \
+           -not -path './audits/private/*' 2>/dev/null || true)
+if [ "$link_broken" -eq 0 ]; then notice "doc-freshness" "relative links ok"; fi
+# audit age (≤ 30 days) — use the newest valid ISO date parsed from an
+# audits/*.md FILENAME (not mtime) so the check is deterministic across clones.
+newest_ts=0
+while IFS= read -r f; do
+  bn=$(basename "$f")
+  d=$(echo "$bn" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+  [ -z "$d" ] && continue
+  t=$(date -d "$d" +%s 2>/dev/null || true)
+  [ -z "$t" ] && continue
+  if [ "$t" -gt "$newest_ts" ]; then newest_ts=$t; fi
+done < <(find audits -name '*.md' -not -path '*/private/*' 2>/dev/null || true)
+if [ "$newest_ts" -eq 0 ]; then
+  error "doc-freshness" "no dated audit found under audits/ (expected YYYY-MM-DD in filename)"
 else
   now=$(date +%s)
-  age=$(( (now - ${newest%.*}) / 86400 ))
+  age=$(( (now - newest_ts) / 86400 ))
   if [ "$age" -gt 30 ]; then error "doc-freshness" "newest audit is $age days old (>30)"; fi
 fi
-# doc baseline
-if [ ! -f docs/_baseline.json ]; then
-  cnt=$(find docs -name '*.md' 2>/dev/null | wc -l)
-  printf '{"md_count": %s}\n' "$cnt" > docs/_baseline.json
-  notice "doc-freshness" "captured docs baseline md_count=$cnt"
-fi
-base=$(grep -o '"md_count": *[0-9]*' docs/_baseline.json | grep -o '[0-9]*$')
-cur=$(find docs -name '*.md' 2>/dev/null | wc -l)
-if [ "${cur:-0}" -lt "${base:-0}" ]; then
-  error "doc-freshness" "docs md count $cur < baseline $base (deletion without approval)"
+# doc baseline — must exist (committed). Missing baseline fails CI so docs
+# deletions can't silently pass; regenerate only via a reviewed bootstrap step.
+base_path="docs/_baseline.json"
+if [ ! -f "$base_path" ]; then
+  error "doc-freshness" "docs/_baseline.json missing — commit it (or run a reviewed bootstrap) so deletions are detectable"
+else
+  base=$(grep -o '"md_count": *[0-9]*' "$base_path" | grep -o '[0-9]*$')
+  cur=$(find docs -name '*.md' 2>/dev/null | wc -l)
+  if [ "${cur:-0}" -lt "${base:-0}" ]; then
+    error "doc-freshness" "docs md count $cur < baseline $base (deletion without approval)"
+  fi
 fi
 
 # ---------------------------------------------------------------- 3. build / test
@@ -130,7 +158,7 @@ if [ ! -f REPO_DIRECTIVE.md ]; then
 else
   # collect defined ids: P<num>, S<num>, E<num>
   defined=$(grep -oE '\b(P[0-9]+|S[0-9]+|E[0-9]+)\b' REPO_DIRECTIVE.md | sort -u)
-  # find task lines: "- [ ] T..." and require a traces-to: <id>
+  # find task lines: "- [ ] T..." and require a traces-to: with a defined P, S, AND E.
   orphans=0
   while IFS= read -r line; do
     if echo "$line" | grep -qE '^[[:space:]]*- \[ \] T[0-9]+'; then
@@ -138,10 +166,24 @@ else
         error "directive-lint" "orphan task (no traces-to): ${line:0:80}"
         orphans=1
       else
-        ref=$(echo "$line" | grep -oE 'traces-to:[^|]*' | sed 's/traces-to://' | tr -d ' ' | cut -d/ -f1)
-        if ! echo "$defined" | grep -qx "$ref"; then
-          error "directive-lint" "task references undefined id '$ref': ${line:0:80}"
+        ref=$(echo "$line" | grep -oE 'traces-to:[^|]*' | sed 's/traces-to://' | tr -d ' ')
+        # each referenced id must be defined in the directive
+        bad=""
+        for id in $(echo "$ref" | tr '/' ' '); do
+          if ! echo "$defined" | grep -qx "$id"; then bad="$bad $id"; fi
+        done
+        if [ -n "$bad" ]; then
+          error "directive-lint" "task references undefined id(s):$bad : ${line:0:80}"
           orphans=1
+        else
+          # require at least one P, one S, and one E among the referenced ids
+          hasP=$(echo "$ref" | grep -oE '\bP[0-9]+' | head -1)
+          hasS=$(echo "$ref" | grep -oE '\bS[0-9]+' | head -1)
+          hasE=$(echo "$ref" | grep -oE '\bE[0-9]+' | head -1)
+          if [ -z "$hasP" ] || [ -z "$hasS" ] || [ -z "$hasE" ]; then
+            error "directive-lint" "task must trace to a Phase (P), Sprint (S) AND Epic (E): ${line:0:80}"
+            orphans=1
+          fi
         fi
       fi
     fi
