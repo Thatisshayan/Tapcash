@@ -126,6 +126,22 @@ export default function CashoutPage() {
   // 429 cooldown: disables Retry for 60s after a rate-limit, matching the
   // error message and the API's 3-requests-per-60s limit.
   const [retryDisabledUntil, setRetryDisabledUntil] = useState(0);
+  const [retrySecondsLeft, setRetrySecondsLeft] = useState(0);
+
+  useEffect(() => {
+    if (retryDisabledUntil <= Date.now()) {
+      setRetrySecondsLeft(0);
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((retryDisabledUntil - Date.now()) / 1000));
+      setRetrySecondsLeft(left);
+      if (left <= 0) clearInterval(id);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [retryDisabledUntil]);
 
   const motionProps = useMemo(
     () => ({
@@ -526,13 +542,11 @@ export default function CashoutPage() {
                 {submitError?.status === 429 && (
                   <button
                     type="button"
-                    disabled={Date.now() < retryDisabledUntil}
+                    disabled={retrySecondsLeft > 0}
                     onClick={() => { setSubmitError(null); void handleSubmit(); }}
                     className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
                   >
-                    {Date.now() < retryDisabledUntil
-                      ? `Retry available in ${Math.ceil((retryDisabledUntil - Date.now()) / 1000)}s`
-                      : "Retry"}
+                    {retrySecondsLeft > 0 ? `Retry available in ${retrySecondsLeft}s` : "Retry"}
                   </button>
                 )}
                 {submitError?.status === 500 && (
