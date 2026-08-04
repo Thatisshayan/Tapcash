@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { BadgeCheck, Coins, Loader2, Sparkles, Wallet, ArrowRight, AlertCircle, CheckCircle, X } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -120,6 +120,12 @@ export default function CashoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ApiError | null>(null);
   const [deviceFingerprint, setDeviceFingerprint] = useState("");
+  // Stable idempotency key per submit attempt. Reused across retries of the
+  // SAME attempt so the payout API dedupes (prevents double-payout on Retry).
+  const idempotencyKeyRef = useRef<string>("");
+  // 429 cooldown: disables Retry for 60s after a rate-limit, matching the
+  // error message and the API's 3-requests-per-60s limit.
+  const [retryDisabledUntil, setRetryDisabledUntil] = useState(0);
 
   const motionProps = useMemo(
     () => ({
@@ -235,6 +241,14 @@ export default function CashoutPage() {
     e?.preventDefault();
     if (!canSubmit || !user || submitting) return;
 
+    // Generate a fresh idempotency key for this user-initiated attempt.
+    // It stays stable across Retry clicks (see idempotencyKeyRef) so the
+    // payout API treats repeats of the same attempt as duplicates instead
+    // of charging twice.
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `${user.uid}_${crypto.randomUUID()}`;
+    }
+
     const destErr = destConfig?.validate ? destConfig.validate(destination) : null;
     if (destErr) { setDestinationError(destErr); return; }
 
@@ -266,6 +280,7 @@ export default function CashoutPage() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Idempotency-Key": idempotencyKeyRef.current,
         },
         body: JSON.stringify(body),
       });
@@ -273,10 +288,17 @@ export default function CashoutPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 429) {
+          // Respect the 60s rate-limit window before allowing another attempt.
+          setRetryDisabledUntil(Date.now() + 60_000);
+        }
         setSubmitError({ status: res.status, message: data.error || "Request failed" });
         setSubmitting(false);
         return;
       }
+
+      // Success: clear the key so the next submit is a genuinely new attempt.
+      idempotencyKeyRef.current = "";
 
       window.location.href = "/cashout/status";
     } catch {
@@ -504,10 +526,13 @@ export default function CashoutPage() {
                 {submitError?.status === 429 && (
                   <button
                     type="button"
+                    disabled={Date.now() < retryDisabledUntil}
                     onClick={() => { setSubmitError(null); void handleSubmit(); }}
-                    className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline"
+                    className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
                   >
-                    Retry
+                    {Date.now() < retryDisabledUntil
+                      ? `Retry available in ${Math.ceil((retryDisabledUntil - Date.now()) / 1000)}s`
+                      : "Retry"}
                   </button>
                 )}
                 {submitError?.status === 500 && (

@@ -1,22 +1,9 @@
 /**
- * Canonical coin -> CAD conversion (mobile).
+ * Mobile-side coin -> CAD conversion.
  *
- * The platform rate is 1000 coins = $1.00 CAD, established by
- * `shared/tapcash-content.ts` and the payout API.
- *
- * Mirrors `src/lib/currency.ts` on the web side. Import from here instead of
- * hardcoding a divisor — OfferCard and the offer detail screen previously
- * divided by 100, advertising 10x the real payout to users.
+ * The canonical implementation lives in `shared/currency.ts` (repo root, mapped
+ * via `@shared/*`) and is consumed by both web and mobile. This module
+ * re-exports it so existing imports (`../lib/currency`) keep working without
+ * call-site changes.
  */
-
-export const COINS_PER_CAD = 1000;
-
-/** Convert a coin amount to its CAD value as a number. */
-export function coinsToCad(coins: number): number {
-  return coins / COINS_PER_CAD;
-}
-
-/** Convert a coin amount to a fixed 2-decimal CAD string, e.g. "0.50". */
-export function formatCadFromCoins(coins: number): string {
-  return coinsToCad(coins).toFixed(2);
-}
+export { COINS_PER_CAD, coinsToCad, formatCadFromCoins } from "@shared/currency";
