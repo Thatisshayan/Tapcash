@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { theme } from "../theme";
+import { formatCadFromCoins } from "../lib/currency";
 import type { ApiOfferDisplay } from "../lib/api";
 
 type OfferCardProps = {
@@ -9,7 +10,7 @@ type OfferCardProps = {
 };
 
 export function OfferCard({ offer, index, onPress }: OfferCardProps) {
-  const price = (offer.payoutCoins / 100).toFixed(2);
+  const price = formatCadFromCoins(offer.payoutCoins);
 
   return (
     <TouchableOpacity

@@ -425,7 +425,6 @@ export default function FraudDetection() {
             </table>
           </div>
         </div>
-      </div>
 </>) : fraudTab === 'blocked_ips' ? (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -479,6 +478,7 @@ export default function FraudDetection() {
           onUnflag={handleUnflagUser}
         />
       )}
+      </div>
     </div>
   );
 }

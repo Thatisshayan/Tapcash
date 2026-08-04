@@ -42,5 +42,15 @@ For full details, see [RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+This repository is governed by `REPO_RULES.md`. Read it before any work.
+
+Non-negotiable gates:
+- Branch-only workflow. No direct pushes or commits to `main`.
+- CI gate must be green (secret-scan, build, test, doc-freshness, deploy-dry, directive-lint) to merge.
+- Update docs in the same pass as code (Rule 2).
+- Save audits under `audits/` using `YYYY-MM-DD_<Agent>_<Scope>_Audit.md` (Rule 6).
+- Record deferred work in `docs/governance/DEFERRED_WORK.md` (Rule 12).
+- No file deletion without Shayan's approval (Rule 14).
+- No paid API / infra spend without Shayan's approval (Rule 24).
+
+Run verification with `bash scripts/verify.sh` (or `pwsh scripts/verify.ps1`).

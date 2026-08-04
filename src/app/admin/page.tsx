@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import ConversionStrip from "@/components/ConversionStrip";
+import { formatCadFromCoins } from "@/lib/currency";
 import Link from "next/link";
 import { ShieldCheck, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { MotionWrap, PageShell, StatCard, CTAButton } from "@/components/PremiumUi";
@@ -485,7 +486,7 @@ export default function AdminPage() {
                       <thead className="bg-white/[0.02] text-[10px] uppercase font-black text-zinc-500">
                         <tr>
                           <th className="px-6 py-4">Beneficiary</th>
-                          <th className="px-6 py-4">Amount (CAD)</th>
+                          <th className="px-6 py-4">Amount</th>
                           <th className="px-6 py-4">Method</th>
                           <th className="px-6 py-4">Created</th>
                           <th className="px-6 py-4 text-right">Actions</th>
@@ -501,7 +502,10 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-[#8cf8e9] font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
+                              <div className="flex flex-col">
+                                <span className="text-[#8cf8e9] font-black text-sm">{(w.amountCoins || 0).toLocaleString()} Coins</span>
+                                <span className="text-[10px] text-zinc-500 font-bold">${formatCadFromCoins(w.amountCoins || 0)} CAD</span>
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
