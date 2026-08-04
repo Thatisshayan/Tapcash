@@ -40,10 +40,11 @@ fi
 echo "== doc-freshness =="
 [ -f README.md ] || error "doc-freshness" "README.md missing"
 # link integrity
+# Skip dependency/generated dirs with -prune so we never walk node_modules.
 # (a) best-effort external tool if present
 if command -v markdown-link-check >/dev/null 2>&1; then
-  find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' \
-    -not -path './audits/private/*' -print0 2>/dev/null \
+  find . \( -name node_modules -o -name .git \) -prune -o \
+    -name '*.md' -print0 2>/dev/null \
     | xargs -0 -r -n1 markdown-link-check || error "doc-freshness" "broken doc links"
 fi
 # (b) built-in relative-link check (no external dep): every relative link
@@ -52,7 +53,6 @@ fi
 link_broken=0
 while IFS= read -r md; do
   dir=$(dirname "$md")
-  # match markdown links: [text](target) and bare <target>
   for target in $(grep -oE '\]\([^)]+\)' "$md" | sed -E 's/^\]\(//; s/\)$//' \
                  | grep -E '^\.{1,2}/' | sed 's/#.*$//'); do
     resolved=$(cd "$dir" && readlink -f "$target" 2>/dev/null || true)
@@ -61,8 +61,8 @@ while IFS= read -r md; do
       link_broken=1
     fi
   done
-done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' \
-           -not -path './audits/private/*' 2>/dev/null || true)
+done < <(find . \( -name node_modules -o -name .git \) -prune -o \
+           -name '*.md' -print 2>/dev/null || true)
 if [ "$link_broken" -eq 0 ]; then notice "doc-freshness" "relative links ok"; fi
 # audit age (≤ 30 days) — use the newest valid ISO date parsed from an
 # audits/*.md FILENAME (not mtime) so the check is deterministic across clones.

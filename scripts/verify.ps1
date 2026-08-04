@@ -61,8 +61,12 @@ if (-not (Test-Path $baselinePath)) {
   if ($cur -lt $base) { Err "doc-freshness" "docs md count $cur < baseline $base (deletion without approval)" }
 }
 # built-in relative-link check (no external dep): every relative .md link must resolve.
+# Enumerate first-party .md only — skip node_modules/.git/audits/private at the
+# source so we never walk dependency trees (which is what made the old -Recurse slow).
 $broken = $false
-foreach ($md in (Get-ChildItem -Path $RepoRoot -Recurse -Filter *.md -ErrorAction SilentlyContinue)) {
+$allMd = Get-ChildItem -Path $RepoRoot -Recurse -Filter *.md -ErrorAction SilentlyContinue |
+  Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.git|audits[\\/]private)[\\/]' }
+foreach ($md in $allMd) {
   if ($md.FullName -match '[\\/](node_modules|\.git|audits[\\/]private)[\\/]') { continue }
   $dir = $md.DirectoryName
   foreach ($m in (Select-String -Path $md.FullName -Pattern '\]\(([^)]+)\)' -AllMatches)) {
