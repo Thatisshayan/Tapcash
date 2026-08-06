@@ -148,12 +148,19 @@ exports.requestPayout = (0, https_1.onCall)(async (request) => {
     const withdrawalRef = db.collection("cashout_requests").doc();
     const ledgerRef = db.collection("ledger_transactions").doc();
     try {
-        const ledgerSnap = await db.collection("ledger_transactions").where("userId", "==", uid).get();
-        let currentBalance = 0;
-        ledgerSnap.forEach((doc) => {
-            currentBalance += Number(doc.data().balanceEffectCoins || 0);
-        });
         await db.runTransaction(async (transaction) => {
+            // The balance read must happen inside the transaction (via
+            // transaction.get) so it participates in Firestore's conflict
+            // detection. Reading it beforehand via a plain .get() registers no
+            // read on ledger_transactions, so two concurrent requestPayout calls
+            // for the same user would both observe the same stale balance, both
+            // pass this check, and both create a cashout request -- letting a
+            // user withdraw more than their available balance.
+            const ledgerSnap = await transaction.get(db.collection("ledger_transactions").where("userId", "==", uid));
+            let currentBalance = 0;
+            ledgerSnap.forEach((doc) => {
+                currentBalance += Number(doc.data().balanceEffectCoins || 0);
+            });
             if (currentBalance < amountCents) {
                 throw new https_1.HttpsError("failed-precondition", "Insufficient funds.");
             }

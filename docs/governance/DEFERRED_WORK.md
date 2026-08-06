@@ -245,6 +245,17 @@ imports (`@typescript-eslint/no-require-imports`).
   substantial scope — not attempted here since it's a new testing
   initiative, not part of TASK-037's original plan.
 
+**Deferred: Snyk security scan in `.github/workflows/deploy.yml` is `continue-on-error` (soft gate), not registered until now**
+- `.github/workflows/deploy.yml`'s `security` job runs `snyk/actions/node@master`
+  with `continue-on-error: true`, deferring hard-gate enforcement until
+  `SNYK_TOKEN` is confirmed configured as a repo secret. This deferral
+  existed in the code/comment but was never captured here per Rule 12 —
+  flagged by Qodo's review and recorded now (no code change; the deferral
+  itself is correct, it just needed a register entry).
+- Action needed: whoever has repo secrets access confirms `SNYK_TOKEN` is
+  set, then flips `continue-on-error` to `false` (or removes it) so Snyk
+  becomes a real hard gate rather than an informational scan.
+
 **Deferred: `beforeUserCreated` may require a Firebase project upgrade to Identity Platform**
 - Per Firebase's own docs, v2 blocking functions (`beforeUserCreated`/
   `beforeSignIn`) require the Firebase project to be upgraded to Firebase
@@ -268,6 +279,69 @@ section said only "Requires admin authentication" without naming the
 mechanism (unlike the `/api/payout (Admin Only)` section just above it,
 which already correctly says "session cookie, no Bearer token needed") —
 updated to match.
+
+**Doc gap, fixed (re-verification pass):** `docs/API_DOCUMENTATION.md`'s CSRF
+method lists (lines ~29 and ~537) said "POST/PATCH/DELETE" while
+`src/lib/csrf.ts`'s `validateCsrf()` actually enforces CSRF on every method
+except `GET/HEAD/OPTIONS` (i.e. `PUT` too) — updated both lists to
+"POST/PATCH/DELETE/PUT" to match code.
+
+## 2026-08-06 — Claude Code — TASK-037 re-verification pass (second external review round)
+
+**Fixed: `requestPayout` balance check race condition (critical, CodeRabbit)**
+- `functions/src/index.ts`'s `requestPayout` computed `currentBalance` via a
+  plain `.get()` query *before* `db.runTransaction(...)`, then checked it
+  *inside* the transaction. Because the read never went through
+  `transaction.get()`, Firestore registered no read on `ledger_transactions`
+  for that transaction, so it couldn't detect a conflicting concurrent write.
+  Two concurrent `requestPayout` calls for the same user could both observe
+  the same stale balance, both pass the insufficient-funds check, and both
+  create a cashout request — letting a user withdraw more than their actual
+  balance (double-payout risk on a financial platform).
+- Fixed: moved the `ledger_transactions` query inside the transaction via
+  `transaction.get(query)`, so the balance read now participates in the
+  transaction's optimistic-concurrency conflict detection, consistent with
+  how `completeTask`'s transaction already reads `taskRef` via
+  `transaction.get()`.
+- Not caught by the original TASK-037 pass or the first review-fix commit
+  (a88b7a8) — surfaced by a second round of CodeRabbit review after that
+  commit landed. `functions/lib/index.js` was NOT hand-edited; regenerate it
+  via `npm --prefix functions run build` before deploy.
+
+**Deferred: `functions/` package still has zero automated test coverage for `requestPayout`'s transaction logic**
+- The race-condition fix above was verified by code inspection and against
+  Firestore's documented transaction semantics (all reads inside a
+  transaction must precede writes, which the fix preserves), not by a test
+  that reproduces the concurrent-request race. This is the same pre-existing
+  gap as the "Firebase Functions v1→v2 migration has no automated test
+  coverage" entry above — still open, still out of scope for this pass.
+- Action needed: when the Functions test harness from the entry above is
+  built, add a concurrency-focused test for `requestPayout` (two overlapping
+  calls against the same seeded balance) to guard against this class of bug
+  regressing.
+
+**Blocked (pre-existing, environment): root `npx jest` could not be run to completion on this machine**
+- `functions/` has its own `node_modules` (installed cleanly via
+  `npm install --legacy-peer-deps`, `tsc` build clean) and `npx tsc --noEmit`
+  at the repo root is clean (no native binaries involved). But `npx jest` at
+  the root fails during `next/jest`'s config load:
+  `Attempted to load @next/swc-win32-x64-msvc, ... next-swc.win32-x64-msvc.node
+  is not a valid Win32 application`, followed by an ESM resolve error on
+  `next.config.compiled.js`. The native SWC binary is present on disk but
+  corrupted/unloadable.
+- This matches the same class of pre-existing local-environment issue
+  already logged above ("local `npm run build` crashes on this machine,
+  0xc0000142") and in the boardroom's `tapcash.md` (Windows Defender /
+  `node_modules` interference) — not something introduced by this pass's
+  changes (`functions/src/index.ts`'s transaction fix and two doc edits).
+  Did not attempt a destructive fix (e.g. force-reinstalling/rebuilding the
+  native binary) per this task's instructions; deferring to real CI
+  (`gate.yml`, Linux runners) as the authoritative check, consistent with
+  this repo's established practice.
+- Action needed: whoever has admin rights on this machine should apply the
+  `Add-MpPreference -ExclusionPath "D:\AgentDevWork"` Defender exclusion
+  documented in the boardroom's design doc, then reinstall `node_modules`
+  from clean.
 
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
