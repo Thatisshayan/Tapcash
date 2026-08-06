@@ -121,6 +121,33 @@ suites, 319 passed / 2 skipped / 0 failed. This entry is kept (not deleted)
 per Rule 14/audit-trail practice — the disproven theory is left visible so a
 future reader doesn't reintroduce it.
 
+## 2026-08-06 — Claude Code — TASK-037 Track 1 Phase 2 (Task 10: Functions v2 migration)
+
+**Deferred: `functions/` has its own unaddressed npm audit findings (2 high, 7 moderate, 1 low)**
+- Discovered incidentally: `functions/node_modules` didn't exist at all before
+  this task (never installed on this branch), so installing it to type-check
+  the v1→v2 migration surfaced `functions/`'s own dependency tree for the
+  first time. TASK-034/Task 1's npm audit remediation was explicitly scoped
+  to the root `package.json` only (per its brief) and never touched
+  `functions/package.json`'s separate dependency tree.
+- Evidence: `cd functions && npm audit --json` → `{"low":1,"moderate":7,"high":2,"critical":0,"total":10}`.
+- Action needed: run the same remediation process Task 1 used (capture
+  baseline, `npm audit fix` for what's safely fixable, record residual risk)
+  against `functions/package.json` specifically. Out of scope for Task 10
+  (a v1→v2 API migration, not a security remediation task).
+
+**Deferred: `functions/package.json` has a pre-existing eslint peer-dependency conflict**
+- `eslint-plugin-import@^2.25.4`'s peer range (`^2 || ... || ^8 || ^9`) does
+  not include `eslint@10.5.0` (the pinned devDependency), so `npm install`
+  fails without `--legacy-peer-deps`. This task used `--legacy-peer-deps` to
+  get a working `node_modules` for verification; the resulting
+  `package-lock.json` is committed as part of this task's build-verification
+  requirement, but the underlying version conflict is unresolved.
+- Action needed: either bump `eslint-plugin-import` to a version supporting
+  eslint 9/10, or pin `eslint` back to a version `eslint-plugin-import`
+  supports — a real choice, not something to silently paper over with
+  `--legacy-peer-deps` as the permanent state.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
 2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.
