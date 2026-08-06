@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
+import type { DecodedIdToken } from "firebase-admin/auth";
 import { createPayPalPayout } from "@/lib/paypal";
 import { createInteracTransfer } from "@/lib/interac";
 import { createTremendousOrder } from "@/lib/tremendous";
 import { logAdminAction } from "@/lib/audit";
-import * as admin from "firebase-admin";
 
 const automatedProviders = ["paypal", "tremendous"];
 const manualProviders = ["interac", "bitcoin", "litecoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
@@ -79,9 +80,9 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let decodedToken: admin.auth.DecodedIdToken;
+    let decodedToken: DecodedIdToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
     }
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     await cashoutRef.update({
       status: "processing",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     let payoutResult: { success: boolean; transactionId: string };
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
       await cashoutRef.update({
         status: "approved",
         processingError: (error as Error).message,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       await logAdminAction({
@@ -175,9 +176,9 @@ export async function POST(req: NextRequest) {
         status: "manual_required",
         transactionId: payoutResult.transactionId,
         processedBy: decodedToken.uid,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
         adminNote: adminNote || null,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       };
 
       if (provider === "interac") {
@@ -211,9 +212,9 @@ export async function POST(req: NextRequest) {
       status: "sent",
       transactionId: payoutResult.transactionId,
       processedBy: decodedToken.uid,
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
       adminNote: adminNote || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     const ledgerRef = adminDb.collection("ledger_transactions").doc();
@@ -232,7 +233,7 @@ export async function POST(req: NextRequest) {
         destination: cashoutData.destination,
         adminNote: adminNote || null,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     await logAdminAction({
@@ -269,9 +270,9 @@ export async function GET(req: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let decodedToken: admin.auth.DecodedIdToken;
+    let decodedToken: DecodedIdToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
     }
