@@ -19,6 +19,67 @@
 
 ---
 
+### Task 0: Fix the CI gate itself (added 2026-08-06, found during re-verification)
+
+**Context:** PR #56 (an unrelated docs/tokens checkpoint) was the first PR to ever actually run `gate.yml` end-to-end, and it failed — not because of anything in that PR, but because `main` itself currently fails its own gate. Confirmed via `git show main:<file>` that every failure pre-dates this push. This blocks every future PR from ever merging cleanly, so it goes first.
+
+**Files:**
+- Modify: `DEPLOYMENT.md`, `docs/PAYMENT_INTEGRATION_REPORT.md`, `docs/DEVELOPER_GUIDE.md`, `MOBILE_BUILD_GUIDE.md` — replace placeholder-style `SOMETHING_SECRET=your-secret-key-here` patterns with a form the scan won't flag (e.g. `SOMETHING_SECRET=<set in Vercel dashboard>`), preserving the documentation's meaning.
+- Modify: `scripts/verify.sh` — the secret-scan step itself needs a real exclusion for `*.test.ts` files (already commented as intentional in the script) and for its own doc-template patterns; read the current heuristic first (`sed -n '1,60p' scripts/verify.sh`) and tighten the regex/exclusion list rather than disabling the check.
+- Modify: `AGENTS.md` — fix the broken relative link `[RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md)` (only valid in Shayan's local multi-repo layout, not in an isolated clone) — change to an absolute description or drop the link, keep the prose reference.
+- Modify: `src/lib/antiFraud.ts:147` — unused `ip` destructured variable (`@typescript-eslint/no-unused-vars` error).
+- Modify: `src/middleware/index.ts:78` — unused `_rateLimit` (same rule).
+- Modify: `src/lib/idempotency.ts:1` — unused `NextResponse` import (same rule) — note Task 2 of this plan also touches this file; if Task 2 lands first, re-check this line is still unused before editing.
+- Investigate and fix (or explicitly downgrade with justification, not a blanket disable) the remaining `Function` type error (`@typescript-eslint/no-unsafe-function-type`) — locate via `npx eslint src --format compact 2>&1 | grep "no-unsafe-function-type"`.
+
+**Interfaces:** None — this task only removes false positives and fixes real but trivial lint errors, no behavior change.
+
+- [ ] **Step 1: Reproduce the failures locally**
+
+Run: `bash scripts/verify.sh 2>&1 | grep -A3 "secret-scan\|doc-freshness"`
+Run: `npx eslint src 2>&1 | tail -5`
+Confirm the same file list this plan describes.
+
+- [ ] **Step 2: Fix secret-scan false positives**
+
+Edit the flagged doc files to remove the literal `KEY=value`-shaped placeholder pattern (e.g. `JWT_SECRET=your-secret-key-here` -> `JWT_SECRET: set in Vercel dashboard, see NEEDSHAYANINPUT.md`). Do not change `scripts/verify.sh`'s own file (it's flagging itself because it contains the regex pattern as a string) unless the false-positive is on the pattern definition itself — verify which line triggers it (`bash scripts/verify.sh 2>&1 | grep -B2 "scripts/verify.sh"`) before editing.
+
+- [ ] **Step 3: Fix the broken doc link**
+
+In `AGENTS.md`, change `[RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md)` to plain text: `RemoteCliControl/AGENTS.md (sibling repo, not included in this clone)`.
+
+- [ ] **Step 4: Fix the 3 confirmed unused-variable ESLint errors**
+
+`antiFraud.ts:147` — prefix with underscore or remove `ip` from the destructure if genuinely unused (check the function body first — `grep -n "\bip\b" src/lib/antiFraud.ts`).
+`src/middleware/index.ts:78` — same treatment for `_rateLimit` (already underscore-prefixed, so check the actual ESLint config — this may be a config gap where the "allow underscore-prefixed unused vars" rule isn't applied to this file's location; fix by either using the variable or aligning the eslint config).
+`src/lib/idempotency.ts:1` — remove the unused `NextResponse` import.
+
+- [ ] **Step 5: Locate and fix the `no-unsafe-function-type` error**
+
+Run `npx eslint src --format compact 2>&1 | grep "no-unsafe-function-type"` to get the exact file:line, replace the bare `Function` type with a specific function signature matching how it's actually called at that site.
+
+- [ ] **Step 6: Verify**
+
+Run: `bash scripts/verify.sh`
+Expected: exits 0, no `##[error]` lines.
+Run: `npx eslint src`
+Expected: 0 errors (warnings may remain — this task fixes errors only, the ~186 warnings are pre-existing debt out of scope here).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add DEPLOYMENT.md docs/PAYMENT_INTEGRATION_REPORT.md docs/DEVELOPER_GUIDE.md MOBILE_BUILD_GUIDE.md AGENTS.md src/lib/antiFraud.ts src/middleware/index.ts src/lib/idempotency.ts
+git commit -m "fix(ci): resolve pre-existing gate failures (secret-scan false positives, broken doc link, ESLint errors)
+
+main was failing its own CI gate before this push started -- confirmed
+via git show main:<file> that every failure pre-dates this branch. Fixes
+here, not new code.
+
+traces-to: TASK-036"
+```
+
+---
+
 ### Task 1: Modularize `firebaseAdmin.ts` and restore `getFirebaseApp`
 
 **Files:**
