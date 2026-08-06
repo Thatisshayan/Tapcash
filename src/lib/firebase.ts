@@ -14,14 +14,20 @@ const firebaseConfig = {
 };
 
 const configured = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-// Next.js sets NEXT_PHASE=phase-production-build only during `next build`, not real
-// runtime serving — same distinction firebaseAdmin.ts uses. CI/build environments here
-// do not have Firebase secrets injected, so a hard throw must not fire during build.
-const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
+// NEXT_PUBLIC_* values are baked into the client bundle at `next build` time,
+// not read fresh at runtime -- unlike server-only code (firebaseAdmin.ts,
+// env.ts), a build-time placeholder here is PERMANENT until the next real
+// build, even if the correct env vars are added afterward. So the
+// build-vs-runtime distinction used elsewhere is wrong for this file: what
+// actually matters is whether this is Vercel's real Production build (which
+// ships to real users and must not silently bake in a dead config) versus
+// CI / a Preview deploy / local dev (where a placeholder is harmless).
+// Vercel sets VERCEL_ENV=production only for that real production build.
+const isRealProductionBuild = process.env.VERCEL_ENV === "production";
 
 if (!configured) {
   const message = '[firebase] Missing required Firebase configuration. Set NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID — no dummy fallback is used at runtime, so the app will not silently point at a demo project.';
-  if (process.env.NODE_ENV === "production" && !isBuildPhase) {
+  if (isRealProductionBuild) {
     throw new Error(message);
   }
   console.warn(message);

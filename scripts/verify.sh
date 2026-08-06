@@ -38,7 +38,7 @@ else
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=audits/private \
     --exclude-dir=.venv --exclude-dir=_repo_clone --exclude-dir=dist --exclude-dir=build \
     --exclude-dir=.cache --exclude-dir=coverage --exclude-dir=__tests__ --exclude-dir=__mocks__ \
-    --exclude-dir=docs --exclude-dir=.superpowers \
+    --exclude-dir=superpowers --exclude-dir=.superpowers \
     --include='*.json' --include='*.env' --include='*.ts' --include='*.js' --include='*.py' \
     --include='*.yml' --include='*.yaml' --include='*.toml' --include='*.sh' . 2>/dev/null || true)
   if [ -n "$hits" ]; then error "secret-scan" "possible hardcoded secrets in: $hits"; fi
