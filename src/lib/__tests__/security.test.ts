@@ -3,7 +3,7 @@ import { validateCsrf } from "../csrf";
 import { validateOrigin } from "../origin";
 import { isBotAgent, calculateFraudScore } from "../antiFraud";
 import type { NextRequest } from "next/server";
-import { setNodeEnv } from "./testEnv";
+import { setNodeEnv } from "../testHelpers/testEnv";
 
 function mockRequest(method: string, headers: Record<string, string> = {}, cookies: Record<string, string> = {}, pathname = "/api/test"): NextRequest {
   const cookieStr = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join("; ");

@@ -1,6 +1,6 @@
 import { validateOrigin } from "../origin";
 import type { NextRequest } from "next/server";
-import { setNodeEnv } from "./testEnv";
+import { setNodeEnv } from "../testHelpers/testEnv";
 
 function mockRequest(method: string, headers: Record<string, string> = {}, pathname = "/api/test"): NextRequest {
   return {
