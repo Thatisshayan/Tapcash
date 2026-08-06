@@ -1,4 +1,29 @@
+// @ts-nocheck
 /**
+ * TapCash token build — single source of truth → both platforms.
+ * Reads tokens.json and regenerates the mobile theme (the platform that
+ * had drifted onto the legacy palette). Web globals.css is the rendered
+ * token layer for web and is kept in parity by packages/tokens/tokens.test.ts.
+ *
+ * Run: node packages/tokens/build.mjs
+ */
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..', '..');
+const tokens = JSON.parse(readFileSync(resolve(__dirname, 'tokens.json'), 'utf8'));
+
+const { primitives: p, semantic: s, typeScale: t, space: sp, radius: r, motion: m, gradients: g } = tokens;
+
+function esc(str) {
+  return String(str).replace(/'/g, "\\'");
+}
+
+// ── Mobile theme.ts (Model U, typed, generated) ──────────────────────────────
+// Sample data kept but emoji iconography removed (REDESIGN_SPEC anti-pattern).
+const mobileTheme = `/**
  * TapCash Model U Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
  * Source of truth: packages/tokens/tokens.json (Model U palette).
@@ -7,60 +32,60 @@
 export const theme = {
   colors: {
     // Base / surfaces
-    bg: '#050813',
-    background: '#050813',
-    surfaceBase: '#050813',
-    surfaceRaised: '#09101F',
-    surfaceOverlay: '#0F1829',
-    panel: 'rgba(9, 16, 31, 0.74)',
-    line: 'rgba(150, 190, 255, 0.14)',
-    border: 'rgba(150, 190, 255, 0.14)',
+    bg: '${p['ink-950']}',
+    background: '${p['ink-950']}',
+    surfaceBase: '${s['surface-base']}',
+    surfaceRaised: '${s['surface-raised']}',
+    surfaceOverlay: '${s['surface-overlay']}',
+    panel: '${s.panel}',
+    line: '${s['border-hairline']}',
+    border: '${s['border-hairline']}',
 
     // Text
-    text: '#F6F8FF',
-    muted: '#9AA8C6',
-    dim: '#7B8AA8',
+    text: '${s['text-primary']}',
+    muted: '${s['text-secondary']}',
+    dim: '${s['text-tertiary']}',
 
     // Legacy-named surface slots (kept for backward-compatible imports)
-    card: '#09101F',
-    elevated: '#0F1829',
+    card: '${s['surface-raised']}',
+    elevated: '${s['surface-overlay']}',
 
     // Semantic accents (Model U)
-    green: '#31F06F',
-    cyan: '#18D9FF',
-    purple: '#7C3DFF',
-    yellow: '#FFC442',
-    gold: '#FFC442',
-    red: '#FF2F42',
-    danger: '#FF2F42',
+    green: '${p.green}',
+    cyan: '${p.cyan}',
+    purple: '${p.purple}',
+    yellow: '${p.gold}',
+    gold: '${p.gold}',
+    red: '${p.red}',
+    danger: '${p.red}',
   },
   gradients: {
-    primary: 'linear-gradient(100deg, #7C3DFF, #18D9FF, #31F06F)',
-    green: 'linear-gradient(90deg, #31F06F, #92FF2F)',
-    cyanPurple: 'linear-gradient(90deg, #18D9FF, #7C3DFF)',
-    panel: 'linear-gradient(180deg, rgba(9, 16, 31, 0.74), rgba(6, 12, 23, 0.72))',
+    primary: '${g.primary}',
+    green: '${g.green}',
+    cyanPurple: '${g.cyanPurple}',
+    panel: '${g.panel}',
     hero: 'radial-gradient(circle at 45% 16%, rgba(29, 214, 255, 0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(124, 61, 255, 0.22), transparent 26%)',
   },
   radius: {
-    xs: 8,
-    sm: 12,
-    md: 16,
-    lg: 22,
-    xl: 28,
+    xs: ${Number(r.sm.replace('px', ''))},
+    sm: ${Number(r.md.replace('px', ''))},
+    md: ${Number(r.lg.replace('px', ''))},
+    lg: ${Number(r.xl.replace('px', ''))},
+    xl: ${Number(r['2xl'].replace('px', ''))},
     full: 999,
   },
   spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
+    xs: ${Number(sp['1'].replace('px', ''))},
+    sm: ${Number(sp['2'].replace('px', ''))},
+    md: ${Number(sp['4'].replace('px', ''))},
+    lg: ${Number(sp['6'].replace('px', ''))},
+    xl: ${Number(sp['8'].replace('px', ''))},
   },
   font: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 18,
+    xs: ${Number(t.xs.replace('px', ''))},
+    sm: ${Number(t.sm.replace('px', ''))},
+    md: ${Number(t.base.replace('px', ''))},
+    lg: ${Number(t.lg.replace('px', ''))},
     xl: 24,
     xxl: 32,
     hero: 86,
@@ -117,3 +142,11 @@ export const leaderboard = [
   { rank: 3, name: 'Mika', coins: 17650 },
   { rank: 4, name: 'Riley', coins: 15125 },
 ];
+`;
+
+const mobilePath = resolve(root, 'mobile', 'src', 'theme.ts');
+writeFileSync(mobilePath, mobileTheme, 'utf8');
+
+console.log('[tokens] wrote', mobilePath.replace(root, '.'));
+console.log('[tokens] mobile theme converged to Model U:', p.green, p.purple, p['ink-950']);
+console.log('[tokens] OK — run `jest packages/tokens/tokens.test.ts` to verify parity.');

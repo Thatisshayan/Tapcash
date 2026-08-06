@@ -1,10 +1,28 @@
 # Deferred Work Register
 
-Rule 12 / Rule 11. This register survives the session. Future agents resume from here.
+> Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
-## Format
-- `[DATE] <scope>: <what> — <why deferred> — <resume hint> — <status>`
+## 2026-08-05 — Hermes — UI/UX Phase 1 token foundation
 
-## Items
-- [2026-08-04] typecheck: `tsc --noEmit` reports 109 pre-existing type errors across ~18 files (api/payout*, api/admin/withdrawals, api/postback*, api/tasks/*, api/promo/redeem, api/streak, lib/firebaseAdmin, lib/audit, lib/ledger, lib/idempotency, scripts/seed-firestore, instrumentation) — why deferred: were masked by a JSX syntax error in admin/fraud/page.tsx that made tsc bail before parsing the repo; fixed in PR #49 but the underlying firebase-admin typing debt (namespace imports `admin.firestore()`/`admin.auth()` not resolving against installed types) remains — resume hint: root-cause is one firebase-admin import-style issue; likely fixable with a single types/resolution change; add a `typecheck` CI gate after — status: OPEN
-- [2026-08-04] lint: `npx eslint src` reports 11 errors + 185 warnings (pre-existing, unrelated to PR #49) — e.g. 6× `Function` type usage, render-during-render bug, TDZ access — why deferred: out of Phase 0 scope (Phase 0 only repaired the ESLint *crash* by pinning eslint@^9.39.5) — resume hint: triage the 11 errors first, then batch-fix warnings — status: OPEN
+**Deferred: Orphan component deletion (REDESIGN_SPEC §4.2)**
+- Blocked by: REPO_RULES Rule 14 (no file deletion without Shayan's explicit approval).
+- Scope: 6 dead Hero variants (`landing/Hero`, `HeroDynamic`, `HeroPremium`, `HeroV1Balanced`, `HeroV2Gaming`, `HeroV3Offers`) + 26 other orphans (`*Premium` components, `sections/{FinalCTA,HowItWorks,PayoutMethods,PayoutTicker,Stats,Testimonials}`, `BrandLogos`, `CashPathFlow`, `CompletionReceiptModal`, `OnboardingModal`, `PushNotificationPrompt`, `TapScoreIndicator`, `TrustBadges`, `ui/DashboardMockup`).
+- Caveat (from spec): the four admin `*Premium` components are dark-theme replacements for the light admin pages shipping today. **Harvest their styling into the retheme BEFORE deleting**, or keep those four and delete the light pages instead.
+- Action needed: obtain Shayan's explicit deletion approval, then raise as a dedicated PR.
+
+**Deferred: Per-component raw-hex purge + contrast audit (REDESIGN_SPEC Phase 1 gate)**
+- Blocked by: scope (≈1153 raw hex literals in `src/**/*.tsx`); not a one-run task.
+- The token *foundation* is in place (`packages/tokens/`), but components still hardcode legacy/inline hex. A follow-on branch must migrate components to semantic tokens and verify all text pairs ≥ 4.5:1, UI ≥ 3:1.
+- Evidence: `grep -rEio "#[0-9a-fA-F]{6}" src --include=*.tsx | wc -l` → 1153 (pre-existing).
+
+**Deferred: Full gate re-run (test/lint/build/typecheck)**
+- Blocked by: `node_modules` was partially broken on the agent machine (missing `jest/package.json`, `next/package.json` manifests). `npm ci` reinstall started 2026-08-05 to restore a runnable verify path.
+- Action: after install completes, run `jest packages/tokens/tokens.test.ts`, `npm test`, `npm run type-check`, `npm run lint`, and confirm the new drift test is green before merging the Phase 1 token branch.
+
+## Open decisions for Shayan (carried from REDESIGN_SPEC §8, still unanswered)
+1. Palette: Model U (recommended) — adopted as default in token source; confirm.
+2. Admin: retheme dark via `*Premium` (recommended) vs keep light.
+3. Motion library: Lottie vs CSS+Reanimated.
+4. Icons: unify on Lucide (recommended).
+5. A/B infra: revive or delete.
+6. Fabricated stats: remove / wire to `/api/stats/platform`.
