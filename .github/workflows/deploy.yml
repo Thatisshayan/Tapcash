@@ -131,8 +131,9 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
+      # Snyk requires SNYK_TOKEN to be configured as a repo secret before this
+      # can be a hard gate — left soft (continue-on-error) until that's confirmed.
       - name: Run Snyk security scan
         uses: snyk/actions/node@master
         continue-on-error: true

@@ -61,6 +61,47 @@
   check in and either re-trigger the review or confirm the grade is
   repo-wide pre-existing debt, not something this branch introduced.
 
+## 2026-08-06 — Claude Code — TASK-037 Track 1 Phase 2 (Task 1: npm audit remediation)
+
+**Deferred: `origin.test.ts` "should reject missing origin in production mode" fails — pre-existing, unrelated to the `next` bump**
+- Root cause verified: `next/jest` (configured in `jest.config.js` via
+  `nextJest({ dir: './' })`) transforms test/source files through Next's SWC
+  pipeline, which statically inlines `process.env.NODE_ENV` references to a
+  literal at transform time (same mechanism as webpack's `DefinePlugin`
+  substitution in production builds). `src/lib/origin.ts`'s
+  `process.env.NODE_ENV === "production"` checks get baked in as `"test" ===
+  "production"` (always `false`) when jest runs, so runtime mutation via
+  `src/lib/testHelpers/testEnv.ts`'s `setNodeEnv()` helper cannot affect the
+  already-inlined check — the test's premise (mutate `NODE_ENV` mid-test) is
+  incompatible with `next/jest`.
+- Verified NOT a regression from the `next` 16.2.9 -> 16.3.0 bump: (1) jest
+  itself was not touched by this task's `npm install`/`npm audit fix` (no
+  `jest`/`jest-environment-*` lines in the `package-lock.json` diff), and
+  (2) running `NODE_ENV=production npx jest src/lib/__tests__/origin.test.ts`
+  (setting the env var before the process starts, so SWC inlines the
+  correct value) makes all 8 applicable tests pass, confirming
+  `validateOrigin`'s actual production-mode logic is correct — only the
+  test's runtime-mutation methodology is broken, and would have been broken
+  under `next@16.2.9` too (this branch's `node_modules` was in a broken
+  state before this task, per Track 1 Phase 1's own deferred-work entry
+  above, so this test likely never ran clean before now).
+- Applied a real but partial fix in `src/lib/testHelpers/testEnv.ts`:
+  `Object.defineProperty(process.env, "NODE_ENV", ...)` was missing
+  `enumerable: true`, which Node's `process.env` setter requires for the
+  write to take effect at all (it silently no-ops otherwise, no throw) —
+  correct per Node semantics, but does not resolve the SWC-inlining issue
+  above, so the test still fails.
+- Action needed: redesign the two production-mode `origin.test.ts` cases to
+  not rely on runtime `NODE_ENV` mutation under `next/jest` — options include
+  (a) a separate `jest --projects` config that runs this file with
+  `NODE_ENV=production` set at process start, (b) refactoring
+  `origin.ts` to read the environment through a small wrapper that jest can
+  `jest.mock()` instead of comparing `process.env.NODE_ENV` inline, or
+  (c) moving these two assertions to a non-SWC-transformed test runner.
+  Out of scope for TASK-034 (npm audit remediation only); flagged here per
+  Rule 12 rather than silently skipped or worked around by weakening the
+  assertion.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
 2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.
