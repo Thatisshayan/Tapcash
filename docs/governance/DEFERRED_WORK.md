@@ -63,6 +63,11 @@
 
 ## 2026-08-06 — Claude Code — TASK-037 Track 1 Phase 2 (Task 1: npm audit remediation)
 
+**✅ RESOLVED 2026-08-06 (Task 7)** — see correction note at the end of this
+entry: the SWC-inlining root cause below was disproven; the actual cause was
+simpler (`Object.defineProperty` silently no-oping the write), and the test
+now passes.
+
 **Deferred: `origin.test.ts` "should reject missing origin in production mode" fails — pre-existing, unrelated to the `next` bump**
 - Root cause verified: `next/jest` (configured in `jest.config.js` via
   `nextJest({ dir: './' })`) transforms test/source files through Next's SWC
@@ -101,6 +106,20 @@
   Out of scope for TASK-034 (npm audit remediation only); flagged here per
   Rule 12 rather than silently skipped or worked around by weakening the
   assertion.
+
+**Correction, 2026-08-06 (TASK-037 Task 7)**: the SWC-static-inlining theory
+above was wrong. Task 7 verified directly:
+`Object.defineProperty(process.env, "NODE_ENV", {value: "x", configurable:
+true, writable: true, enumerable: true})` left `NODE_ENV` unchanged, while
+plain `process.env.NODE_ENV = "x"` took effect immediately — `process.env`'s
+native binding silently no-ops `defineProperty`-based writes regardless of
+descriptor shape, it isn't about SWC inlining the comparison at all.
+Switching `setNodeEnv()` in `src/lib/testHelpers/testEnv.ts` to a plain
+assignment fixed the test outright — both `origin.test.ts` production-mode
+cases now pass genuinely, no restructuring needed. Full test suite: 23/23
+suites, 319 passed / 2 skipped / 0 failed. This entry is kept (not deleted)
+per Rule 14/audit-trail practice — the disproven theory is left visible so a
+future reader doesn't reintroduce it.
 
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
