@@ -161,6 +161,41 @@ If a batch needs a semantic token that doesn't exist yet (none identified in thi
 
 ---
 
+### Task -1: Mockup Approval Gate (prerequisite — run before Task 1 and all batches; added 2026-08-06 per Shayan)
+
+**Context:** Shayan's explicit instruction: before any full page/component migration work starts, he wants to see a generated mockup image of the target look first. This is a visual sign-off gate, not a code task — no batch (Tasks 1-4) or the asset pipeline (Task 5) may start until this is approved.
+
+**Files:**
+- Create: `docs/superpowers/mockups/track2-mockup-v1.png` (or `.jpg`) — one representative composite image, not a full page build
+- Create: `docs/superpowers/mockups/track2-mockup-notes.md` — what the mockup shows and what it doesn't (e.g. "shows Home/landing hero + dashboard balance card + one offer card, does not show every route")
+
+**Interfaces:**
+- Consumes: `packages/tokens/tokens.json` Model U primitives, and Task 5's asset-generation approach (same tool: Higgsfield or Gemini 2.5 Flash Image / Nano Banana) so the mockup reflects the same visual language the real build will use — not a disconnected concept image.
+- Produces: nothing consumed by later tasks — this is a human checkpoint, not a code dependency. Tasks 1-4 and 5 read this task's outcome (approved / not approved) as a go/no-go gate.
+
+- [ ] **Step 1: Generate one composite mockup image**
+
+Using Higgsfield or Gemini 2.5 Flash Image (Nano Banana), generate a single image showing the target look applied to 2-3 representative real surfaces — not every page. Recommended composition: the landing hero section (Batch A's territory) + the dashboard balance/offers area (Batch B's territory), shown side by side or stacked, using Model U's exact hex values (`#050813` bg, `#31F06F` green, `#7C3DFF` purple, `#18D9FF` cyan) plus a sample of the Task 5 hero/wallet asset style. This does not need to be pixel-accurate production code — it's a direction-check image, generated once, not iterated 20 times.
+
+- [ ] **Step 2: Write the notes file**
+
+In `docs/superpowers/mockups/track2-mockup-notes.md`, state plainly: which surfaces the mockup covers, which it doesn't, and that approval of this image is approval of the *direction* (palette + asset style + layout feel), not a pixel-exact spec every batch must match precisely.
+
+- [ ] **Step 3: Present to Shayan for approval — STOP here**
+
+Do not proceed to Task 1 or any batch until Shayan explicitly approves the mockup. If he requests changes, regenerate (Step 1) and re-present — do not silently proceed on an assumption of approval.
+
+- [ ] **Step 4: Commit (only after approval)**
+
+```bash
+git add docs/superpowers/mockups/
+git commit -m "docs(track2): add approved mockup, gate for full-page work
+
+traces-to: TASK-038"
+```
+
+---
+
 ### Task 1: Orphaned Component Review Doc (prerequisite — run before Tasks 2-4 start)
 
 Single-session task. Must land before the three parallel batches begin, because it writes one shared file (`docs/superpowers/orphaned-components-for-review.md`) that all three batches would otherwise race on. Read-only against component code — this task greps for import counts and writes a doc, it does not modify any component.
