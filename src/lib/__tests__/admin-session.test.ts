@@ -1,3 +1,19 @@
+/**
+ * @jest-environment node
+ *
+ * The repo's default jsdom test environment lacks several WHATWG APIs
+ * (fetch's Request, WebCrypto, TextEncoder) that jose and NextRequest's
+ * real cookie parsing both need -- Node's own test environment already
+ * provides all of them natively, so this file opts into it instead of
+ * polyfilling jsdom globally (a per-file override, scoped to this file
+ * only; no other test file is affected).
+ *
+ * jest.setup.ts also globally mocks next/server with a stub NextRequest
+ * that has no .cookies implementation -- this file specifically needs
+ * real cookie parsing, so it un-mocks next/server for itself only.
+ */
+jest.unmock("next/server");
+
 import { NextRequest } from "next/server";
 import { SignJWT } from "jose";
 
