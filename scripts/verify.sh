@@ -27,9 +27,9 @@ else
   if [ -n "$bad_files" ]; then error "secret-scan" "secret files present: $bad_files"; fi
   # (b) content-based: only scan first-party code/config, require an ASSIGNED VALUE.
   #     Exclude dependency / generated dirs so library files don't false-positive.
-  #     Test/spec files intentionally contain mock credentials (e.g.
-  #     PAYPAL_CLIENT_SECRET='test_client_secret') — never real secrets — so they
-  #     are excluded from the content scan to avoid false positives.
+  #     Test/spec files intentionally contain mock credentials (e.g. a fake
+  #     PayPal client secret assigned to a test fixture) — never real
+  #     secrets — so they are excluded from the content scan below.
   # Multiple repeated --exclude=<glob> flags are unreliable across grep
   # implementations (only the last one may be honored) — exclude the whole
   # __tests__/__mocks__ directories instead, since that's robust everywhere
