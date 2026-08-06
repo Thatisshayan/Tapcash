@@ -150,6 +150,97 @@ traces-to: TASK-038"
 
 ---
 
+### Task 6: Real Brand Logos — NOT AI-generated, NOT hand-vectored (added 2026-08-06 per Shayan)
+
+**Hard rule, explicit from Shayan: every payment/brand logo in this app must be the company's actual official logo asset, sourced from that company's real brand/press kit. No AI-generated logos, no icon-library approximations (the current `lucide-react` `CreditCard`/`ShoppingBag`/`Bitcoin`/`Landmark` icons and emoji (💰🎁☕🎮💳) standing in for real brands), no hand-built "looks close enough" vector reconstructions. This is a different category of asset from Task 5's AI-generated hero/wallet/offer *illustrations* — illustrations can be AI-generated, real company logos cannot.**
+
+**Files:**
+- Create: `public/images/logos/paypal.svg` (and `.png` fallback if the official kit provides one)
+- Create: `public/images/logos/amazon.svg`
+- Create: `public/images/logos/tim-hortons.svg`
+- Create: `public/images/logos/steam.svg`
+- Create: `public/images/logos/visa.svg`
+- Create: `public/images/logos/bitcoin.svg`
+- Create: `public/images/logos/litecoin.svg`
+- Modify: `src/components/sections/CashoutMethodsSection.tsx` — replace the `icon: "💰"` etc. emoji map with real logo images
+- Modify: `src/components/sections/PayoutMethodsSection.tsx` — replace the `lucide-react` icon map (`CreditCard`, `ShoppingBag`, `Bitcoin`, `Landmark`) with real logo images; remove the stale `/* TODO: Replace with official PayPal/Interac SVG logos when available */` comment (superseded by this task; the Interac half of that TODO is moot since Track 1 froze Interac entirely)
+
+**Interfaces:**
+- Consumes: nothing generated — these are sourced assets, not produced ones.
+- Produces: `public/images/logos/*.svg` referenced by both sections above via Next.js `<Image>`.
+
+- [ ] **Step 1: Source each logo from the company's own official brand/press resources — not a search-engine image result, not a generic icon pack**
+
+Real official sources only, e.g.: PayPal — https://newsroom.paypal-corp.com or PayPal's brand guideline page; Visa — usa.visa.com brand assets; Steam — Valve's partner/press assets; Bitcoin — bitcoin.org (the Bitcoin Foundation's own site publishes the open logo); Litecoin — litecoin.org's press kit; Amazon and Tim Hortons — their respective investor-relations/press-kit pages typically host approved logo downloads (Amazon in particular has strict brand-usage guidelines — check their trademark guidelines page before using their logo, since retail/rewards platforms using the Amazon logo for a "gift card" context need to comply with Amazon's affiliate/brand-usage terms, not just download the SVG). If Shayan's content-creator agent or Hermes has access to a licensed brand-asset library, use that instead of ad hoc downloads.
+
+- [ ] **Step 2: Verify each downloaded asset against the source, don't trust a filename**
+
+For each logo, confirm the file actually renders as that company's current logo (not a legacy/outdated version, not a placeholder) by opening it and visually comparing against the official site. Do not skip this — a stale or wrong-version logo is worse than no logo.
+
+- [ ] **Step 3: Normalize format and size, preserve brand color (don't force logos into Model U)**
+
+Company logos are exempt from the Model U palette migration (Batches A/B don't touch these) — a payment brand's logo must stay in that brand's real colors for recognizability/trust, not be recolored to match the app. Export/save each as SVG where the official kit provides one (preferred — crisp at any size); PNG at minimum 256×256 otherwise. Do not compress SVGs lossily.
+
+- [ ] **Step 4: Wire into both sections**
+
+Replace the emoji/icon-library placeholders with real `<Image>` (or inline SVG component) references, sized consistently within each section's existing card layout. Keep each brand's logo on a neutral/transparent background so it reads correctly against the dark Model U card background — most official logos are exported for light backgrounds, so check for a "for dark backgrounds" or white/reversed variant in the same press kit, and use that variant instead of just placing a light-background logo directly on dark UI.
+
+- [ ] **Step 5: Verify**
+
+Run: `npx next build 2>&1 | grep -i "error"` — no broken image references.
+Visual check in `npm run dev`: every payment method card shows a real, correctly-oriented, legible brand mark — no emoji, no generic lucide icon standing in for a real company.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add public/images/logos src/components/sections/CashoutMethodsSection.tsx src/components/sections/PayoutMethodsSection.tsx
+git commit -m "feat(assets): replace placeholder icons with real official brand logos
+
+traces-to: TASK-038"
+```
+
+**Licensing note:** Some brand-usage guidelines (Amazon in particular) restrict how their logo may be displayed and in what context. Flag to Shayan if any sourced brand's terms conflict with how TapCash displays it (e.g., implying an endorsement/partnership that doesn't exist) — don't silently proceed past a licensing red flag.
+
+---
+
+### Task 7: Contrast Audit — WCAG AA (4.5:1 text, 3:1 UI) — REDESIGN_SPEC Phase 1 gate (added 2026-08-06)
+
+**Context:** `docs/governance/DEFERRED_WORK.md`'s "Per-component raw-hex purge" entry explicitly pairs the hex purge with a contrast audit as REDESIGN_SPEC's own Phase 1 gate criterion — this was missing from Batches A-C above, which only covered the hex-to-token migration itself, not verifying the resulting token pairings are actually readable. This task closes that gap.
+
+**Files:**
+- No new files — audits the output of Tasks 2-4 (Batches A/B/C) after they land.
+- Modify: any component where a check below fails (fix by choosing a different Model U semantic pairing, not by inventing a new off-palette color).
+
+**Interfaces:**
+- Consumes: the final rendered output of Batches A, B, C (this task runs after all three, not in parallel with them).
+
+- [ ] **Step 1: Enumerate every text-on-background and UI-element-on-background color pairing actually used post-migration**
+
+For each component touched in Batches A-C, list the semantic token pairs in use (e.g., `text-white/70` on `bg-[#050813]`, `text-[--color-brand-green]` on a card background, etc.).
+
+- [ ] **Step 2: Check each pairing against WCAG AA**
+
+Text pairs must meet ≥ 4.5:1 contrast ratio (3:1 for large text ≥ 24px/19px-bold). Non-text UI elements (borders, icons conveying meaning, focus indicators) must meet ≥ 3:1. Use a real contrast-checking tool (e.g., the WebAIM contrast checker, or a CLI tool like `wcag-contrast` — don't eyeball it) against the actual hex values resolved from each Model U token.
+
+- [ ] **Step 3: Fix any failing pairing**
+
+If a pairing fails, substitute a different existing Model U semantic token with sufficient contrast (e.g., a higher-contrast text-white opacity step, or a different semantic surface token) — do not introduce a new off-palette hex value to patch a contrast failure, that would undo the purge Batches A-C just did.
+
+- [ ] **Step 4: Verify and document**
+
+Record the audit result (pass/fail per pairing, any fixes applied) in a short note appended to `docs/superpowers/mockups/track2-mockup-notes.md` or a new `docs/superpowers/contrast-audit-2026-08-06.md`, so this isn't re-litigated per PR.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "fix(a11y): contrast audit pass on Model U token pairings (REDESIGN_SPEC Phase 1 gate)
+
+traces-to: TASK-038"
+```
+
+---
+
 ### Task 0: Token Dependency (do not replan — read-only reference for every batch)
 
 **Files:**
