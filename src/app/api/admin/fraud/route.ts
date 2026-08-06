@@ -1,26 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdminSession } from '@/lib/admin-session';
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'view_fraud_flags',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
@@ -97,20 +86,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const { alertId, status, notes, action, ipId } = await request.json();
 
@@ -128,7 +105,7 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('fraud_flags').doc(alertId).update({
         status: 'resolved',
         notes: notes || 'Unflagged by admin',
-        reviewedBy: decodedToken.uid,
+        reviewedBy: auth.uid,
         reviewedAt: new Date()
       });
 
@@ -138,13 +115,13 @@ export async function POST(request: NextRequest) {
           status: 'active',
           updatedAt: new Date(),
           actionReason: notes || 'Unflagged by admin',
-          actionBy: decodedToken.uid
+          actionBy: auth.uid
         });
       }
 
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'unflag_user',
         targetAlertId: alertId,
         targetUserId: alertData.userId,
@@ -163,8 +140,8 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('blocked_ips').doc(ipId).delete();
 
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'unblock_ip',
         targetId: ipId,
         timestamp: new Date(),
@@ -189,7 +166,7 @@ export async function POST(request: NextRequest) {
     await adminDb.collection('fraud_flags').doc(alertId).update({
       status,
       notes,
-      reviewedBy: decodedToken.uid,
+      reviewedBy: auth.uid,
       reviewedAt: new Date()
     });
 
@@ -198,22 +175,22 @@ export async function POST(request: NextRequest) {
         status: action === 'ban' ? 'banned' : 'suspended',
         updatedAt: new Date(),
         actionReason: notes,
-        actionBy: decodedToken.uid
+        actionBy: auth.uid
       });
 
       if (action === 'ban' && alertData.metadata?.ip) {
         await adminDb.collection('blocked_ips').add({
           ip: alertData.metadata.ip,
           reason: notes,
-          blockedBy: decodedToken.uid,
+          blockedBy: auth.uid,
           timestamp: new Date()
         });
       }
     }
 
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'review_fraud_alert',
       targetAlertId: alertId,
       details: { 
