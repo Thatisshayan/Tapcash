@@ -30,6 +30,37 @@
   was already deferred before this PR and remains open.
 - Action needed: source an official PayPal brand SVG asset, swap the icon.
 
+**Deferred: Deploy Preview workflow is broken (pre-existing, unrelated to TASK-036)**
+- Blocked by: `.github/workflows/deploy.yml`'s `Deploy Preview` job pins
+  `vercel@^50.0.0` and passes `--pre` via `amondnet/vercel-action@v42`;
+  that flag no longer exists on the resolved CLI version (`vercel@50.44.0`
+  as of 2026-08-06) — `Error: unknown or unexpected option: --pre`.
+  Confirmed pre-existing via `git diff main...HEAD -- .github/workflows/deploy.yml`
+  (zero changes on the TASK-036 branch) and via `git log` (workflow last
+  touched by an unrelated `actions/checkout` bump).
+- Not a merge blocker: the actual preview deployment already succeeds via
+  Vercel's native GitHub integration (`Vercel – tapcash` / `Vercel – tapcash-zyd5`
+  checks pass independently), and this job isn't part of the named `gate`
+  workflow required by `AGENTS.md`.
+- Action needed: either drop the `--pre` arg (redundant with `target: preview`
+  on this action version) or pin an older `vercel-version` — whoever owns
+  CI should decide since it's a shared workflow file, not scoped to one track.
+
+**Deferred: Codacy stuck in `action_required`, CodeFactor grade-fail — no actionable findings remain**
+- On PR #57: all specific Codacy findings were verified against current
+  code and are either already fixed (2 High: payout-route transaction,
+  antiFraud `_ip` destructure) or fixed in the same PR (unused `esc()`
+  helper + unused `motion` destructure in `packages/tokens/build.mjs`,
+  stale `@ts-nocheck` in `build.mjs`/`tokens.test.ts`).
+- After that fix, Codacy's check-run conclusion is `action_required`
+  (their GitHub App needs a manual "Run reviewer" trigger on
+  app.codacy.com, not a code change) and CodeFactor fails with no
+  PR-scoped comment output (likely a whole-repo grade threshold, not a
+  diff-specific finding).
+- Action needed: whoever has the Codacy/CodeFactor dashboard access should
+  check in and either re-trigger the review or confirm the grade is
+  repo-wide pre-existing debt, not something this branch introduced.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
 2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.
