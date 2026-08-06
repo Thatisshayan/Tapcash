@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * TapCash token build — single source of truth → both platforms.
  * Reads tokens.json and regenerates the mobile theme (the platform that
@@ -15,11 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..', '..');
 const tokens = JSON.parse(readFileSync(resolve(__dirname, 'tokens.json'), 'utf8'));
 
-const { primitives: p, semantic: s, typeScale: t, space: sp, radius: r, motion: m, gradients: g } = tokens;
-
-function esc(str) {
-  return String(str).replace(/'/g, "\\'");
-}
+const { primitives: p, semantic: s, typeScale: t, space: sp, radius: r, gradients: g } = tokens;
 
 // ── Mobile theme.ts (Model U, typed, generated) ──────────────────────────────
 // Sample data kept but emoji iconography removed (REDESIGN_SPEC anti-pattern).

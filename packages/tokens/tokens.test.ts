@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 1 token-foundation drift test.
  * Enforces the REDESIGN_SPEC Phase 1 gate:
