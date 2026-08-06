@@ -36,7 +36,7 @@ describe("Transaction Atomicity Patterns", () => {
       delete: jest.fn(),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -57,7 +57,7 @@ describe("Transaction Atomicity Patterns", () => {
       set: jest.fn(),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -85,7 +85,7 @@ describe("Transaction Atomicity Patterns", () => {
       }),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -113,7 +113,7 @@ describe("Transaction Atomicity Patterns", () => {
       }),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -140,7 +140,7 @@ describe("Transaction Atomicity Patterns", () => {
       update: jest.fn(),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -169,7 +169,7 @@ describe("Transaction Atomicity Patterns", () => {
       update: jest.fn(),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -192,7 +192,7 @@ describe("Transaction Atomicity Patterns", () => {
       }),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
@@ -219,7 +219,7 @@ describe("Transaction Atomicity Patterns", () => {
       update: jest.fn(),
     };
 
-    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: typeof mockTransaction) => Promise<any>) => {
+    (adminDb.runTransaction as jest.Mock).mockImplementation(async (cb: (transaction: any) => Promise<any>) => {
       return cb(mockTransaction);
     });
 
