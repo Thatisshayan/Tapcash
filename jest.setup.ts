@@ -10,15 +10,19 @@ if (typeof globalThis.TextEncoder === 'undefined') {
   // not jsdom's -- jose's `instanceof Uint8Array` checks run against
   // jsdom's ambient Uint8Array, so a plain assignment fails cross-realm.
   // Re-materializing via the current realm's Uint8Array.from() fixes it.
-  class PatchedTextEncoder extends TextEncoder {
+  // Not `extends TextEncoder`: Node's TextEncoder.encode() return type
+  // (NonSharedUint8Array) is incompatible with a plain Uint8Array override,
+  // so composition avoids that override-compatibility error entirely.
+  class PatchedTextEncoder {
+    private readonly encoder = new TextEncoder()
     encode(input?: string): Uint8Array {
-      return Uint8Array.from(super.encode(input))
+      return Uint8Array.from(this.encoder.encode(input))
     }
   }
-  // @ts-expect-error -- structurally compatible with the DOM lib types
-  // jsdom expects here.
+  // @ts-expect-error -- PatchedTextEncoder is structurally compatible with
+  // what jsdom/jose actually call (encode()), not the full DOM TextEncoder
+  // interface.
   globalThis.TextEncoder = PatchedTextEncoder
-  // @ts-expect-error -- see above
   globalThis.TextDecoder = TextDecoder
 }
 if (typeof globalThis.crypto?.subtle === 'undefined') {

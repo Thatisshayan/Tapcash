@@ -12,6 +12,7 @@ jest.unmock("next/server");
 
 import { NextRequest } from "next/server";
 import { SignJWT } from "jose";
+import { setNodeEnv } from "../lib/testHelpers/testEnv";
 
 const SECRET = "test-middleware-secret";
 
@@ -35,13 +36,13 @@ describe("middleware", () => {
 
   beforeEach(() => {
     process.env.SESSION_SECRET = SECRET;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     jest.resetModules();
   });
 
   afterEach(() => {
     process.env.SESSION_SECRET = ORIGINAL_SECRET;
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+    setNodeEnv(ORIGINAL_NODE_ENV ?? "test");
   });
 
   it("passes through a public route with no session cookie", async () => {

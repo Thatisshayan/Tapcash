@@ -8,6 +8,8 @@
 // src/lib/__tests__/admin-session.test.ts un-mocks next/server the same way.
 jest.unmock("@/lib/firebaseAdmin");
 
+import { setNodeEnv } from "../testHelpers/testEnv";
+
 describe("firebaseAdmin module initialization", () => {
   const ORIGINAL_ENV = { ...process.env };
 
@@ -17,7 +19,7 @@ describe("firebaseAdmin module initialization", () => {
   });
 
   it("initializes in fallback mode in a non-production env with no credentials configured", async () => {
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     delete process.env.FIREBASE_PRIVATE_KEY;
     delete process.env.FIREBASE_CLIENT_EMAIL;
     delete process.env.FIREBASE_PROJECT_ID;
@@ -32,7 +34,7 @@ describe("firebaseAdmin module initialization", () => {
   });
 
   it("exposes adminDb and adminAuth even in fallback mode (module stays importable)", async () => {
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     delete process.env.FIREBASE_PRIVATE_KEY;
     delete process.env.FIREBASE_CLIENT_EMAIL;
     delete process.env.FIREBASE_PROJECT_ID;
@@ -45,7 +47,7 @@ describe("firebaseAdmin module initialization", () => {
   });
 
   it("sets firebaseAdminError with a descriptive message when credentials are partially configured", async () => {
-    process.env.NODE_ENV = "test";
+    setNodeEnv("test");
     process.env.FIREBASE_CLIENT_EMAIL = "test@example.iam.gserviceaccount.com";
     delete process.env.FIREBASE_PRIVATE_KEY;
     delete process.env.FIREBASE_PROJECT_ID;

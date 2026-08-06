@@ -11,5 +11,9 @@ export function setNodeEnv(value: string): void {
   // NODE_ENV=test, masking production-only branches (e.g.
   // src/lib/__tests__/origin.test.ts "should reject missing origin in
   // production mode").
-  process.env.NODE_ENV = value;
+  // @types/node types NODE_ENV as readonly (TS2540) -- the readonly marker
+  // is compile-time only and doesn't affect runtime assignability, so this
+  // narrow cast is the correct way to keep the real plain-assignment
+  // behavior above while satisfying the type checker.
+  (process.env as { NODE_ENV: string }).NODE_ENV = value;
 }
