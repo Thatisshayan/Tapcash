@@ -1,18 +1,18 @@
-import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function logFraudFlag(entry: Record<string, unknown>) {
   await adminDb.collection("fraud_flags").add({
     ...entry,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 }
 
 export async function logAdminAction(entry: Record<string, unknown>) {
   await adminDb.collection("admin_actions").add({
     ...entry,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 }
