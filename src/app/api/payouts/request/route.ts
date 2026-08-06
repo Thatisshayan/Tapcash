@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     const todayCashouts = await adminDb
       .collection("cashout_requests")
       .where("userId", "==", uid)
-      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(todayStart))
+      .where("createdAt", ">=", Timestamp.fromDate(todayStart))
       .get();
     let todayTotal = 0;
     todayCashouts.forEach((doc) => {
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
             status: "flagged",
             isFlagged: true,
             flaggedReason: "Attempted payout destination already linked to another account.",
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
 
           if (linkedUserSnap.exists) {
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
               status: "flagged",
               isFlagged: true,
               flaggedReason: "Payment address linked to another account was reused.",
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             });
           }
 
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
               status: "flagged",
               isFlagged: true,
               flaggedReason: "Attempted payout destination already linked to another account.",
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             });
 
             if (linkedUserSnap.exists) {
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
                 status: "flagged",
                 isFlagged: true,
                 flaggedReason: "Payment address linked to another account was reused.",
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
               });
             }
 
@@ -292,8 +292,8 @@ export async function POST(request: NextRequest) {
                 destinationKey: destinationLockId,
                 ownerUserId: duplicateUserId,
                 linkedCashoutRequestId: duplicateDoc.id,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+                createdAt: FieldValue.serverTimestamp(),
               },
               { merge: true }
             );
@@ -316,8 +316,8 @@ export async function POST(request: NextRequest) {
         bonusCoins: bonusInfo.bonus,
         bonusPercent: bonusConfig?.bonusPercent ?? 0,
         totalValueCoins: bonusInfo.total,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ip,
         deviceFingerprint: deviceFingerprint || null,
       });
@@ -329,8 +329,8 @@ export async function POST(request: NextRequest) {
           destinationKey: destinationLockId,
           ownerUserId: uid,
           linkedCashoutRequestId: cashoutRef.id,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
       transaction.update(userRef, {
         activeCashoutRequestId: cashoutRef.id,
         activeCashoutDestinationKey: cleanDest,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -351,8 +351,8 @@ export async function POST(request: NextRequest) {
         source: "cashout_request",
         referenceId: cashoutRef.id,
         metadata: { method, destination: cleanDest },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 
