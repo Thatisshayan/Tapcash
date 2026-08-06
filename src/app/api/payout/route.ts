@@ -18,6 +18,15 @@ interface ProcessRequest {
   interacSecurityAnswer?: string;
 }
 
+class ClaimError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ClaimError";
+    this.status = status;
+  }
+}
+
 function coinsToDollars(coins: number): number {
   return coins / 1000;
 }
@@ -101,43 +110,56 @@ export async function POST(req: NextRequest) {
     }
 
     const cashoutRef = adminDb.collection("cashout_requests").doc(cashoutRequestId);
-    const cashoutSnap = await cashoutRef.get();
 
-    if (!cashoutSnap.exists) {
-      return NextResponse.json({ error: "Cashout request not found" }, { status: 404 });
-    }
+    // Atomically read-check-claim: without a transaction, two concurrent
+    // requests for the same cashoutRequestId could both pass the
+    // status === "approved" check before either writes "processing",
+    // resulting in duplicate payouts. The transaction below makes the
+    // read + validation + claim a single atomic operation.
+    let cashoutData: FirebaseFirestore.DocumentData;
+    let provider: string;
+    try {
+      const result = await adminDb.runTransaction(async (transaction) => {
+        const snap = await transaction.get(cashoutRef);
+        if (!snap.exists) {
+          throw new ClaimError("Cashout request not found", 404);
+        }
 
-    const cashoutData = cashoutSnap.data()!;
-    if (cashoutData.status !== "approved") {
-      return NextResponse.json({ error: `Cashout request is ${cashoutData.status}, expected "approved"` }, { status: 400 });
-    }
+        const data = snap.data()!;
+        if (data.status !== "approved") {
+          throw new ClaimError(`Cashout request is ${data.status}, expected "approved"`, 400);
+        }
 
-    const provider = cashoutData.method as string;
+        const providerId = data.method as string;
+        if (![...automatedProviders, ...manualProviders].includes(providerId)) {
+          throw new ClaimError(`Provider "${providerId}" is not supported.`, 400);
+        }
 
-    if (![...automatedProviders, ...manualProviders].includes(provider)) {
-      return NextResponse.json({
-        error: `Provider "${provider}" is not supported.`,
-      }, { status: 400 });
-    }
+        if (FROZEN_PROVIDERS.includes(providerId)) {
+          throw new ClaimError("This payout method is temporarily unavailable.", 400);
+        }
 
-    if (FROZEN_PROVIDERS.includes(provider)) {
-      return NextResponse.json({
-        error: "This payout method is temporarily unavailable.",
-      }, { status: 400 });
-    }
+        if (providerId === "interac") {
+          if (!body.interacSecurityQuestion?.trim() || !body.interacSecurityAnswer?.trim()) {
+            throw new ClaimError("Interac payouts require securityQuestion and securityAnswer", 400);
+          }
+        }
 
-    if (provider === "interac") {
-      if (!body.interacSecurityQuestion?.trim() || !body.interacSecurityAnswer?.trim()) {
-        return NextResponse.json({
-          error: "Interac payouts require securityQuestion and securityAnswer",
-        }, { status: 400 });
+        transaction.update(cashoutRef, {
+          status: "processing",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return { data, providerId };
+      });
+      cashoutData = result.data;
+      provider = result.providerId;
+    } catch (error) {
+      if (error instanceof ClaimError) {
+        return NextResponse.json({ error: error.message }, { status: error.status });
       }
+      throw error;
     }
-
-    await cashoutRef.update({
-      status: "processing",
-      updatedAt: FieldValue.serverTimestamp(),
-    });
 
     let payoutResult: { success: boolean; transactionId: string };
     try {
