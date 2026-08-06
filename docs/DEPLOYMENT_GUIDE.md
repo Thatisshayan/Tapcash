@@ -151,7 +151,7 @@ Set these in Vercel Dashboard (Settings > Environment Variables):
 
 #### Firebase Configuration
 ```bash
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_API_KEY=<set in Vercel dashboard>
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
@@ -162,57 +162,57 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
 #### Firebase Admin SDK
 ```bash
-FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+FIREBASE_SERVICE_ACCOUNT_KEY=<set in Vercel dashboard, full JSON service account key>
 ```
 
 #### Payment Providers
 ```bash
 # PayPal
 PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
 PAYPAL_MODE=live
 
 # Tremendous (Gift Cards)
-TREMENDOUS_API_KEY=your_tremendous_api_key
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
 TREMENDOUS_MODE=production
 
-# Interac (Canada)
-INTERAC_API_KEY=your_interac_api_key
-INTERAC_API_SECRET=your_interac_secret
+# Interac (Canada) — frozen for launch, see NEEDSHAYANINPUT.md
+INTERAC_API_KEY=<set in Vercel dashboard>
+INTERAC_API_SECRET=<set in Vercel dashboard>
 ```
 
 #### Security
 ```bash
-SESSION_SECRET=your_secure_random_string_min_32_chars
+SESSION_SECRET=<set in Vercel dashboard, min 32 random chars>
 ADMIN_UIDS=comma,separated,firebase,uids
 ```
 
 #### Offerwall
 ```bash
 RAPIDOREACH_APP_ID=your_app_id
-RAPIDOREACH_APP_KEY=your_app_key
-RAPIDOREACH_APP_SECRET=your_app_secret
-RAPIDOREACH_TRANSACTION_KEY=your_transaction_key
+RAPIDOREACH_APP_KEY=<set in Vercel dashboard>
+RAPIDOREACH_APP_SECRET=<set in Vercel dashboard>
+RAPIDOREACH_TRANSACTION_KEY=<set in Vercel dashboard>
 ```
 
 #### Email Service
 ```bash
-SENDGRID_API_KEY=your_sendgrid_api_key
-FROM_EMAIL=noreply@tapcash.com
+SENDGRID_API_KEY=<set in Vercel dashboard>
+FROM_EMAIL=noreply@tapcash.online
 # OR
-RESEND_API_KEY=your_resend_api_key
+RESEND_API_KEY=<set in Vercel dashboard>
 ```
 
 #### Rate Limiting (Optional — recommended for production)
 ```bash
 UPSTASH_REDIS_REST_URL=your_upstash_url
-UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+UPSTASH_REDIS_REST_TOKEN=<set in Vercel dashboard>
 ```
 
 #### Monitoring (Optional)
 ```bash
 SENTRY_DSN=your_sentry_dsn
-SENTRY_AUTH_TOKEN=your_sentry_auth_token
+SENTRY_AUTH_TOKEN=<set in Vercel dashboard>
 ```
 
 *(rate limiting env vars are listed above under "Rate Limiting")*
@@ -234,8 +234,8 @@ vercel env add FIREBASE_SERVICE_ACCOUNT_KEY production
 
 In Vercel Dashboard:
 1. Go to Settings > Domains
-2. Add your domain: `tapcash.com`
-3. Add www subdomain: `www.tapcash.com`
+2. Add your domain: `tapcash.online`
+3. Add www subdomain: `www.tapcash.online`
 
 ### 2. Configure DNS
 
@@ -253,8 +253,8 @@ Wait for DNS propagation (can take up to 48 hours, usually much faster).
 
 Verify with:
 ```bash
-dig tapcash.com
-dig www.tapcash.com
+dig tapcash.online
+dig www.tapcash.online
 ```
 
 ## SSL & Security
@@ -367,13 +367,13 @@ images: {
 
 ```bash
 # Check homepage
-curl -I https://tapcash.com
+curl -I https://tapcash.online
 
 # Check API health
-curl https://tapcash.com/api/health
+curl https://tapcash.online/api/health
 
 # Check authentication
-curl https://tapcash.com/api/auth/status
+curl https://tapcash.online/api/auth/status
 ```
 
 ### 2. Functionality Tests
@@ -391,7 +391,7 @@ curl https://tapcash.com/api/auth/status
 
 ```bash
 # Run Lighthouse audit
-npx lighthouse https://tapcash.com --view
+npx lighthouse https://tapcash.online --view
 
 # Check Core Web Vitals
 # Use PageSpeed Insights: https://pagespeed.web.dev/
@@ -401,10 +401,10 @@ npx lighthouse https://tapcash.com --view
 
 ```bash
 # Check SSL
-curl -I https://tapcash.com | grep -i strict
+curl -I https://tapcash.online | grep -i strict
 
 # Check security headers
-curl -I https://tapcash.com | grep -i x-frame
+curl -I https://tapcash.online | grep -i x-frame
 
 # Run security audit
 npm audit
@@ -439,8 +439,8 @@ Set up monitoring with:
 - StatusCake (https://www.statuscake.com)
 
 Monitor these endpoints:
-- `https://tapcash.com` (Homepage)
-- `https://tapcash.com/api/health` (API Health)
+- `https://tapcash.online` (Homepage)
+- `https://tapcash.online/api/health` (API Health)
 
 ### 4. Firebase Monitoring
 
@@ -541,10 +541,10 @@ vercel env pull
 
 ### Important URLs
 
-- Production: https://tapcash.com
+- Production: https://tapcash.online
 - Vercel Dashboard: https://vercel.com/dashboard
 - Firebase Console: https://console.firebase.google.com
-- Admin Panel: https://tapcash.com/admin/dashboard
+- Admin Panel: https://tapcash.online/admin/dashboard
 
 ---
 

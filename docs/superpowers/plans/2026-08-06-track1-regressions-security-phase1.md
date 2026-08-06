@@ -24,9 +24,9 @@
 **Context:** PR #56 (an unrelated docs/tokens checkpoint) was the first PR to ever actually run `gate.yml` end-to-end, and it failed — not because of anything in that PR, but because `main` itself currently fails its own gate. Confirmed via `git show main:<file>` that every failure pre-dates this push. This blocks every future PR from ever merging cleanly, so it goes first.
 
 **Files:**
-- Modify: `DEPLOYMENT.md`, `docs/PAYMENT_INTEGRATION_REPORT.md`, `docs/DEVELOPER_GUIDE.md`, `MOBILE_BUILD_GUIDE.md` — replace placeholder-style `SOMETHING_SECRET=your-secret-key-here` patterns with a form the scan won't flag (e.g. `SOMETHING_SECRET=<set in Vercel dashboard>`), preserving the documentation's meaning.
+- Modify: `DEPLOYMENT.md`, `docs/PAYMENT_INTEGRATION_REPORT.md`, `docs/DEVELOPER_GUIDE.md`, `MOBILE_BUILD_GUIDE.md` — replace placeholder-style env-var-equals-example-value patterns (the kind the secret-scan regex matches on an assigned-looking value) with a form the scan won't flag (a "set in Vercel dashboard" style phrasing instead of a literal assignment), preserving the documentation's meaning.
 - Modify: `scripts/verify.sh` — the secret-scan step itself needs a real exclusion for `*.test.ts` files (already commented as intentional in the script) and for its own doc-template patterns; read the current heuristic first (`sed -n '1,60p' scripts/verify.sh`) and tighten the regex/exclusion list rather than disabling the check.
-- Modify: `AGENTS.md` — fix the broken relative link `[RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md)` (only valid in Shayan's local multi-repo layout, not in an isolated clone) — change to an absolute description or drop the link, keep the prose reference.
+- Modify: `AGENTS.md` — fix the broken relative link the markdown link to the sibling-repo path `../RemoteCliControl/AGENTS.md` (only valid in Shayan's local multi-repo layout, not in an isolated clone) — change to an absolute description or drop the link, keep the prose reference.
 - Modify: `src/lib/antiFraud.ts:147` — unused `ip` destructured variable (`@typescript-eslint/no-unused-vars` error).
 - Modify: `src/middleware/index.ts:78` — unused `_rateLimit` (same rule).
 - Modify: `src/lib/idempotency.ts:1` — unused `NextResponse` import (same rule) — note Task 2 of this plan also touches this file; if Task 2 lands first, re-check this line is still unused before editing.
@@ -42,11 +42,11 @@ Confirm the same file list this plan describes.
 
 - [ ] **Step 2: Fix secret-scan false positives**
 
-Edit the flagged doc files to remove the literal `KEY=value`-shaped placeholder pattern (e.g. `JWT_SECRET=your-secret-key-here` -> `JWT_SECRET: set in Vercel dashboard, see NEEDSHAYANINPUT.md`). Do not change `scripts/verify.sh`'s own file (it's flagging itself because it contains the regex pattern as a string) unless the false-positive is on the pattern definition itself — verify which line triggers it (`bash scripts/verify.sh 2>&1 | grep -B2 "scripts/verify.sh"`) before editing.
+Edit the flagged doc files to remove the assignment-shaped placeholder pattern — change the JWT secret example line to a colon-separated form pointing at Vercel dashboard / NEEDSHAYANINPUT.md instead of an equals-sign assignment. Do not change `scripts/verify.sh`'s own file (it's flagging itself because it contains the regex pattern as a string) unless the false-positive is on the pattern definition itself — verify which line triggers it (`bash scripts/verify.sh 2>&1 | grep -B2 "scripts/verify.sh"`) before editing.
 
 - [ ] **Step 3: Fix the broken doc link**
 
-In `AGENTS.md`, change `[RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md)` to plain text: `RemoteCliControl/AGENTS.md (sibling repo, not included in this clone)`.
+In `AGENTS.md`, change the markdown link to the sibling-repo path `../RemoteCliControl/AGENTS.md` to plain text: `RemoteCliControl/AGENTS.md (sibling repo, not included in this clone)`.
 
 - [ ] **Step 4: Fix the 3 confirmed unused-variable ESLint errors**
 
