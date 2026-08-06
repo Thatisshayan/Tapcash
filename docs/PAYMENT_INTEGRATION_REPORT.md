@@ -50,8 +50,8 @@ All three payment providers (PayPal, Interac, Tremendous) have been fully integr
 #### Configuration Required
 ```env
 PAYPAL_MODE=sandbox              # or 'live'
-PAYPAL_CLIENT_ID=your_client_id
-PAYPAL_CLIENT_SECRET=your_secret
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
 ```
 
 #### Limits & Constraints
@@ -96,8 +96,8 @@ PAYPAL_CLIENT_SECRET=your_secret
 
 #### Configuration Required
 ```env
-INTERAC_API_KEY=your_api_key
-INTERAC_API_SECRET=your_api_secret
+INTERAC_API_KEY=<set in Vercel dashboard>
+INTERAC_API_SECRET=<set in Vercel dashboard>
 INTERAC_ENVIRONMENT=sandbox      # or 'production'
 ```
 
@@ -149,8 +149,8 @@ If API credentials are not configured, the system falls back to manual processin
 
 #### Configuration Required
 ```env
-TREMENDOUS_API_KEY=your_api_key
-TREMENDOUS_CAMPAIGN_ID=your_campaign_id
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
+TREMENDOUS_CAMPAIGN_ID=<set in Vercel dashboard>
 TREMENDOUS_ENVIRONMENT=sandbox   # or 'production'
 ```
 
@@ -379,17 +379,17 @@ User → /api/payouts/request → pending_review
 ```env
 # PayPal Production
 PAYPAL_MODE=live
-PAYPAL_CLIENT_ID=<production_client_id>
-PAYPAL_CLIENT_SECRET=<production_secret>
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
 
 # Interac Production
-INTERAC_API_KEY=<production_api_key>
-INTERAC_API_SECRET=<production_secret>
+INTERAC_API_KEY=<set in Vercel dashboard>
+INTERAC_API_SECRET=<set in Vercel dashboard>
 INTERAC_ENVIRONMENT=production
 
 # Tremendous Production
-TREMENDOUS_API_KEY=<production_api_key>
-TREMENDOUS_CAMPAIGN_ID=<production_campaign_id>
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
+TREMENDOUS_CAMPAIGN_ID=<set in Vercel dashboard>
 TREMENDOUS_ENVIRONMENT=production
 ```
 
