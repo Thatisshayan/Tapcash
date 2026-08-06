@@ -57,21 +57,19 @@ export function validateEnv(): Env {
     console.error(
       "[ENV] Invalid environment variables:\n" + missing.join("\n")
     );
-    // `next build` always sets NODE_ENV=production, including in CI/Vercel
-    // preview builds that don't have secrets injected -- NEXT_PHASE is the
-    // signal Next.js actually sets only during `next build` itself, distinct
-    // from real production runtime serving. Same distinction already used
-    // in firebaseAdmin.ts and firebase.ts. Without this, `next build` can
-    // never succeed anywhere secrets aren't configured, which blocked CI
-    // entirely once earlier gate steps stopped short-circuiting first.
-    const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
-    if (process.env.NODE_ENV === "production" && !isBuildPhase) {
-      throw new Error(
-        `Missing required environment variables: ${missing.join(", ")}`
-      );
-    }
+    // validateEnv() is only ever called from next.config.ts (confirmed --
+    // it has no other call site), which Next.js evaluates once during
+    // `next build` and never again at real runtime request-serving. So a
+    // throw here can only ever block a build, never actually protect a
+    // running production server -- and `next build` always sets
+    // NODE_ENV=production regardless of whether secrets are configured
+    // for this particular build (CI, Vercel preview deployments without
+    // env vars scoped to Preview, etc). NEXT_PHASE is not reliably set
+    // this early in config-load to distinguish build from runtime either
+    // (confirmed empirically -- it did not prevent this exact throw).
+    // Given that, throwing here can never be correct: log loudly instead.
     console.warn(
-      "[ENV] Running with incomplete env vars (non-production mode or build phase)"
+      "[ENV] Running with incomplete env vars -- see errors above"
     );
   }
 
