@@ -13,9 +13,6 @@ const customJestConfig = {
     '^@shared/(.*)$': '<rootDir>/shared/$1',
   },
   testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
-  transformIgnorePatterns: [
-    'node_modules/(?!(jose)/)',
-  ],
 }
 
 module.exports = createJestConfig(customJestConfig)

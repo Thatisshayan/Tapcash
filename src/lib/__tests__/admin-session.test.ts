@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { SignJWT } from "jose";
 
 const SECRET = "test-admin-session-secret";
 
@@ -11,7 +12,6 @@ async function makeRequestWithCookie(cookieValue: string | undefined): Promise<N
 }
 
 async function signAdminJwt(payload: Record<string, unknown>, secret = SECRET): Promise<string> {
-  const { SignJWT } = await import("jose");
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

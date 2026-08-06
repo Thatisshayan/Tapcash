@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
 interface AdminSessionPayload {
   uid: string;
@@ -35,7 +36,6 @@ export async function requireAdminSession(request: NextRequest): Promise<AdminSe
   }
 
   try {
-    const { jwtVerify } = await import("jose");
     const secret = new TextEncoder().encode(SESSION_SECRET);
     const { payload } = await jwtVerify(cookieValue, secret);
 
