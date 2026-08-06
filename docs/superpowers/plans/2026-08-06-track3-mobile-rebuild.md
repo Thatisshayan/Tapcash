@@ -18,6 +18,7 @@
 - Interac e-Transfer is frozen platform-wide (Track 1 Phase 1). The mobile cashout UI must not offer it as a selectable method (Task 7).
 - Domain is `tapcash.online`, not `tapcash.com` (Task 8 — verification found no violation, documented as a clean check).
 - App Store / Play Store submission is out of scope for this plan (Task 10) — deferred until Track 2 redesign lands and Shayan approves the new UI.
+- **Motion/animation library: CSS + Reanimated, not Lottie** — confirmed explicitly by Shayan 2026-08-06 (was an open REDESIGN_SPEC §8 decision, now resolved; see `docs/governance/DEFERRED_WORK.md`). No task in this plan currently builds new mobile animations, but if a future task (or Track 3's follow-up after this plan) adds any, it must use `react-native-reanimated`, not introduce `lottie-react-native` or any Lottie/After-Effects asset pipeline.
 
 ---
 
