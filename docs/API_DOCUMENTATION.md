@@ -26,7 +26,7 @@ Client-side uses Firebase Auth. Server-side uses either:
 
 ### CSRF protection
 
-Cookie-authenticated state-changing requests (POST/PATCH/DELETE) require a
+Cookie-authenticated state-changing requests (POST/PATCH/DELETE/PUT) require a
 `x-csrf-token` header matching the non-HTTP-only `csrf_token` cookie set
 alongside the session (double-submit-cookie pattern, `src/lib/csrf.ts`).
 This applies to `/api/admin/*` and other cookie-authenticated mutating
@@ -538,7 +538,7 @@ All admin endpoints require admin role verification via the `admin_session`
 HTTP-only cookie (minted by `POST /api/auth/session`, not a Bearer token —
 `middleware.ts` doesn't cover `/api/admin/*`, so each route verifies this
 cookie directly via `requireAdminSession()`). State-changing requests
-(POST/PATCH/DELETE) also require the CSRF header/cookie pair (see
+(POST/PATCH/DELETE/PUT) also require the CSRF header/cookie pair (see
 Authentication section above).
 
 ### GET /api/admin/stats
