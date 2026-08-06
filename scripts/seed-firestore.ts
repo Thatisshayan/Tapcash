@@ -9,7 +9,8 @@
  *   - Firestore initialized in the project
  */
 
-import * as admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -20,15 +21,15 @@ if (!privateKey || !clientEmail || !projectId) {
   process.exit(1);
 }
 
-const app = admin.initializeApp({
-  credential: admin.credential.cert({
+const app = initializeApp({
+  credential: cert({
     projectId,
     clientEmail,
     privateKey: privateKey.replace(/\\n/g, "\n"),
   }),
 });
 
-const db = admin.firestore(app);
+const db = getFirestore(app);
 
 // --- Data from shared/tapcash-content.ts ---
 
@@ -84,7 +85,7 @@ async function seedCollection(name: string, docs: Record<string, unknown>[]) {
   for (const data of docs) {
     const id = data.id as string;
     const ref = id ? col.doc(id) : col.doc();
-    batch.set(ref, { ...data, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    batch.set(ref, { ...data, createdAt: FieldValue.serverTimestamp() });
   }
 
   await batch.commit();
