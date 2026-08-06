@@ -144,7 +144,7 @@ export function calculateFraudScore(params: {
   emailDomain: string;
   ip?: string;
 }): FraudScore {
-  const { userAgent, deviceFingerprint, emailDomain, _ip } = params;
+  const { userAgent, deviceFingerprint, emailDomain } = params;
   let score = 0;
   const riskFactors: string[] = [];
 
