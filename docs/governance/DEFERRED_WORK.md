@@ -30,10 +30,12 @@
   was already deferred before this PR and remains open.
 - Action needed: source an official PayPal brand SVG asset, swap the icon.
 
-## Open decisions for Shayan (carried from REDESIGN_SPEC §8, still unanswered)
-1. Palette: Model U (recommended) — adopted as default in token source; confirm.
-2. Admin: retheme dark via `*Premium` (recommended) vs keep light.
-3. Motion library: Lottie vs CSS+Reanimated.
-4. Icons: unify on Lucide (recommended).
-5. A/B infra: revive or delete.
-6. Fabricated stats: remove / wire to `/api/stats/platform`.
+## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
+1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
+2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.
+3. ✅ **RESOLVED 2026-08-06** — Motion library: CSS + Reanimated (not Lottie). Confirmed by Shayan. See `docs/superpowers/plans/2026-08-06-track3-mobile-rebuild.md` for where this applies.
+4. Icons: unify on Lucide (recommended) — de facto already true, no other icon library present in `package.json` as of 2026-08-06. Not a blocking decision, just needs a formal nod.
+5. A/B infra (`landing/HeroDynamic` + `HeroV1Balanced`/`HeroV2Gaming`/`HeroV3Offers`): revive or delete — still open, tied to the orphan-component deletion decision (item below).
+6. ✅ **RESOLVED** — Fabricated stats: wire to `/api/stats/platform` (already live). See Track 2 Task 2.
+7. **NEW 2026-08-06, per Shayan explicitly:** every payment/brand logo (PayPal, Amazon, Tim Hortons, Steam, Visa, Bitcoin, Litecoin) must be that company's real official logo, sourced from their own brand/press kit — never AI-generated, never a lucide-icon/emoji stand-in. See Track 2 Task 6.
+8. **NEW 2026-08-06:** contrast audit (WCAG AA, 4.5:1 text / 3:1 UI) was missing from Track 2's Batches A-C despite being REDESIGN_SPEC's own Phase 1 gate criterion paired with the hex purge — added as Track 2 Task 7.
