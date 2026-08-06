@@ -27,14 +27,18 @@ else
   if [ -n "$bad_files" ]; then error "secret-scan" "secret files present: $bad_files"; fi
   # (b) content-based: only scan first-party code/config, require an ASSIGNED VALUE.
   #     Exclude dependency / generated dirs so library files don't false-positive.
-  #     Test/spec files intentionally contain mock credentials (e.g.
-  #     PAYPAL_CLIENT_SECRET='test_client_secret') — never real secrets — so they
-  #     are excluded from the content scan to avoid false positives.
+  #     Test/spec files intentionally contain mock credentials (e.g. a fake
+  #     PayPal client secret assigned to a test fixture) — never real
+  #     secrets — so they are excluded from the content scan below.
+  # Multiple repeated --exclude=<glob> flags are unreliable across grep
+  # implementations (only the last one may be honored) — exclude the whole
+  # __tests__/__mocks__ directories instead, since that's robust everywhere
+  # these mock-credential test files actually live.
   hits=$(grep -rIlE "(API_KEY|SECRET|PRIVATE_KEY|TOKEN|PASSWORD)[[:space:]]*[=:][[:space:]]*[\"']?[A-Za-z0-9/+_-]{8,}" \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=audits/private \
     --exclude-dir=.venv --exclude-dir=_repo_clone --exclude-dir=dist --exclude-dir=build \
-    --exclude-dir=.cache --exclude-dir=coverage \
-    --exclude='*.test.ts' --exclude='*.spec.ts' --exclude='*.test.js' --exclude='*.spec.js' \
+    --exclude-dir=.cache --exclude-dir=coverage --exclude-dir=__tests__ --exclude-dir=__mocks__ \
+    --exclude-dir=superpowers --exclude-dir=.superpowers \
     --include='*.json' --include='*.env' --include='*.ts' --include='*.js' --include='*.py' \
     --include='*.yml' --include='*.yaml' --include='*.toml' --include='*.sh' . 2>/dev/null || true)
   if [ -n "$hits" ]; then error "secret-scan" "possible hardcoded secrets in: $hits"; fi
@@ -47,7 +51,7 @@ echo "== doc-freshness =="
 # Skip dependency/generated dirs with -prune so we never walk node_modules.
 # (a) best-effort external tool if present
 if command -v markdown-link-check >/dev/null 2>&1; then
-  find . \( -name node_modules -o -name .git \) -prune -o \
+  find . \( -name node_modules -o -name .git -o -path './docs/superpowers' \) -prune -o \
     -name '*.md' -print0 2>/dev/null \
     | xargs -0 -r -n1 markdown-link-check || error "doc-freshness" "broken doc links"
 fi
@@ -65,7 +69,7 @@ while IFS= read -r md; do
       link_broken=1
     fi
   done
-done < <(find . \( -name node_modules -o -name .git \) -prune -o \
+done < <(find . \( -name node_modules -o -name .git -o -path './docs/superpowers' \) -prune -o \
            -name '*.md' -print 2>/dev/null || true)
 if [ "$link_broken" -eq 0 ]; then notice "doc-freshness" "relative links ok"; fi
 # audit age (≤ 30 days) — use the newest valid ISO date parsed from an
@@ -122,8 +126,18 @@ if [ -n "$PM" ]; then
     npm)  run_with_timeout 300 build npm ci ;;
   esac
   if [ $FAIL -eq 0 ]; then
-    (npm run build --if-present || pnpm run build --if-present || yarn build) >/dev/null 2>&1 && notice build "build ok" || error build "build failed"
-    (npm test --if-present || pnpm test --if-present || yarn test) >/dev/null 2>&1 && notice test "test ok" || error test "test failed"
+    # Use the single package manager already detected above -- an
+    # `a || b || c` fallback chain risks masking a real failure in `a` by
+    # silently trying `b`/`c` next, and previously had no timeout at all
+    # (a hung build/test could block CI indefinitely).
+    build_out=$(timeout 300 "$PM" run build --if-present 2>&1); build_rc=$?
+    if [ $build_rc -eq 124 ]; then error build "timed out after 300s"
+    elif [ $build_rc -eq 0 ]; then notice build "build ok"
+    else error build "build failed: $(printf '%s' "$build_out" | tail -40)"; fi
+    test_out=$(timeout 300 "$PM" test --if-present 2>&1); test_rc=$?
+    if [ $test_rc -eq 124 ]; then error test "timed out after 300s"
+    elif [ $test_rc -eq 0 ]; then notice test "test ok"
+    else error test "test failed: $(printf '%s' "$test_out" | tail -60)"; fi
   fi
 elif [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   pip install -q -r requirements.txt 2>/dev/null || true

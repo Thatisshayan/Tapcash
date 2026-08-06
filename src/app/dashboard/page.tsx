@@ -31,6 +31,43 @@ type LedgerSummaryResponse = {
   verificationState?: string;
 };
 
+function GDPRExportButton({ user }: { user: { getIdToken: () => Promise<string> } | null }) {
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    if (!user) return;
+    setExporting(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/gdpr/export", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tapcash-data-export-${new Date().toISOString().split("T")[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      console.error("GDPR export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+  return (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      className="mt-3 w-full rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors disabled:opacity-40"
+    >
+      {exporting ? "Exporting..." : "Download my data"}
+    </button>
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [ledger, setLedger] = useState<LedgerSummaryResponse | null>(null);
@@ -163,43 +200,6 @@ export default function DashboardPage() {
 
   usePolling(refreshActivity, 30000, !!user);
   usePolling(refreshLeaderboard, 60000, !!user);
-
-  function GDPRExportButton({ user }: { user: { getIdToken: () => Promise<string> } | null }) {
-  const [exporting, setExporting] = useState(false);
-  const handleExport = async () => {
-    if (!user) return;
-    setExporting(true);
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/gdpr/export", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success && data.data) {
-        const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `tapcash-data-export-${new Date().toISOString().split("T")[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch {
-      console.error("GDPR export failed");
-    } finally {
-      setExporting(false);
-    }
-  };
-  return (
-    <button
-      onClick={handleExport}
-      disabled={exporting}
-      className="mt-3 w-full rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors disabled:opacity-40"
-    >
-      {exporting ? "Exporting..." : "Download my data"}
-    </button>
-  );
-}
 
 if (authLoading || (user && loading && !ledger)) {
     return (

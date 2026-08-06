@@ -25,7 +25,7 @@ All repositories follow the foundational agent rules established in the RemoteCl
 - Documentation must be updated in the same pass as code changes
 - Verification must be run (or concrete blockers reported)
 
-For full details, see [RemoteCliControl/AGENTS.md](../RemoteCliControl/AGENTS.md).
+For full details, see RemoteCliControl/AGENTS.md (sibling repo, not included in this clone).
 
 ## TapCash-Specific Context
 

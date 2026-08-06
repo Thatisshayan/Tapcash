@@ -14,7 +14,7 @@ function validateCashoutAmount(amountCoins: number): { valid: boolean; error?: s
   return { valid: true };
 }
 
-const ALLOWED_METHODS = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
+const ALLOWED_METHODS = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
 
 function validateMethod(method: string): boolean {
   return ALLOWED_METHODS.includes(method);
@@ -90,6 +90,10 @@ describe("validateMethod", () => {
 
   it("rejects unknown method", () => {
     expect(validateMethod("bank_transfer")).toBe(false);
+  });
+
+  it("rejects 'interac' (frozen for launch, 2026-08-06)", () => {
+    expect(validateMethod("interac")).toBe(false);
   });
 
   it("rejects empty string", () => {

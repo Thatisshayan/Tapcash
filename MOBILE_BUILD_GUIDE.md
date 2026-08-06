@@ -37,7 +37,7 @@ eas init --id 1c561a9d-ac22-47db-b376-921c6e4b5086
 ### Required `.env` values:
 ```
 EXPO_PUBLIC_API_BASE_URL=https://tapcash.online
-EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyACKd9BuIVbwADY8P1Ap3_gHdDoLs3uGdw
+EXPO_PUBLIC_FIREBASE_API_KEY=<set in Vercel dashboard>
 EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=tapcash-16238.firebaseapp.com
 EXPO_PUBLIC_FIREBASE_PROJECT_ID=tapcash-16238
 EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=tapcash-16238.firebasestorage.app

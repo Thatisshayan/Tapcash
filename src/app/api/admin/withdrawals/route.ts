@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { sendPayoutApprovedEmail, sendPayoutRejectedEmail, sendPayoutSentEmail } from "@/lib/email";
 import { logAdminAction } from "@/lib/audit";
 
@@ -11,7 +11,7 @@ async function requireAdmin(request: NextRequest) {
   }
 
   const idToken = authHeader.split("Bearer ")[1];
-  const decodedToken = await admin.auth().verifyIdToken(idToken);
+  const decodedToken = await adminAuth.verifyIdToken(idToken);
   const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
 
   if (!userDoc.exists || !userDoc.data()?.isAdmin) {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const auth = await requireAdmin(request);
     if ("error" in auth) return auth.error;
 
-    const oneDayAgo = admin.firestore.Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const oneDayAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
 
     const [
       withdrawalsSnap,
@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
           status: "sent",
           referenceNumber: referenceNumber || null,
           processedBy: adminUid,
-          processedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          processedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
 
         transaction.set(ledgerRef, {
@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
             referenceNumber: referenceNumber || null,
             adminNote: adminNote || null,
           },
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       });
 
@@ -156,9 +156,9 @@ export async function POST(request: NextRequest) {
           status: "approved",
           reviewedBy: adminEmail,
           reviewedByUid: adminUid,
-          reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+          reviewedAt: FieldValue.serverTimestamp(),
           adminNote: adminNote || null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
 
         transaction.set(ledgerRef, {
@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
             destination: withdrawalData.destination,
             adminNote: adminNote || null,
           },
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       });
 
@@ -201,9 +201,9 @@ export async function POST(request: NextRequest) {
         status: "rejected",
         reviewedBy: adminEmail,
         reviewedByUid: adminUid,
-        reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+        reviewedAt: FieldValue.serverTimestamp(),
         adminNote: adminNote || null,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -220,8 +220,8 @@ export async function POST(request: NextRequest) {
           destination: withdrawalData.destination,
           adminNote: adminNote || null,
         },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 

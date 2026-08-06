@@ -21,10 +21,6 @@ export default function StreakWidget() {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStreak();
-  }, []);
-
   async function fetchStreak() {
     try {
       const res = await fetch("/api/streak");
@@ -36,6 +32,10 @@ export default function StreakWidget() {
       setError("Could not load streak data");
     }
   }
+
+  useEffect(() => {
+    fetchStreak();
+  }, []);
 
   async function handleCheckIn() {
     setChecking(true);
