@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
 
     let lastCheckInDate: string | null = null;
     if (lastCheckIn) {
-      const d = lastCheckIn.toDate ? lastCheckIn.toDate() : new Date(lastCheckIn);
+      const d = typeof lastCheckIn === "object" && lastCheckIn.toDate
+        ? lastCheckIn.toDate()
+        : new Date(lastCheckIn as string);
       lastCheckInDate = d.toISOString().split("T")[0];
     }
 

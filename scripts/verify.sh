@@ -129,7 +129,7 @@ if [ -n "$PM" ]; then
     build_out=$( (npm run build --if-present || pnpm run build --if-present || yarn build) 2>&1 )
     if [ $? -eq 0 ]; then notice build "build ok"; else error build "build failed: $(printf '%s' "$build_out" | tail -40)"; fi
     test_out=$( (npm test --if-present || pnpm test --if-present || yarn test) 2>&1 )
-    if [ $? -eq 0 ]; then notice test "test ok"; else error test "test failed: $(printf '%s' "$test_out" | tail -15)"; fi
+    if [ $? -eq 0 ]; then notice test "test ok"; else error test "test failed: $(printf '%s' "$test_out" | tail -60)"; fi
   fi
 elif [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   pip install -q -r requirements.txt 2>/dev/null || true
