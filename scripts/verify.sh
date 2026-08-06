@@ -126,10 +126,18 @@ if [ -n "$PM" ]; then
     npm)  run_with_timeout 300 build npm ci ;;
   esac
   if [ $FAIL -eq 0 ]; then
-    build_out=$( (npm run build --if-present || pnpm run build --if-present || yarn build) 2>&1 )
-    if [ $? -eq 0 ]; then notice build "build ok"; else error build "build failed: $(printf '%s' "$build_out" | tail -40)"; fi
-    test_out=$( (npm test --if-present || pnpm test --if-present || yarn test) 2>&1 )
-    if [ $? -eq 0 ]; then notice test "test ok"; else error test "test failed: $(printf '%s' "$test_out" | tail -60)"; fi
+    # Use the single package manager already detected above -- an
+    # `a || b || c` fallback chain risks masking a real failure in `a` by
+    # silently trying `b`/`c` next, and previously had no timeout at all
+    # (a hung build/test could block CI indefinitely).
+    build_out=$(timeout 300 "$PM" run build --if-present 2>&1); build_rc=$?
+    if [ $build_rc -eq 124 ]; then error build "timed out after 300s"
+    elif [ $build_rc -eq 0 ]; then notice build "build ok"
+    else error build "build failed: $(printf '%s' "$build_out" | tail -40)"; fi
+    test_out=$(timeout 300 "$PM" test --if-present 2>&1); test_rc=$?
+    if [ $test_rc -eq 124 ]; then error test "timed out after 300s"
+    elif [ $test_rc -eq 0 ]; then notice test "test ok"
+    else error test "test failed: $(printf '%s' "$test_out" | tail -60)"; fi
   fi
 elif [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   pip install -q -r requirements.txt 2>/dev/null || true

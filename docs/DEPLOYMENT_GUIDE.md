@@ -162,7 +162,9 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
 #### Firebase Admin SDK
 ```bash
-FIREBASE_SERVICE_ACCOUNT_KEY=<set in Vercel dashboard, full JSON service account key>
+FIREBASE_PROJECT_ID=<set in Vercel dashboard>
+FIREBASE_CLIENT_EMAIL=<set in Vercel dashboard>
+FIREBASE_PRIVATE_KEY=<set in Vercel dashboard, full JSON service account key>
 ```
 
 #### Payment Providers
@@ -174,7 +176,7 @@ PAYPAL_MODE=live
 
 # Tremendous (Gift Cards)
 TREMENDOUS_API_KEY=<set in Vercel dashboard>
-TREMENDOUS_MODE=production
+TREMENDOUS_ENVIRONMENT=production
 
 # Interac (Canada) — frozen for launch, see NEEDSHAYANINPUT.md
 INTERAC_API_KEY=<set in Vercel dashboard>
