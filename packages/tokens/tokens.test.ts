@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const repoRoot = resolve(__dirname, '..', '..', '..');
+const repoRoot = resolve(__dirname, '..', '..');
 
 const tokens = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tokens/tokens.json'), 'utf8'));
 const { primitives, legacy } = tokens;
