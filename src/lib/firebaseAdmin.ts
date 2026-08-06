@@ -64,14 +64,21 @@ if (!getApps().length) {
     log(isProduction ? "error" : "warn", firebaseAdminError);
   }
 
-  // In production, never fall back — fail loudly if Firebase Admin isn't configured.
-  // In dev/test, initialize a minimal app so the module is importable.
+  // "Never fall back in production" must NOT mean "leave the module
+  // uninitializable" — adminDb/adminAuth below call getFirestore()/getAuth()
+  // unconditionally at module-evaluation time, so if no app exists here,
+  // importing this module anywhere (even pages that don't touch Firebase)
+  // throws and takes the whole route/page down. Always initialize a
+  // (possibly placeholder) app so the module loads; the loud error log
+  // is how production misconfiguration surfaces, not a crash on import.
+  // firebaseAdminReady stays false so callers that check it before relying
+  // on real data still gate correctly.
   if (!getApps().length) {
+    app = initializeApp({ projectId: projectId || "tapcash-dev" });
+    firebaseAdminMode = "fallback";
     if (isProduction) {
-      log("error", "Firebase Admin unavailable in production — credentials are required.");
+      log("error", "Firebase Admin unavailable in production — credentials are required. Using placeholder app so the module still loads; firebaseAdminReady is false.");
     } else {
-      app = initializeApp({ projectId: projectId || "tapcash-dev" });
-      firebaseAdminMode = "fallback";
       log("warn", "Using fallback Firebase app. Real credentials required for production.");
     }
   }

@@ -19,6 +19,17 @@
 - Blocked by: `node_modules` was partially broken on the agent machine (missing `jest/package.json`, `next/package.json` manifests). `npm ci` reinstall started 2026-08-05 to restore a runnable verify path.
 - Action: after install completes, run `jest packages/tokens/tokens.test.ts`, `npm test`, `npm run type-check`, `npm run lint`, and confirm the new drift test is green before merging the Phase 1 token branch.
 
+## 2026-08-06 — Claude Code — TASK-036 Track 1 Phase 1
+
+**Deferred: Official PayPal SVG logo**
+- Blocked by: no official PayPal brand asset sourced yet.
+- Scope: `src/components/sections/PayoutMethodsSection.tsx:4` — TODO comment
+  updated (Interac reference removed from it as part of the Interac freeze,
+  TASK-036 Task 9) but the underlying deferred work — replacing the
+  `CreditCard` lucide icon placeholder with an official PayPal SVG logo —
+  was already deferred before this PR and remains open.
+- Action needed: source an official PayPal brand SVG asset, swap the icon.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8, still unanswered)
 1. Palette: Model U (recommended) — adopted as default in token source; confirm.
 2. Admin: retheme dark via `*Premium` (recommended) vs keep light.
