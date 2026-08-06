@@ -62,7 +62,8 @@ const FAQS = [
 
 const PAYOUT_METHODS = [
   { id: "paypal", label: "PayPal Cash", subtitle: "Fastest mainstream cashout", minCoins: 5000, eta: "Usually under 24h", accent: "teal", audience: "Most users", order: 1 },
-  { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", accent: "blue", audience: "Canadian users", order: 2 },
+  // FROZEN 2026-08-06: Interac disabled for launch, do not seed. Re-enable when un-frozen.
+  // { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", accent: "blue", audience: "Canadian users", order: 2 },
   { id: "bitcoin", label: "Bitcoin", subtitle: "Direct crypto payout", minCoins: 10000, eta: "Queue based", accent: "gold", audience: "Crypto users", order: 3 },
   { id: "gift", label: "Gift cards", subtitle: "Steam, Tim Hortons, and more", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Light redeemers", order: 4 },
 ];

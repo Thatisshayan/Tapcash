@@ -9,6 +9,7 @@ import { logAdminAction } from "@/lib/audit";
 
 const automatedProviders = ["paypal", "tremendous"];
 const manualProviders = ["interac", "bitcoin", "litecoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
+const FROZEN_PROVIDERS = ["interac"];
 
 interface ProcessRequest {
   cashoutRequestId: string;
@@ -116,6 +117,12 @@ export async function POST(req: NextRequest) {
     if (![...automatedProviders, ...manualProviders].includes(provider)) {
       return NextResponse.json({
         error: `Provider "${provider}" is not supported.`,
+      }, { status: 400 });
+    }
+
+    if (FROZEN_PROVIDERS.includes(provider)) {
+      return NextResponse.json({
+        error: "This payout method is temporarily unavailable.",
       }, { status: 400 });
     }
 

@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Daily withdrawal limit is ${DAILY_LIMIT.toLocaleString()} coins ($${DAILY_LIMIT / 1000}.00). You have already requested ${todayTotal.toLocaleString()} coins today.` }, { status: 400 });
     }
 
-    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
+    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
     if (!allowedMethods.includes(method)) {
       return NextResponse.json({ error: `Invalid payout method: ${method}` }, { status: 400 });
     }

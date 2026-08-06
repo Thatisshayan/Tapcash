@@ -1,11 +1,10 @@
-import { CreditCard, Building2, ShoppingBag, Bitcoin, Landmark, Shield } from 'lucide-react';
+import { CreditCard, ShoppingBag, Bitcoin, Landmark, Shield } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
-/* TODO: Replace with official PayPal/Interac SVG logos when available */
+/* TODO: Replace with official PayPal SVG logo when available */
 
 const METHODS = [
   { icon: CreditCard, name: 'PayPal', interac: false },
-  { icon: Building2, name: 'Interac e-Transfer', interac: true },
   { icon: ShoppingBag, name: 'Amazon Gift Card', interac: false },
   { icon: Bitcoin, name: 'Crypto', interac: false },
   { icon: Landmark, name: 'Bank Transfer', interac: false },
@@ -48,11 +47,6 @@ export function PayoutMethodsSection() {
             </GlassCard>
           ))}
         </div>
-
-        {/* Interac note */}
-        <p className="text-center text-[13px] text-white/50 max-w-lg mx-auto mb-12">
-          Canadian users: Interac e-Transfer deposits directly to your bank — no middleman.
-        </p>
 
         {/* Trust badges */}
         <div className="flex flex-wrap justify-center gap-6">

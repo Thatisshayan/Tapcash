@@ -2,7 +2,6 @@ import { MotionWrap } from "@/components/PremiumUi";
 
 const METHODS = [
   { name: "PayPal", icon: "💰", detail: "Instant transfer", badge: "Most popular" },
-  { name: "Interac e-Transfer", icon: "🏦", detail: "Canadian banks", badge: "Canada" },
   { name: "Amazon Gift Card", icon: "🎁", detail: "+2% bonus", badge: "Bonus" },
   { name: "Tim Hortons", icon: "☕", detail: "+3% bonus", badge: "Bonus" },
   { name: "Steam", icon: "🎮", detail: "+1% bonus", badge: "Bonus" },
