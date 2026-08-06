@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { adminFetch } from '@/lib/adminApiClient';
 
 interface User {
   id: string;
@@ -32,12 +33,7 @@ export default function UserManagement() {
 
   const loadUsers = useCallback(async () => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await adminFetch('/api/admin/users');
 
       if (response.status === 403) {
         router.push('/dashboard');
@@ -70,13 +66,9 @@ export default function UserManagement() {
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/users', {
+      const response = await adminFetch('/api/admin/users', {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, status: newStatus })
       });
 
@@ -93,13 +85,9 @@ export default function UserManagement() {
 
   const handleBalanceAdjustment = async (userId: string, amount: number, reason: string) => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/users', {
+      const response = await adminFetch('/api/admin/users', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, amount, reason, action: 'adjust_balance' })
       });
 

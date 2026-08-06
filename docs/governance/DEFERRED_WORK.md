@@ -148,6 +148,57 @@ future reader doesn't reintroduce it.
   supports — a real choice, not something to silently paper over with
   `--legacy-peer-deps` as the permanent state.
 
+## 2026-08-06 — Claude Code — TASK-037 admin frontend was broken by the auth migration (self-discovered, not from external review)
+
+**Found and fixed: the entire admin dashboard was non-functional on this branch**
+- While wiring CSRF into `requireAdminSession()` (see next entry below), I
+  checked whether the admin frontend actually sends the required header —
+  and discovered it doesn't send ANYTHING the new auth mechanism needs.
+  Tasks 3/4/5 (this same phase) removed Bearer-token support from all 8
+  `/api/admin/*` routes, but every admin frontend page (`src/app/admin/**`,
+  31 fetch call sites across 9 files) still exclusively sent
+  `Authorization: Bearer <firebase_id_token>` and never called
+  `POST /api/auth/session` to mint the `admin_session` cookie. `AdminLayout`
+  itself (the shared wrapper for all 8 admin pages) checked admin status by
+  Bearer-pinging `/api/admin/withdrawals` — which now 401s unconditionally,
+  so every real admin user would have been immediately redirected away from
+  the entire admin panel.
+- This was never caught because all of Tasks 2-9's verification was
+  backend-only (jest with synthetic cookies, tsc, grep) — nothing exercised
+  the actual frontend-to-backend request flow.
+- Fixed: added `src/lib/adminApiClient.ts` (`adminFetch()` — drops the
+  Bearer header, attaches `x-csrf-token` from the `csrf_token` cookie for
+  non-GET requests), updated `AdminLayout` to mint the `admin_session`
+  cookie via `POST /api/auth/session` instead of Bearer-pinging an admin
+  route, and converted all 31 call sites across the 9 admin frontend files
+  to use `adminFetch()`. Left `src/app/admin/page.tsx`'s one call to
+  `/api/payout` on Bearer intentionally — that route is separate and
+  wasn't migrated by TASK-037.
+- Verified: `npx tsc --noEmit` clean, `npx eslint` 0 errors (only
+  pre-existing warnings), full jest suite still 25/25/329 passed. Could NOT
+  verify `npm run build` locally — see the local-build-crash entry below;
+  relying on real CI (already green on `build` in this repo's `gate.yml`
+  for prior pushes) as the authoritative check per this repo's established
+  precedent.
+
+**Note: local `npm run build` crashes on this machine (0xc0000142), unrelated to code**
+- Both `next build` (Turbopack, default) and `next build --webpack`
+  crash identically: `Next.js build worker exited with code: 3221225794`
+  (= `0xc0000142` / `STATUS_DLL_INIT_FAILED` in hex) while spawning a child
+  process, reproducible on 2 consecutive runs, occurring during
+  `globals.css` processing under Turbopack — a file untouched by this PR.
+  Since it reproduces identically under both bundlers, it's not a
+  Turbopack-specific bug; it's a native child-process spawn failure on this
+  machine. Matches the same class of local-environment issue already
+  documented in the boardroom's `tapcash.md` (Windows Defender /
+  `node_modules` interference) from earlier in this launch push.
+- Not fixed here (infra, not code) — `npx tsc --noEmit` (full static type
+  check) and `npx jest` (full suite) both pass clean, and this repo's real
+  GitHub Actions CI (`gate.yml`, Linux runners) has repeatedly built this
+  codebase successfully. Treat local build failures on this machine as
+  unreliable; real CI remains authoritative, consistent with this repo's
+  established practice (see TASK-036's PR body).
+
 ## 2026-08-06 — Claude Code — TASK-037 PR #59 external review triage
 
 External review (Codacy, CodeFactor, Qodo, CodeRabbit) on PR #59 surfaced
