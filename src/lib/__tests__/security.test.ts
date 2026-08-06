@@ -3,6 +3,7 @@ import { validateCsrf } from "../csrf";
 import { validateOrigin } from "../origin";
 import { isBotAgent, calculateFraudScore } from "../antiFraud";
 import type { NextRequest } from "next/server";
+import { setNodeEnv } from "./testEnv";
 
 function mockRequest(method: string, headers: Record<string, string> = {}, cookies: Record<string, string> = {}, pathname = "/api/test"): NextRequest {
   const cookieStr = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join("; ");
@@ -73,24 +74,24 @@ describe("Security: CSRF Bypass Attempts", () => {
 describe("Security: Origin Spoofing", () => {
   it("should reject null origin on POST in production", () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
 
     const req = mockRequest("POST", { origin: "null" }, {}, "/api/payouts/request");
     const result = validateOrigin(req);
     expect(result.valid).toBe(false);
 
-    process.env.NODE_ENV = originalEnv;
+    setNodeEnv(originalEnv as string);
   });
 
   it("should reject origin with trailing slash", () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
 
     const req = mockRequest("POST", { origin: "https://tapcash.online/" }, {}, "/api/payouts/request");
     const result = validateOrigin(req);
     expect(result.valid).toBe(false);
 
-    process.env.NODE_ENV = originalEnv;
+    setNodeEnv(originalEnv as string);
   });
 });
 
