@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom'
 import { TextEncoder, TextDecoder } from 'node:util'
+import { webcrypto } from 'node:crypto'
+import { deserialize, serialize } from 'node:v8'
 
 // jsdom (testEnvironment: 'jest-environment-jsdom') does not provide
 // TextEncoder/TextDecoder as globals -- jose (and other WHATWG-spec-based
@@ -29,7 +31,6 @@ if (typeof globalThis.crypto?.subtle === 'undefined') {
   // jsdom doesn't implement the Web Crypto API; jose's webapi build needs
   // crypto.subtle for HMAC sign/verify. Node's own webcrypto implements
   // the same standard interface.
-  const { webcrypto } = require('node:crypto')
   // jsdom's `crypto` is a getter-only accessor property -- a plain
   // assignment silently no-ops (or throws under strict mode) instead of
   // replacing it. defineProperty overwrites the accessor with a data
@@ -44,8 +45,7 @@ if (typeof globalThis.structuredClone === 'undefined') {
   // real structured-clone implementation (handles TypedArrays, Dates,
   // Maps, etc.), unlike a JSON.stringify/parse shim which would corrupt
   // the Uint8Array key material jose clones internally.
-  const v8 = require('node:v8')
-  globalThis.structuredClone = (value: unknown) => v8.deserialize(v8.serialize(value))
+  globalThis.structuredClone = (value: unknown) => deserialize(serialize(value))
 }
 
 // Mock Firebase Admin to prevent real database/auth calls during tests

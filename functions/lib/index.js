@@ -56,22 +56,33 @@ exports.onUserCreated = (0, identity_1.beforeUserCreated)(async (event) => {
     const user = event.data;
     if (!user)
         return;
-    const userRef = db.collection("users").doc(user.uid);
-    const batch = db.batch();
-    batch.set(userRef, {
-        email: user.email,
-        createdAt: firestore_2.FieldValue.serverTimestamp(),
-        lastLogin: firestore_2.FieldValue.serverTimestamp(),
-    });
-    await batch.commit();
-    console.log(`User ${user.uid} created.`);
+    // Unlike v1's onCreate (async, ran after the Auth record already existed
+    // -- a Firestore failure there only lost the profile doc), this runs
+    // inline during signup: an uncaught error here aborts account creation
+    // itself. Catch and log instead of letting a transient Firestore error
+    // turn into a failed signup; the profile doc can be backfilled later if
+    // it's ever actually missing.
+    try {
+        const userRef = db.collection("users").doc(user.uid);
+        const batch = db.batch();
+        batch.set(userRef, {
+            email: user.email,
+            createdAt: firestore_2.FieldValue.serverTimestamp(),
+            lastLogin: firestore_2.FieldValue.serverTimestamp(),
+        });
+        await batch.commit();
+        console.log(`User ${user.uid} created.`);
+    }
+    catch (error) {
+        console.error(`Failed to initialize profile doc for user ${user.uid}:`, error);
+    }
 });
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
 exports.completeTask = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "User must be logged in.");
     }
-    const { taskId, offerId, rewardCents } = request.data;
+    const { taskId, offerId, rewardCents } = (request.data || {});
     if (!taskId || !offerId || !rewardCents || rewardCents <= 0) {
         throw new https_1.HttpsError("invalid-argument", "Missing task data.");
     }
@@ -129,7 +140,7 @@ exports.requestPayout = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "User must be logged in.");
     }
-    const { amountCents, method, payoutAddress } = request.data;
+    const { amountCents, method, payoutAddress } = (request.data || {});
     if (!amountCents || amountCents <= 0 || !payoutAddress) {
         throw new https_1.HttpsError("invalid-argument", "Invalid payout request.");
     }
@@ -208,7 +219,15 @@ exports.onCashoutSent = (0, firestore_1.onDocumentUpdated)("cashout_requests/{re
     const after = (_b = event.data) === null || _b === void 0 ? void 0 : _b.after.data();
     if (!before || !after)
         return;
-    if (before.status !== "pending_review" && before.status !== "processing" && after.status !== "sent")
+    // Only fire on the transition INTO "sent". The three-negation form this
+    // replaced (`before.status !== "pending_review" && before.status !==
+    // "processing" && after.status !== "sent"`) only returned early when ALL
+    // three held, so it fired whenever before was pending_review/processing
+    // regardless of what after.status actually became -- including a
+    // rejection, which incorrectly sent "Payout on the way!" alongside
+    // onCashoutRejected's own (correct) notification. Pre-existing bug, not
+    // introduced by the v1->v2 migration; fixed while touching this function.
+    if (after.status !== "sent" || before.status === "sent")
         return;
     const uid = after.userId;
     const amountCoins = Number(after.amountCoins || 0);

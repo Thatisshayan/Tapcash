@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { validateCsrf } from "@/lib/csrf";
 
 interface AdminSessionPayload {
   uid: string;
@@ -18,6 +19,13 @@ type AdminSessionResult =
  * middleware.ts only protects page routes (its config.matcher does not
  * include /api/admin/:path*), so every /api/admin/* route must call this
  * directly instead of relying on middleware to have already checked.
+ *
+ * Also validates CSRF for state-changing requests (POST/PATCH/DELETE/PUT):
+ * these routes moved from Bearer-token auth (inherently CSRF-immune, since
+ * browsers never auto-attach a custom Authorization header cross-site) to
+ * cookie auth, which IS vulnerable to CSRF unless checked explicitly.
+ * validateCsrf() implements the same double-submit-cookie pattern already
+ * used by other mutating routes in this codebase (see src/lib/csrf.ts).
  */
 export async function requireAdminSession(request: NextRequest): Promise<AdminSessionResult> {
   const SESSION_SECRET = process.env.SESSION_SECRET;
@@ -25,6 +33,13 @@ export async function requireAdminSession(request: NextRequest): Promise<AdminSe
   if (!SESSION_SECRET) {
     return {
       response: NextResponse.json({ error: "Server misconfigured: SESSION_SECRET not set" }, { status: 500 }),
+    };
+  }
+
+  const csrfResult = validateCsrf(request);
+  if (!csrfResult.valid) {
+    return {
+      response: NextResponse.json({ error: `Forbidden: ${csrfResult.error}` }, { status: 403 }),
     };
   }
 

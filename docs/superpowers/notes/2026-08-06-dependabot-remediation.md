@@ -34,17 +34,20 @@
 - `npm run lint`: exits 0, 209 pre-existing warnings (all
   `@typescript-eslint/no-explicit-any` / unused-arg style warnings,
   unrelated to this change), 0 errors.
-- `npx jest`: 304 passed, 1 failed, 2 skipped (307 total). The 1 failure
-  (`origin.test.ts` "should reject missing origin in production mode") is
-  a pre-existing test-methodology bug unrelated to the `next` bump —
-  root-caused and logged in `docs/governance/DEFERRED_WORK.md` under the
-  2026-08-06 TASK-037 entry. Verified not a regression: jest itself did not
-  change in the `package-lock.json` diff, and running the same test with
-  `NODE_ENV=production` set before the process starts (rather than mutated
-  at runtime) makes all 8 applicable assertions in that file pass —
-  confirming `validateOrigin`'s actual production logic is correct and only
-  the test's runtime-`NODE_ENV`-mutation approach is incompatible with
-  `next/jest`'s SWC env-inlining.
+- `npx jest`: 304 passed, 1 failed, 2 skipped (307 total) at the time this
+  note was originally written. The 1 failure (`origin.test.ts` "should
+  reject missing origin in production mode") was a pre-existing bug,
+  unrelated to the `next` bump — verified not a regression (jest itself
+  was untouched in the `package-lock.json` diff).
+  **Correction (2026-08-06, TASK-037 Task 7):** this note originally
+  theorized the cause was `next/jest`'s SWC statically inlining
+  `process.env.NODE_ENV` at transform time. That theory was disproven — the
+  actual cause was that `Object.defineProperty(process.env, "NODE_ENV",
+  ...)` silently no-ops the write regardless of descriptor shape; plain
+  assignment (`process.env.NODE_ENV = value`) works. Task 7 fixed
+  `setNodeEnv()` to use plain assignment, and the test now genuinely
+  passes. See `docs/governance/DEFERRED_WORK.md`'s 2026-08-06 TASK-037
+  entry for the full corrected root-cause writeup.
 - `npm run build`: completes successfully (exit 0), all routes compile and
   prerender/route-map correctly under Next.js 16.3.0 with Turbopack.
 
@@ -59,11 +62,14 @@
   `SNYK_TOKEN` provisioning as a repo secret could not be verified in this
   session's scope.
 - Also fixed, while verifying: `src/lib/testHelpers/testEnv.ts`'s
-  `setNodeEnv()` was missing `enumerable: true` on its
-  `Object.defineProperty(process.env, "NODE_ENV", ...)` descriptor, which
-  Node requires for the write to actually take effect (it silently no-ops
-  otherwise). This is a correct, self-contained fix but does not by itself
-  resolve the `origin.test.ts` failure above (separate root cause, see
-  `docs/governance/DEFERRED_WORK.md`).
+  `setNodeEnv()`. **Superseded (2026-08-06, TASK-037 Task 7)** — the
+  original `enumerable: true` fix described here did not actually resolve
+  the `origin.test.ts` failure; see the correction above and
+  `docs/governance/DEFERRED_WORK.md` for what the real fix turned out to
+  be.
+- `.github/workflows/deploy.yml`'s Snyk step (`continue-on-error: true`,
+  soft-gated pending `SNYK_TOKEN` provisioning) is a deliberate, deferred
+  decision — see `docs/governance/DEFERRED_WORK.md`'s 2026-08-06 TASK-037
+  entry for the tracked action item.
 
 traces-to: TASK-034

@@ -148,6 +148,76 @@ future reader doesn't reintroduce it.
   supports — a real choice, not something to silently paper over with
   `--legacy-peer-deps` as the permanent state.
 
+## 2026-08-06 — Claude Code — TASK-037 PR #59 external review triage
+
+External review (Codacy, CodeFactor, Qodo, CodeRabbit) on PR #59 surfaced
+several real findings. Fixed inline (see PR commits): CSRF protection wired
+into `requireAdminSession()` (8 admin routes moved from Bearer, inherently
+CSRF-immune, to cookies, which need it — `src/lib/csrf.ts`'s existing
+double-submit-cookie check was not applied to any of them before this fix),
+`/api/auth/session` now accepts either `admin` or `isAdmin` on the Firestore
+user doc (repo has historically used both field names — see next entry),
+the admin-session JWT now carries an `email` claim (was empty-string before,
+reducing `admin_logs` audit fidelity), a pre-existing logic bug in
+`onCashoutSent`'s status-transition guard (fired on rejections too, not just
+sends), `beforeUserCreated` no longer lets a Firestore write failure abort
+signup itself (v1's `onCreate` ran after the Auth record existed; v2's
+`beforeUserCreated` runs inline, so an uncaught error now aborts account
+creation — added try/catch), `request.data` null-fallback in `completeTask`/
+`requestPayout`, and `jest.setup.ts`'s `require()` calls moved to top-level
+imports (`@typescript-eslint/no-require-imports`).
+
+**Deferred, not fixed in this phase:**
+
+**Deferred: `admin` vs `isAdmin` field naming is unresolved, only made non-blocking**
+- The real fix (accepting either field when minting the `admin_session`
+  cookie) avoids locking out an admin whose Firestore doc uses the other
+  convention, but does NOT resolve which field is actually canonical — no
+  code path in this repo writes `admin: true` or `isAdmin: true`, so there's
+  no way to determine this from the codebase alone.
+- Action needed: Shayan confirms which field production `users` docs
+  actually carry (or whether both exist from different eras), and the repo
+  standardizes on one — the accept-either shim should be temporary, not
+  permanent policy.
+
+**Deferred: Firebase Functions v1→v2 migration has no automated test coverage**
+- `functions/src/index.ts` was significantly modified (all 6 exports moved
+  APIs, one with a documented behavior change) with only `tsc`/`npm run
+  build` verification — no unit tests exist for the Functions package at
+  all (confirmed: no test runner/framework wired into
+  `functions/package.json` beyond `firebase-functions-test` as an unused
+  devDependency).
+- Action needed: set up a Functions test harness (`firebase-functions-test`
+  is already a devDependency, unused) and add coverage for the 6 exported
+  functions, especially `onUserCreated`'s new error-handling path and the
+  `onCashoutSent`/`onCashoutRejected` transition-guard fix above. Real,
+  substantial scope — not attempted here since it's a new testing
+  initiative, not part of TASK-037's original plan.
+
+**Deferred: `beforeUserCreated` may require a Firebase project upgrade to Identity Platform**
+- Per Firebase's own docs, v2 blocking functions (`beforeUserCreated`/
+  `beforeSignIn`) require the Firebase project to be upgraded to Firebase
+  Authentication with Identity Platform — this is a project-level
+  infrastructure setting, not something verifiable or changeable from this
+  repo.
+- Action needed: Shayan confirms (or performs) the Identity Platform
+  upgrade in the Firebase console before this function is deployed, or
+  `onUserCreated` will fail to deploy/register. Added to
+  `docs/SHAYAN_LAUNCH_ACTION_ITEMS.md`.
+
+**Declined (not a code change): Qodo's finding that `docs/superpowers/plans/2026-08-06-track1-phase2-hardening.md`'s "Shayan's explicit sign-off" requirement for deletions "violates a rule forbidding person-specific approval, not enforceable via CODEOWNERS"**
+- This isn't a defect — it's this repo's own established governance
+  (`REPO_RULES.md` Rule 14, referenced throughout `AGENTS.md` and every
+  track's plan), predating this PR and explicitly set by Shayan. A generic
+  external review heuristic about CODEOWNERS-enforceability doesn't
+  override a project owner's explicit process choice. No change made.
+
+**Minor doc gap, fixed:** `docs/API_DOCUMENTATION.md`'s Admin Endpoints
+section said only "Requires admin authentication" without naming the
+mechanism (unlike the `/api/payout (Admin Only)` section just above it,
+which already correctly says "session cookie, no Bearer token needed") —
+updated to match.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
 2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.

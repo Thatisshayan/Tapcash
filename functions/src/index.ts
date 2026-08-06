@@ -58,17 +58,27 @@ export const onUserCreated = beforeUserCreated(async (event) => {
   const user = event.data;
   if (!user) return;
 
-  const userRef = db.collection("users").doc(user.uid);
-  const batch = db.batch();
+  // Unlike v1's onCreate (async, ran after the Auth record already existed
+  // -- a Firestore failure there only lost the profile doc), this runs
+  // inline during signup: an uncaught error here aborts account creation
+  // itself. Catch and log instead of letting a transient Firestore error
+  // turn into a failed signup; the profile doc can be backfilled later if
+  // it's ever actually missing.
+  try {
+    const userRef = db.collection("users").doc(user.uid);
+    const batch = db.batch();
 
-  batch.set(userRef, {
-    email: user.email,
-    createdAt: FieldValue.serverTimestamp(),
-    lastLogin: FieldValue.serverTimestamp(),
-  });
+    batch.set(userRef, {
+      email: user.email,
+      createdAt: FieldValue.serverTimestamp(),
+      lastLogin: FieldValue.serverTimestamp(),
+    });
 
-  await batch.commit();
-  console.log(`User ${user.uid} created.`);
+    await batch.commit();
+    console.log(`User ${user.uid} created.`);
+  } catch (error) {
+    console.error(`Failed to initialize profile doc for user ${user.uid}:`, error);
+  }
 });
 
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
@@ -77,7 +87,7 @@ export const completeTask = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { taskId, offerId, rewardCents } = request.data as {
+  const { taskId, offerId, rewardCents } = (request.data || {}) as {
     taskId?: string;
     offerId?: string;
     rewardCents?: number;
@@ -144,7 +154,7 @@ export const requestPayout = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { amountCents, method, payoutAddress } = request.data as {
+  const { amountCents, method, payoutAddress } = (request.data || {}) as {
     amountCents?: number;
     method?: string;
     payoutAddress?: string;
@@ -243,7 +253,15 @@ export const onCashoutSent = onDocumentUpdated("cashout_requests/{requestId}", a
   const after = event.data?.after.data();
   if (!before || !after) return;
 
-  if (before.status !== "pending_review" && before.status !== "processing" && after.status !== "sent") return;
+  // Only fire on the transition INTO "sent". The three-negation form this
+  // replaced (`before.status !== "pending_review" && before.status !==
+  // "processing" && after.status !== "sent"`) only returned early when ALL
+  // three held, so it fired whenever before was pending_review/processing
+  // regardless of what after.status actually became -- including a
+  // rejection, which incorrectly sent "Payout on the way!" alongside
+  // onCashoutRejected's own (correct) notification. Pre-existing bug, not
+  // introduced by the v1->v2 migration; fixed while touching this function.
+  if (after.status !== "sent" || before.status === "sent") return;
 
   const uid = after.userId;
   const amountCoins = Number(after.amountCoins || 0);
