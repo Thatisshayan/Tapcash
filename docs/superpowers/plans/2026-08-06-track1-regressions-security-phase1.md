@@ -11,8 +11,8 @@
 ## Global Constraints
 
 - Do not delete any file or component without Shayan's explicit sign-off (boardroom Rule 14) — this plan only edits, never deletes, existing files.
-- Branch: `agent/claude/035-track1-phase1-build-fix`. Never commit to `main`.
-- Every commit message should reference `traces-to: TASK-035` (boardroom ledger).
+- Branch: `agent/claude/036-track1-phase1-build-fix`. Never commit to `main`.
+- Every commit message should reference `traces-to: TASK-036` (boardroom ledger).
 - No live secrets are touched or required for this plan — every task is verifiable with `npx tsc --noEmit` and `npx jest`, no external API calls.
 - Interac: freeze only — no deletion of `src/lib/interac.ts` or its types. Disable the path so it cannot be selected or processed; leave the code intact and clearly marked frozen.
 - Commit after each task per Shayan's standing instruction for this push (periodic commits, no need to ask first) — still never push/merge to `main` (that stays Shayan-gated).
@@ -133,7 +133,7 @@ Expected: no output (error gone).
 git add src/lib/firebaseAdmin.ts
 git commit -m "fix(firebase-admin): modularize admin SDK init, restore getFirebaseApp
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -202,7 +202,7 @@ Expected: no output.
 git add src/lib/idempotency.ts src/lib/audit.ts src/lib/ledger.ts
 git commit -m "fix(firebase-admin): migrate core lib files to modular firestore API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -244,7 +244,7 @@ Expected: no output.
 git add src/app/api/admin/withdrawals/route.ts
 git commit -m "fix(firebase-admin): migrate admin withdrawals route to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -290,7 +290,7 @@ Expected: no output (Interac-related errors, if any, are out of scope for this t
 git add src/app/api/payout/route.ts
 git commit -m "fix(firebase-admin): migrate payout route to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -326,7 +326,7 @@ Expected: no output.
 git add src/app/api/payouts/request/route.ts
 git commit -m "fix(firebase-admin): migrate payouts/request route to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -380,7 +380,7 @@ Expected: no output.
 git add src/app/api/postback/route.ts src/app/api/postback/rapidoreach/route.ts
 git commit -m "fix(firebase-admin): migrate postback routes to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -412,7 +412,7 @@ Expected: no output.
 git add src/app/api/promo/redeem/route.ts src/app/api/tasks/claim-mission/route.ts src/app/api/tasks/complete/route.ts src/app/api/tasks/daily-spin/route.ts
 git commit -m "fix(firebase-admin): migrate promo/tasks routes to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -476,7 +476,7 @@ Expected: no output.
 git add scripts/seed-firestore.ts
 git commit -m "fix(firebase-admin): migrate seed script to modular API
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -583,7 +583,7 @@ the two user-facing method lists. Code stays intact per Rule 14 — not a
 deletion, a freeze. Remaining incidental mentions (blog/FAQ copy) tracked
 as a follow-up sweep.
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -652,7 +652,7 @@ git commit -m "fix(security): remove dummy Firebase key fallback
 Client Firebase config now throws if required env vars are missing
 instead of silently falling back to a demo project.
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -681,7 +681,7 @@ Expected: no output (all references now point to `tapcash.online`).
 git add .env.local .env.example
 git commit -m "fix(config): standardize on tapcash.online domain
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -724,7 +724,7 @@ Expected: PASS (or no tests found, which is fine — this task doesn't add new t
 git add src/app/api/streak/route.ts
 git commit -m "fix(types): resolve unknown-type errors in streak route
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -775,7 +775,7 @@ Expected: all tests still PASS (behavior is unchanged, only the assignment mecha
 git add src/lib/__tests__/testEnv.ts src/lib/__tests__/origin.test.ts src/lib/__tests__/security.test.ts
 git commit -m "fix(tests): resolve NODE_ENV read-only typecheck errors
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -809,7 +809,7 @@ Expected: PASS, 4/4 tests (previously: `ENOENT` before any test ran).
 git add packages/tokens/tokens.test.ts
 git commit -m "fix(tests): correct repo-root path resolution in tokens drift test
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 ---
@@ -850,9 +850,9 @@ npx jest: all suites passing
 Domain standardized on tapcash.online, dummy-key fallback removed,
 Interac frozen pending redesign.
 
-traces-to: TASK-035"
+traces-to: TASK-036"
 ```
 
 - [ ] **Step 6: Open the PR (do not merge)**
 
-Per boardroom rules, open a PR from `agent/claude/035-track1-phase1-build-fix` with body referencing `traces-to: TASK-035`, summarizing the 109->0 typecheck fix, the security/domain/Interac changes, and flagging that Phase 2 (Dependabot remediation, cashout route test coverage, Bearer-token audit, Functions v1->v2) is a separate follow-up plan. Shayan reviews and merges.
+Per boardroom rules, open a PR from `agent/claude/036-track1-phase1-build-fix` with body referencing `traces-to: TASK-036`, summarizing the 109->0 typecheck fix, the security/domain/Interac changes, and flagging that Phase 2 (Dependabot remediation, cashout route test coverage, Bearer-token audit, Functions v1->v2) is a separate follow-up plan. Shayan reviews and merges.
