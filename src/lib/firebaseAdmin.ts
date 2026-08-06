@@ -1,4 +1,6 @@
-import * as admin from "firebase-admin";
+import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 type FirebaseAdminMode = "real" | "fallback";
 
@@ -31,6 +33,8 @@ export let firebaseAdminReady = false;
 export let firebaseAdminMode: FirebaseAdminMode = "fallback";
 export let firebaseAdminError: string | null = null;
 
+let app: App | null = null;
+
 function log(level: "error" | "warn", message: string) {
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
   if (!isBuildPhase) {
@@ -38,7 +42,7 @@ function log(level: "error" | "warn", message: string) {
   }
 }
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   const isProduction = process.env.NODE_ENV === "production";
   const privateKey = process.env.FIREBASE_PRIVATE_KEY ? formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY) : null;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -46,8 +50,8 @@ if (!admin.apps.length) {
 
   if (privateKey && clientEmail && projectId) {
     try {
-      admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+      app = initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
       });
       firebaseAdminReady = true;
       firebaseAdminMode = "real";
@@ -62,16 +66,22 @@ if (!admin.apps.length) {
 
   // In production, never fall back — fail loudly if Firebase Admin isn't configured.
   // In dev/test, initialize a minimal app so the module is importable.
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     if (isProduction) {
       log("error", "Firebase Admin unavailable in production — credentials are required.");
     } else {
-      admin.initializeApp({ projectId: projectId || "tapcash-dev" });
+      app = initializeApp({ projectId: projectId || "tapcash-dev" });
       firebaseAdminMode = "fallback";
       log("warn", "Using fallback Firebase app. Real credentials required for production.");
     }
   }
+} else {
+  app = getApps()[0] ?? null;
 }
 
-export const adminDb = admin.firestore();
-export const adminAuth = admin.auth();
+export function getFirebaseApp(): App | null {
+  return app;
+}
+
+export const adminDb = getFirestore();
+export const adminAuth = getAuth();
