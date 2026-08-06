@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";
@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
       // Atomic Update
       transaction.update(userRef, {
-        lastDailySpin: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastDailySpin: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       const ledgerRef = adminDb.collection("ledger_transactions").doc();
@@ -125,8 +125,8 @@ export async function POST(request: NextRequest) {
         source: "daily_spin",
         referenceId: null,
         metadata: { sectorIndex: rewardCoins === 10 ? 0 : rewardCoins === 25 ? 1 : rewardCoins === 50 ? 2 : rewardCoins === 100 ? 3 : 4 },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       const auditRef = adminDb.collection("admin_actions").doc();
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
         targetType: "user",
         targetId: uid,
         metadata: { rewardCoins, sectorIndex },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       return { rewardCoins, sectorIndex };
