@@ -8,23 +8,19 @@ interface Props {
   params: Promise<{ refId: string }>;
 }
 
+// Deliberately does not query or expose ledger_transactions / lifetime
+// earnings here -- this page is publicly reachable by anyone with (or
+// guessing) a referral link, so it must never leak a specific user's
+// financial data. Only a display name and coarse VIP tier (used for the
+// accent color, not a real dollar figure) are looked up.
 async function getReferrerInfo(refId: string) {
   try {
     const snap = await adminDb.collection("users").doc(refId).get();
     if (!snap.exists) return null;
     const data = snap.data()!;
-    const txSnap = await adminDb
-      .collection("ledger_transactions")
-      .where("userId", "==", refId)
-      .get();
-    const totalCoins = txSnap.docs.reduce(
-      (sum, d) => sum + (d.data().balanceEffectCoins || 0),
-      0
-    );
     return {
       displayName: data.displayName || "A TapCash Member",
       tier: data.vipTier || "Bronze",
-      totalCoins,
     };
   } catch {
     return null;
@@ -103,7 +99,7 @@ export default async function ReferralLandingPage({ params }: Props) {
             <div className="flex items-center justify-center gap-2 pt-1">
               <Trophy className="w-4 h-4" style={{ color: accentColor }} />
               <span className="font-mono text-sm font-black tabular-nums" style={{ color: accentColor }}>
-                {referrer.tier} VIP · {referrer.totalCoins.toLocaleString()} coins earned
+                {referrer.tier} VIP Member
               </span>
             </div>
           )}
