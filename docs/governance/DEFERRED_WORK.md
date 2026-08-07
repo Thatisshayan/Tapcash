@@ -30,6 +30,68 @@
   plan for links already shared in the wild. Out of scope for a retheme
   pass; flagging for Shayan to decide whether/when to take on the
   migration.
+## 2026-08-07 — Claude Code — Dashboard/cashout ledger endpoint audit
+
+**Fixed: dashboard leaderboard/activity silently passed off seed data as live**
+- `src/app/dashboard/page.tsx` seeded `leaderboard` and `liveActivity` state
+  with static demo content (`tapCashLeaderboardSeed`, `tapCashActivity` --
+  masked usernames, fabricated dollar amounts) and, on a failed live-data
+  fetch, kept showing that content under headings like "What people are
+  doing now" with no indication it wasn't real. That's the exact
+  fabricated-live-activity anti-pattern this whole Aurora pass was
+  supposed to remove (see the homepage EarningsCounter/LivePayoutCard
+  removal earlier in this rollout). Added `leaderboardLive`/`activityLive`
+  tracking and a visible "Sample data — live feed unavailable" label
+  (heading also changes to "Example activity") whenever the seed content
+  is actually what's on screen.
+
+**Fixed: hardcoded cashout minimum contradicted the real minimums**
+- Dashboard claimed "$20.00 min cashout" (`MIN_CASHOUT_COINS = 20000`).
+  The payout API's actual floor is 2,000 coins ($2.00,
+  `src/app/api/payouts/request/route.ts:77`), and every real method on
+  `/cashout` requires 5,000-10,000 coins. Neither number was 20,000.
+  Changed to 5,000 coins ($5.00) -- the lowest real per-method minimum,
+  i.e. the true "you can cash out via at least one method" threshold --
+  and the on-screen copy now reads off that constant instead of a
+  hardcoded string, so they can't drift apart silently again.
+
+**Deferred: dashboard and cashout both depend on a `/api/debug/*` route**
+- Both `src/app/dashboard/page.tsx` and `src/app/cashout/page.tsx` call
+  `/api/debug/ledger-summary` as their only source of balance data. The
+  route itself is properly auth-scoped (verifies the bearer token, scopes
+  the Firestore query to the caller's own uid) -- this is a contract
+  smell, not an access-control hole. Wiring production UX to a path
+  namespaced `debug` risks someone treating it as disposable/gated later
+  and breaking both pages. Not renamed in this pass because the same
+  route is depended on by two separate in-flight PR branches
+  (`038-dashboard-page-aurora`, `038-cashout-page-aurora`) that deploy to
+  independent Vercel previews -- renaming from inside one branch would
+  leave the other's preview broken until it also picks up the change.
+  Needs a dedicated follow-up PR that adds a properly-namespaced route
+  (e.g. `/api/ledger/summary`) and repoints both callers together, once
+  this batch has landed.
+
+## 2026-08-07 — Claude Code — Mobile home screen (Aurora dashboard rollout)
+
+**Deferred: Real CashPath step tracking on mobile home**
+- `mobile/app/(tabs)/index.tsx` had a `CASHPATH` stepper hardcoded to
+  `ACTIVE = 2` for every user (exactly the bug REDESIGN_SPEC.md §5.5
+  flagged). Removed rather than reskinned — this screen has no per-user
+  "which stage is my most recent earning at" data source wired to it.
+- Action needed: either wire a real per-user CashPath status query (check
+  if `mobile/app/(tabs)/activity.tsx` / the transactions ledger already
+  has this data, since if so it may just need surfacing here too), or
+  decide the mobile home screen doesn't need a CashPath widget at all
+  and drop the concept from this screen permanently.
+
+**Deferred: Platform stats on mobile home**
+- Same file had hardcoded `50K+ Users / $2.5M+ Paid / 98% Verified`
+  stat tiles with no backing API — fabricated statistics, banned per
+  `packages/tokens/tokens.json` `meta.antiPatterns`. Removed, not
+  reskinned. The web landing page already had its own version of this
+  same bug removed for the same reason (see REDESIGN_SPEC.md §5.1) —
+  if/when a real `/api/stats/platform`-equivalent exists for mobile,
+  wire both surfaces from it.
 
 ## 2026-08-07 — Claude Code — Homepage sections (Aurora rollout, root landing page)
 

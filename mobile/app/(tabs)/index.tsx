@@ -1,18 +1,13 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { theme } from "../../src/theme";
-import { GlassCard } from "../../src/components/GlassCard";
-import { PulsingDot } from "../../src/components/PulsingDot";
 import { OfferCard } from "../../src/components/OfferCard";
 import { useAuth } from "../../src/auth/AuthContext";
 import { subscribeToBalance } from "../../src/lib/firestore";
 import { loadOffers, type ApiOfferDisplay } from "../../src/lib/api";
-
-const CASHPATH = ["Choose", "Tracking", "Pending", "Approved", "Cashed Out"];
-const ACTIVE = 2;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -76,96 +71,63 @@ export default function HomeScreen() {
   const balanceCad = (balance.balanceCoins / 1000).toFixed(2);
   const minW = 20;
   const prog = Math.min((balance.balanceCoins / (minW * 1000)) * 100, 100);
+  const initial = (user?.displayName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
 
   return (
     <ScrollView style={[styles.screen, { paddingTop: insets.top + 12 }]} contentContainerStyle={styles.content}>
       <View style={styles.headerRow}>
-        <Text style={styles.logoText}>TapCash</Text>
+        <Text style={styles.logoText}>
+          TAP<Text style={{ color: theme.colors.accent }}>CASH</Text>
+        </Text>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={h} style={styles.iconBtn}>
             <Ionicons name="notifications-outline" size={22} color={theme.colors.text} />
           </TouchableOpacity>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>U</Text>
+            <Text style={styles.avatarText}>{initial}</Text>
           </View>
         </View>
       </View>
 
-      <GlassCard>
+      {/* Aurora "stat cluster" -- huge tabular balance + borderless progress,
+          no card panel around it (was GlassCard, which also silently rendered
+          transparent since surface/surfaceAlt don't exist on the regenerated
+          theme -- see PR notes). */}
+      <View style={styles.balBlock}>
         <View style={styles.balHead}>
           <Text style={styles.balLabel}>YOUR BALANCE</Text>
-          <Ionicons name="wallet-outline" size={20} color={theme.colors.green} />
+          <Ionicons name="wallet-outline" size={18} color={theme.colors.accent} />
         </View>
-        <View style={styles.balRow}>
-          {loadingBalance ? (
-            <Text style={styles.balAmt}>---</Text>
-          ) : (
-            <Animated.Text style={[styles.balAmt, { transform: [{ scale: balanceAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }] }]}>
-              ${balanceCad}
-            </Animated.Text>
-          )}
-          <Text style={styles.balToday}>
-            {balance.pendingCoins > 0 ? `+$${(balance.pendingCoins / 1000).toFixed(2)} pending` : "+$0.00 today"}
-          </Text>
-        </View>
+        {loadingBalance ? (
+          <Text style={styles.balAmt}>---</Text>
+        ) : (
+          <Animated.Text style={[styles.balAmt, { transform: [{ scale: balanceAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }] }]}>
+            ${balanceCad}
+          </Animated.Text>
+        )}
+        <Text style={styles.balToday}>
+          {balance.pendingCoins > 0 ? `+$${(balance.pendingCoins / 1000).toFixed(2)} pending` : "No pending earnings"}
+        </Text>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${prog}%` as any }]} />
         </View>
         <Text style={styles.balMeta}>Min. $20 to withdraw · ${balanceCad} / $20.00</Text>
-      </GlassCard>
-
-      <GlassCard>
-        <View style={styles.liveHead}>
-          <Text style={styles.liveLabel}>LIVE PAYOUT</Text>
-          <PulsingDot size={8} />
-        </View>
-        <View style={styles.liveRow}>
-          <View style={styles.liveIcon}>
-            <Text style={styles.liveIconText}>P</Text>
-          </View>
-          <View style={styles.liveInfo}>
-            <Text style={styles.liveName}>Real-time payouts loading</Text>
-            <Text style={styles.liveAmt}>$0.00</Text>
-            <Text style={styles.liveMeta}>via Network · Just now</Text>
-          </View>
-        </View>
-      </GlassCard>
-
-      <View style={styles.pathRow}>
-        {CASHPATH.map((s, i) => {
-          const c = i < ACTIVE;
-          const a = i === ACTIVE;
-          return (
-            <View key={s} style={styles.pathItem}>
-              {i > 0 && (
-                <View
-                  style={[
-                    styles.pathLine,
-                    { backgroundColor: c || a ? theme.colors.green : theme.colors.border },
-                  ]}
-                />
-              )}
-              <View
-                style={[
-                  styles.pathDot,
-                  {
-                    backgroundColor: c || a ? theme.colors.green : "transparent",
-                    borderColor: c || a ? theme.colors.green : theme.colors.muted,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.pathText,
-                  { color: c || a ? theme.colors.green : theme.colors.muted },
-                ]}
-              >
-                {s}
-              </Text>
-            </View>
-          );
-        })}
       </View>
+
+      {/*
+        Removed from this pass, both hard anti-patterns per REDESIGN_SPEC.md /
+        packages/tokens/tokens.json meta.antiPatterns -- see
+        docs/governance/DEFERRED_WORK.md for the follow-on:
+        - A permanent "LIVE PAYOUT" row that always showed the placeholder
+          copy "Real-time payouts loading" / "$0.00" / "via Network · Just
+          now" -- never real data, a fake live-activity row.
+        - A CashPath tracker hardcoded to `ACTIVE = 2` for every user --
+          this screen has no real per-user step data source to replace it
+          with honestly; removing rather than reskinning a fake state.
+        - Hardcoded "50K+ Users / $2.5M+ Paid / 98% Verified" stats with no
+          backing API -- fabricated statistics, same class of bug the
+          landing page already had removed for the same reason.
+      */}
 
       <View style={styles.secHead}>
         <Text style={styles.secTitle}>Top Offers</Text>
@@ -184,62 +146,31 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
       )}
-
-      <View style={styles.statRow}>
-        {[
-          { l: "Users", v: "50K+" },
-          { l: "Paid", v: "$2.5M+" },
-          { l: "Verified", v: "98%" },
-        ].map((s) => (
-          <GlassCard key={s.l} style={styles.statCard}>
-            <Text style={styles.statLabel}>{s.l}</Text>
-            <Text style={styles.statValue}>{s.v}</Text>
-          </GlassCard>
-        ))}
-      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.bg },
-  content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm },
-  logoText: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "bold" },
+  content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.lg },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xs },
+  logoText: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "800", letterSpacing: -0.2 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
-  iconBtn: { width: 36, height: 36, borderRadius: theme.radius.full, backgroundColor: theme.colors.card, alignItems: "center", justifyContent: "center" },
-  avatar: { width: 36, height: 36, borderRadius: theme.radius.full, backgroundColor: theme.colors.purple, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: theme.colors.text, fontWeight: "bold", fontSize: theme.font.sm },
+  iconBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 36, height: 36, borderRadius: theme.radius.full, backgroundColor: theme.colors.accentDeep, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: theme.colors.text, fontWeight: "800", fontSize: theme.font.sm },
+  balBlock: { paddingVertical: theme.spacing.sm },
   balHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm },
-  balLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
-  balRow: { flexDirection: "row", alignItems: "baseline", gap: theme.spacing.sm, marginBottom: theme.spacing.sm },
-  balAmt: { color: theme.colors.text, fontSize: theme.font.xxl, fontWeight: "900" },
-  balToday: { color: theme.colors.green, fontSize: theme.font.sm, fontWeight: "600" },
-  track: { height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: theme.spacing.xs },
-  fill: { height: "100%", borderRadius: 2, backgroundColor: theme.colors.green },
-  balMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
-  liveHead: { flexDirection: "row", alignItems: "center", gap: theme.spacing.xs, marginBottom: theme.spacing.sm },
-  liveLabel: { color: theme.colors.text, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
-  liveRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
-  liveIcon: { width: 32, height: 32, borderRadius: theme.radius.full, backgroundColor: theme.colors.purple, alignItems: "center", justifyContent: "center" },
-  liveIconText: { color: theme.colors.text, fontWeight: "bold", fontSize: theme.font.sm },
-  liveInfo: { flex: 1 },
-  liveName: { color: theme.colors.text, fontSize: theme.font.md, fontWeight: "600" },
-  liveAmt: { color: theme.colors.green, fontSize: theme.font.lg, fontWeight: "900" },
-  liveMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
-  pathRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: theme.spacing.md },
-  pathItem: { flex: 1, alignItems: "center", position: "relative" },
-  pathLine: { position: "absolute", top: 8, left: "-50%", width: "100%", height: 2, zIndex: 0 },
-  pathDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, zIndex: 1, marginBottom: theme.spacing.xs },
-  pathText: { fontSize: theme.font.xs, fontWeight: "600", textAlign: "center" },
-  secHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
-  secTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "bold" },
-  secLink: { color: theme.colors.green, fontSize: theme.font.md, fontWeight: "600" },
+  balLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
+  balAmt: { color: theme.colors.text, fontSize: 44, fontWeight: "800", fontVariant: ["tabular-nums"], marginBottom: theme.spacing.xs },
+  balToday: { color: theme.colors.accentBright, fontSize: theme.font.sm, fontWeight: "600", marginBottom: theme.spacing.md },
+  track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.line, overflow: "hidden", marginBottom: theme.spacing.xs },
+  fill: { height: "100%", borderRadius: 2, backgroundColor: theme.colors.accent },
+  balMeta: { color: theme.colors.dim, fontSize: theme.font.xs },
+  secHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm },
+  secTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "700" },
+  secLink: { color: theme.colors.accentBright, fontSize: theme.font.md, fontWeight: "600" },
   offScroll: { marginBottom: theme.spacing.md },
   loadingRow: { paddingVertical: theme.spacing.md, alignItems: "center" },
   loadingText: { color: theme.colors.muted, fontSize: theme.font.sm },
-  statRow: { flexDirection: "row", gap: theme.spacing.sm },
-  statCard: { flex: 1, padding: theme.spacing.md, alignItems: "center", justifyContent: "center" },
-  statLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "600", textTransform: "uppercase", marginBottom: theme.spacing.xs },
-  statValue: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "900" },
 });
