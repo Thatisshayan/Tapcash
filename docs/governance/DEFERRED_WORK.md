@@ -4,6 +4,18 @@
 
 ## 2026-08-07 — Claude Code — Cashout page (Aurora rollout)
 
+**Deferred: cashout status page depends on a `/api/debug/*` route**
+- `src/app/cashout/page.tsx` calls `/api/debug/ledger-summary` as its
+  only source of balance data (same finding logged against the
+  dashboard page on `038-dashboard-page-aurora`). Already properly
+  auth-scoped (bearer token verified, query scoped to the caller's own
+  uid) -- not an access-control bug, just a bad contract to build
+  production UX on. Not renamed here because the route is shared with
+  that other in-flight branch's independent Vercel preview; needs a
+  dedicated follow-up PR once this batch lands that adds a
+  properly-namespaced route (e.g. `/api/ledger/summary`) and repoints
+  both callers together.
+
 **Note: Interac e-Transfer freeze — cashout page**
 - `src/app/cashout/page.tsx` keeps full Interac data model, validation, and
   submission logic (`ALL_METHODS`, `interacQuestion`/`interacAnswer`
