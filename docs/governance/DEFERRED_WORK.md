@@ -2,6 +2,14 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Payouts / referrals pages (Aurora rollout)
+
+**Note: Interac e-Transfer freeze — payouts page**
+- `src/app/payouts/page.tsx` filters Interac out of the visible method
+  list (`VISIBLE_METHODS = tapCashPayoutMethods.filter(m => m.id !==
+  "interac")`), matching the standing freeze referenced elsewhere in
+  this file. Intentional, now formally logged for this page.
+
 ## 2026-08-05 — Hermes — UI/UX Phase 1 token foundation
 
 **Deferred: Orphan component deletion (REDESIGN_SPEC §4.2)**

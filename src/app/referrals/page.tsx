@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -103,16 +104,16 @@ export default function ReferralsPage() {
               Please log in to your account to view the Affiliate Program.
             </p>
             <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
-              <a
+              <Link
                 href="/auth/signin"
                 className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-black transition-all duration-200 hover:-translate-y-0.5"
                 style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#0A0A0D", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
               >
                 Sign In Now <ArrowRight className="h-4 w-4" />
-              </a>
-              <a href="/dashboard" className="text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
+              </Link>
+              <Link href="/dashboard" className="text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
                 Go to dashboard
-              </a>
+              </Link>
             </div>
           </MotionWrap>
         </main>
@@ -165,9 +166,9 @@ export default function ReferralsPage() {
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copied" : "Copy referral link"}
               </button>
-              <a href="/dashboard" className="inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
+              <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
                 Open dashboard
-              </a>
+              </Link>
             </div>
           </div>
         </MotionWrap>
@@ -183,6 +184,7 @@ export default function ReferralsPage() {
               <input
                 type="text"
                 readOnly
+                aria-label="Your referral link"
                 value={inviteLink}
                 className="flex-grow w-full bg-transparent font-mono text-sm md:text-base focus:outline-none"
                 style={{ color: INK }}
