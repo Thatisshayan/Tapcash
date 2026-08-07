@@ -58,7 +58,7 @@ export default function RootLayout() {
             <NetworkBanner />
             <NotificationHandler />
             <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#040913" } }} />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A0D" } }} />
           </AuthProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -69,12 +69,12 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    backgroundColor: "#040913",
+    backgroundColor: "#0A0A0D",
     alignItems: "center",
     justifyContent: "center",
   },
   splashText: {
-    color: "#00FF85",
+    color: "#D9B678",
     fontSize: 32,
     fontWeight: "900",
   },
