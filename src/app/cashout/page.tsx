@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { CheckCircle, Coins, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -364,16 +365,16 @@ export default function CashoutPage() {
               The payout store is private because the balance and withdrawal queue are user-specific.
             </p>
             <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
-              <a
+              <Link
                 href="/auth/signin"
                 className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-black text-[#0A0A0D] transition-all duration-200 hover:-translate-y-0.5"
                 style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
               >
                 Sign in <ArrowRight className="h-4 w-4" />
-              </a>
-              <a href="/" className="text-sm font-bold text-[rgba(245,243,239,0.68)] transition-colors hover:text-[#F5F3EF]">
+              </Link>
+              <Link href="/" className="text-sm font-bold text-[rgba(245,243,239,0.68)] transition-colors hover:text-[#F5F3EF]">
                 Back home
-              </a>
+              </Link>
             </div>
           </MotionWrap>
         </main>
@@ -416,12 +417,12 @@ export default function CashoutPage() {
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
-              <a href="/cashout/status" className="inline-flex items-center gap-1.5 text-sm font-bold text-[#D9B678] transition-colors hover:text-[#F0CE97]">
+              <Link href="/cashout/status" className="inline-flex items-center gap-1.5 text-sm font-bold text-[#D9B678] transition-colors hover:text-[#F0CE97]">
                 Check payout status <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-              <a href="/dashboard" className="text-sm font-bold text-[rgba(245,243,239,0.45)] transition-colors hover:text-[#F5F3EF]">
+              </Link>
+              <Link href="/dashboard" className="text-sm font-bold text-[rgba(245,243,239,0.45)] transition-colors hover:text-[#F5F3EF]">
                 Back to dashboard
-              </a>
+              </Link>
             </div>
           </div>
         </MotionWrap>
