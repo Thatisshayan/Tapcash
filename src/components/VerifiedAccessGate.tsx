@@ -21,6 +21,48 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function GateHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <>
+      <div className="flex items-start gap-4">
+        <ShieldAlert className="w-6 h-6 shrink-0 mt-0.5" style={{ color: GOLD }} />
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-[0.28em] text-[rgba(245,243,239,0.4)] font-bold">Verification required</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#F5F3EF]">{title}</h2>
+          <p className="text-sm md:text-base text-[rgba(245,243,239,0.5)] leading-relaxed max-w-2xl">{description}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-3">
+        {[
+          "Verify your inbox",
+          "Keep the platform bot-resistant",
+          "Unlock offers, cashout, and referrals",
+        ].map((item) => (
+          <p key={item} className="text-sm text-[rgba(245,243,239,0.68)] font-medium leading-relaxed">{item}</p>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function GateMessage({ message, messageType }: { message: string | null; messageType: MessageType }) {
+  if (!message) return null;
+  return (
+    <div
+      className="mt-5 py-3 text-sm flex items-start gap-2"
+      style={{
+        borderTop: "1px solid rgba(245,243,239,0.09)",
+        color: messageType === "success" ? GOLD_BRIGHT : "#FF2F42",
+      }}
+    >
+      {messageType === "error" && <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+      {messageType === "success" && <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+      <span>{message}</span>
+    </div>
+  );
+}
+
 export default function VerifiedAccessGate({ title, description, nextHref }: VerifiedAccessGateProps) {
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
@@ -82,38 +124,8 @@ export default function VerifiedAccessGate({ title, description, nextHref }: Ver
 
   return (
     <div className="py-6" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
-      <div className="flex items-start gap-4">
-        <ShieldAlert className="w-6 h-6 shrink-0 mt-0.5" style={{ color: GOLD }} />
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-[rgba(245,243,239,0.4)] font-bold">Verification required</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#F5F3EF]">{title}</h2>
-          <p className="text-sm md:text-base text-[rgba(245,243,239,0.5)] leading-relaxed max-w-2xl">{description}</p>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-3">
-        {[
-          "Verify your inbox",
-          "Keep the platform bot-resistant",
-          "Unlock offers, cashout, and referrals",
-        ].map((item) => (
-          <p key={item} className="text-sm text-[rgba(245,243,239,0.68)] font-medium leading-relaxed">{item}</p>
-        ))}
-      </div>
-
-      {message && (
-        <div
-          className="mt-5 py-3 text-sm flex items-start gap-2"
-          style={{
-            borderTop: "1px solid rgba(245,243,239,0.09)",
-            color: messageType === "success" ? GOLD_BRIGHT : "#FF2F42",
-          }}
-        >
-          {messageType === "error" && <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
-          {messageType === "success" && <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />}
-          <span>{message}</span>
-        </div>
-      )}
+      <GateHeader title={title} description={description} />
+      <GateMessage message={message} messageType={messageType} />
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <button
