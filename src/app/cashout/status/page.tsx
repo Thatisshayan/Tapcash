@@ -20,12 +20,15 @@ interface Payout {
   adminNote?: string;
 }
 
+// Aurora palette: text-ghost #F5F3EF/28 for inert steps, gold for
+// approved/in-progress states, violet for "sent" (secondary accent), red
+// for rejected. No neon green/cyan carried over from the retired palette.
 const STATUS_META: Record<Payout["status"], { label: string; color: string; icon: React.ReactNode; step: number }> = {
-  pending_review: { label: "Submitted",     color: "#94a3b8", icon: <Clock className="w-4 h-4" />,                 step: 1 },
-  processing:     { label: "Processing",    color: "#f5c842", icon: <Loader2 className="w-4 h-4 animate-spin" />,   step: 2 },
-  approved:       { label: "Approved",      color: "#00e6c3", icon: <CheckCircle2 className="w-4 h-4" />,          step: 3 },
-  sent:           { label: "Sent",          color: "#3a7bff", icon: <CheckCircle2 className="w-4 h-4" />,          step: 4 },
-  rejected:       { label: "Rejected",      color: "#ef4444", icon: <AlertCircle className="w-4 h-4" />,           step: 0 },
+  pending_review: { label: "Submitted",     color: "#F5F3EF",               icon: <Clock className="w-4 h-4" />,                 step: 1 },
+  processing:     { label: "Processing",    color: "#D9B678",               icon: <Loader2 className="w-4 h-4 animate-spin" />,   step: 2 },
+  approved:       { label: "Approved",      color: "#F0CE97",               icon: <CheckCircle2 className="w-4 h-4" />,          step: 3 },
+  sent:           { label: "Sent",          color: "#6C5CE0",               icon: <CheckCircle2 className="w-4 h-4" />,          step: 4 },
+  rejected:       { label: "Rejected",      color: "#FF2F42",               icon: <AlertCircle className="w-4 h-4" />,           step: 0 },
 };
 
 const LIFECYCLE_STEPS = ["pending_review", "processing", "approved", "sent"] as const;
@@ -72,37 +75,41 @@ export default function PayoutStatusPage() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white px-4 py-8">
-      <div className="max-w-xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <div className="mx-auto w-full max-w-xl space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Link href="/cashout" className="w-9 h-9 rounded-full bg-white/5 border border-white/8 flex items-center justify-center text-zinc-500 hover:text-white transition">
+          <Link href="/cashout" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[rgba(245,243,239,0.45)] transition-colors hover:text-[#D9B678]">
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-black text-white">Payout Status</h1>
-            <p className="text-xs text-zinc-500">Real-time updates on your withdrawal requests</p>
+          <div className="min-w-0">
+            <h1 className="text-xl font-black text-[#F5F3EF] sm:text-2xl">Payout Status</h1>
+            <p className="text-xs text-[rgba(245,243,239,0.45)]">Real-time updates on your withdrawal requests</p>
           </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-[#00e6c3]" />
+          <div className="flex items-center justify-center py-16 sm:py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-[#D9B678]" />
           </div>
         )}
 
         {/* Empty state */}
         {!loading && payouts.length === 0 && (
-          <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-10 text-center space-y-3">
-            <Wallet className="w-8 h-8 mx-auto text-zinc-600" />
-            <p className="font-black text-zinc-400">No payouts yet</p>
-            <p className="text-sm text-zinc-600">
+          <div className="space-y-3 px-2 py-12 text-center sm:py-16">
+            <Wallet className="mx-auto h-8 w-8 text-[rgba(245,243,239,0.28)]" />
+            <p className="font-black text-[rgba(245,243,239,0.68)]">No payouts yet</p>
+            <p className="mx-auto max-w-xs text-sm text-[rgba(245,243,239,0.45)]">
               {balance >= 2000
                 ? "You haven't cashed out yet — request your first payout."
                 : "Complete offers to earn coins, then cash out."}
             </p>
-            <Link href={balance >= 2000 ? "/cashout" : "/games"} className="inline-block mt-2 px-6 py-2.5 rounded-full bg-[#00e6c3] text-[#050816] text-sm font-black hover:opacity-90 transition">
+            <Link
+              href={balance >= 2000 ? "/cashout" : "/games"}
+              className="mt-2 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-black text-[#0A0A0D] transition-transform hover:-translate-y-0.5"
+              style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
+            >
               {balance >= 2000 ? "Request Cashout" : "Start Earning"}
             </Link>
           </div>
@@ -113,32 +120,39 @@ export default function PayoutStatusPage() {
           <div className="space-y-3">
             {payouts.map((p) => {
               const meta = STATUS_META[p.status];
+              const isOpen = selected?.id === p.id;
               return (
                 <motion.button
                   key={p.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  onClick={() => setSelected(selected?.id === p.id ? null : p)}
-                  className="w-full text-left rounded-2xl border border-white/6 bg-[#080c1a] p-5 hover:border-white/10 transition-all"
+                  onClick={() => setSelected(isOpen ? null : p)}
+                  className="w-full rounded-2xl p-4 text-left transition-colors duration-200 sm:p-5"
+                  style={{ background: isOpen ? "rgba(217,182,120,0.05)" : "rgba(245,243,239,0.025)" }}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border" style={{ background: `${meta.color}15`, borderColor: `${meta.color}30`, color: meta.color }}>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10"
+                        style={{ background: `${meta.color}1a`, color: meta.color }}
+                      >
                         {meta.icon}
                       </div>
-                      <div>
-                        <p className="font-black text-white text-sm">{methodLabel(p.method)}</p>
-                        <p className="text-xs text-zinc-500">{fmt(p.createdAt)}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-[#F5F3EF]">{methodLabel(p.method)}</p>
+                        <p className="text-xs text-[rgba(245,243,239,0.45)]">{fmt(p.createdAt)}</p>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-black text-sm" style={{ color: meta.color }}>{meta.label}</p>
-                      <p className="text-xs text-zinc-400">${(p.amountCents / 100).toFixed(2) || (p.amountCoins / 1000).toFixed(2)} CAD</p>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-black" style={{ color: meta.color }}>{meta.label}</p>
+                      <p className="font-mono text-xs tabular-nums text-[rgba(245,243,239,0.68)]">
+                        ${(p.amountCents != null ? p.amountCents / 100 : p.amountCoins / 1000).toFixed(2)} CAD
+                      </p>
                     </div>
                   </div>
 
                   <AnimatePresence>
-                    {selected?.id === p.id && (
+                    {isOpen && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -155,20 +169,26 @@ export default function PayoutStatusPage() {
                                 const active = stepMeta.step <= meta.step;
                                 const current = step === p.status;
                                 return (
-                                  <div key={step} className="flex items-center gap-1 flex-1">
-                                    <div className={`flex flex-col items-center gap-1 flex-1 ${idx < LIFECYCLE_STEPS.length - 1 ? "" : ""}`}>
+                                  <div key={step} className="flex flex-1 items-center gap-1">
+                                    <div className="flex flex-1 flex-col items-center gap-1">
                                       <div
-                                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border transition-all"
-                                        style={active ? { background: stepMeta.color, borderColor: stepMeta.color, color: "#050816" } : { borderColor: "#1e2d4f", color: "#334155" }}
+                                        className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black transition-all"
+                                        style={active ? { background: stepMeta.color, color: "#0A0A0D" } : { background: "rgba(245,243,239,0.06)", color: "rgba(245,243,239,0.28)" }}
                                       >
                                         {active ? "✓" : idx + 1}
                                       </div>
-                                      <p className="text-[9px] text-center font-semibold" style={{ color: current ? stepMeta.color : active ? "#64748b" : "#1e2d4f" }}>
+                                      <p
+                                        className="text-center text-[9px] font-semibold leading-tight"
+                                        style={{ color: current ? stepMeta.color : active ? "rgba(245,243,239,0.45)" : "rgba(245,243,239,0.28)" }}
+                                      >
                                         {stepMeta.label}
                                       </p>
                                     </div>
                                     {idx < LIFECYCLE_STEPS.length - 1 && (
-                                      <div className="h-0.5 flex-1 mb-4 rounded-full transition-all" style={{ background: active && idx < meta.step - 1 ? "#00e6c3" : "#1e2d4f" }} />
+                                      <div
+                                        className="mb-4 h-0.5 flex-1 rounded-full transition-all"
+                                        style={{ background: active && idx < meta.step - 1 ? "#D9B678" : "rgba(245,243,239,0.09)" }}
+                                      />
                                     )}
                                   </div>
                                 );
@@ -177,15 +197,31 @@ export default function PayoutStatusPage() {
                           )}
 
                           {/* Details */}
-                          <div className="rounded-xl bg-white/[0.02] border border-white/5 p-4 space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-zinc-500">Destination</span><span className="text-white font-semibold">{p.destination}</span></div>
-                            <div className="flex justify-between"><span className="text-zinc-500">Coins deducted</span><span className="text-white font-semibold">{p.amountCoins?.toLocaleString()}</span></div>
-                            {p.updatedAt && <div className="flex justify-between"><span className="text-zinc-500">Last updated</span><span className="text-white font-semibold">{fmt(p.updatedAt)}</span></div>}
-                            {p.adminNote && <div className="pt-2 border-t border-white/5"><p className="text-zinc-500 text-xs mb-1">Admin note</p><p className="text-yellow-300 text-xs">{p.adminNote}</p></div>}
+                          <div className="space-y-2 border-t border-[rgba(245,243,239,0.09)] pt-4 text-sm">
+                            <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
+                              <span className="text-[rgba(245,243,239,0.45)]">Destination</span>
+                              <span className="truncate font-semibold text-[#F5F3EF]">{p.destination}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[rgba(245,243,239,0.45)]">Coins deducted</span>
+                              <span className="font-mono font-semibold tabular-nums text-[#F5F3EF]">{p.amountCoins?.toLocaleString()}</span>
+                            </div>
+                            {p.updatedAt && (
+                              <div className="flex justify-between">
+                                <span className="text-[rgba(245,243,239,0.45)]">Last updated</span>
+                                <span className="font-semibold text-[#F5F3EF]">{fmt(p.updatedAt)}</span>
+                              </div>
+                            )}
+                            {p.adminNote && (
+                              <div className="border-t border-[rgba(245,243,239,0.09)] pt-2">
+                                <p className="mb-1 text-xs text-[rgba(245,243,239,0.45)]">Admin note</p>
+                                <p className="text-xs text-[#F0CE97]">{p.adminNote}</p>
+                              </div>
+                            )}
                           </div>
 
                           {p.status === "rejected" && (
-                            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-300">
+                            <div className="rounded-xl p-3 text-sm text-[#ffb3ba]" style={{ background: "rgba(255,47,66,0.08)" }}>
                               Payout was rejected. Coins have been returned to your wallet.
                               {p.adminNote && <span> Reason: {p.adminNote}</span>}
                             </div>
