@@ -5,7 +5,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
 import { Shield, Lock, Eye, CheckCircle2, AlertTriangle, Scale, RefreshCw, ArrowRight } from "lucide-react";
-import Link from "next/link";
 
 import { MotionWrap } from "@/components/PremiumUi";
 
@@ -246,16 +245,6 @@ export default function PrivacyPolicyPage() {
         </div>
       </main>
       <Footer />
-
-      <footer className="border-t border-[rgba(245,243,239,0.09)] bg-[#0A0A0D] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[rgba(245,243,239,0.28)] uppercase tracking-widest">
-          <span>&copy; {new Date().getFullYear()} TapCash. All rights reserved.</span>
-          <div className="flex gap-6">
-            <Link href="/" className="hover:text-[#D9B678] transition">Dashboard</Link>
-            <Link href="/terms" className="hover:text-[#D9B678] transition">Terms of Service</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
