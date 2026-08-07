@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { adminFetch } from "@/lib/adminApiClient";
 import { Plus, ToggleLeft, ToggleRight, Trash2, Loader2, Timer } from "lucide-react";
 
 interface MultiplierEvent {
@@ -40,8 +41,7 @@ export default function MultiplierPage() {
   const fetchEvents = useCallback(async () => {
     if (!user) return;
     try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/multiplier", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await adminFetch("/api/admin/multiplier");
       if (!res.ok) throw new Error("Failed to load");
       const data = await res.json();
       setEvents(data.events || []);
@@ -60,10 +60,9 @@ export default function MultiplierPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/multiplier", {
+      const res = await adminFetch("/api/admin/multiplier", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -81,10 +80,9 @@ export default function MultiplierPage() {
   async function toggleEvent(id: string, currentActive: boolean) {
     if (!user) return;
     try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/multiplier", {
+      const res = await adminFetch("/api/admin/multiplier", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, active: !currentActive }),
       });
       if (!res.ok) throw new Error("Failed to toggle");

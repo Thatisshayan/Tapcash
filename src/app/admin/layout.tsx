@@ -36,8 +36,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
       try {
         const token = await user.getIdToken();
-        const res = await fetch('/api/admin/withdrawals', {
-          headers: { Authorization: `Bearer ${token}` },
+        // Mints the admin_session + csrf_token cookies (see POST
+        // /api/auth/session) -- every /api/admin/* route now authenticates
+        // via that cookie, not a Bearer token, so this replaces the old
+        // "ping a Bearer-authed admin route to check status" approach.
+        const res = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: token }),
         });
         if (res.ok) setIsAdmin(true);
         else router.push('/');
