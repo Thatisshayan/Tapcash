@@ -2,6 +2,41 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Homepage sections (Aurora rollout, root landing page)
+
+**Deferred: Homepage was missed by the first Aurora rollout wave entirely**
+- `src/app/page.tsx` (the actual root "/" landing page) composes 8 section
+  components; the first rollout wave (PRs #65-#72) only touched one of
+  them (`OffersSection`, via PR #65). The other 7 (`HeroSection`,
+  `CashPathSection`, `TruthModeSection`, `AppShowcaseSection`,
+  `TrustStripSection`, `CashoutMethodsSection`, `FAQSection`) were still
+  on the legacy `#0d0d1a`/`#00FF85`/`#7B5CF0` palette. Fixed in this
+  pass (`agent/claude/038-homepage-sections-aurora`).
+
+**Deferred: Trustpilot "4.8/5, Excellent" rating claim removed**
+- `TrustStripSection.tsx` displayed a specific "4.8 / 5 — Excellent on
+  Trustpilot" rating with the real Trustpilot logo. Unlike an internal
+  fabricated stat, this cites a specific third-party rating — if TapCash
+  doesn't actually have that rating on Trustpilot, this is both the
+  standard fabricated-statistic anti-pattern AND a real
+  reputational/legal exposure (using another company's mark to claim an
+  unverified rating). Removed rather than assumed true, since I have no
+  way to verify it from this session.
+- Action needed: if TapCash has a real, current Trustpilot profile,
+  re-add this block with the actual live rating (ideally fetched, not
+  hardcoded, so it doesn't go stale/wrong again) and a link to the
+  actual profile. If there's no real Trustpilot presence yet, leave
+  removed.
+
+**Deferred: two other homepage illustrative-content items, kept as-is**
+  (not fabricated-stat violations, just flagging the judgment call for
+  review): `TruthModeSection`'s fixed "TapScore 94%" gauge and
+  `AppShowcaseSection`'s example phone-mockup screens (sample
+  leaderboard names, sample mission progress) are both presented as
+  illustrative product-preview content, not live claims about a
+  specific real event — kept, palette-only fix. Revisit if that read is
+  wrong.
+
 ## 2026-08-07 — Claude Code — globals.css banned-hex cleanup
 
 **Fixed: two current-block vars carried retired Neon gold hex**
