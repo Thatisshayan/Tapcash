@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Loader2, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -17,19 +18,19 @@ const GOLD_CTA_STYLE = {
 
 function GoldButton({ href, label, className = "" }: { href: string; label: string; className?: string }) {
   return (
-    <a
+    <Link
       href={href}
       className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-black transition-all hover:-translate-y-0.5 ${className}`}
       style={GOLD_CTA_STYLE}
     >
       {label}
-    </a>
+    </Link>
   );
 }
 
 function GhostButton({ href, label, className = "" }: { href: string; label: string; className?: string }) {
   return (
-    <a
+    <Link
       href={href}
       className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-black transition-all hover:-translate-y-0.5 ${className}`}
       style={{
@@ -39,7 +40,7 @@ function GhostButton({ href, label, className = "" }: { href: string; label: str
       }}
     >
       {label}
-    </a>
+    </Link>
   );
 }
 
