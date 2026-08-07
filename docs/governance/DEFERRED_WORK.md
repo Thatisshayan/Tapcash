@@ -42,6 +42,84 @@
   was already deferred before this PR and remains open.
 - Action needed: source an official PayPal brand SVG asset, swap the icon.
 
+## 2026-08-06 — Claude Code — TASK-038 Offers page Aurora reskin
+
+**Deferred: `globals.css` still carries retired-Neon hex in "current" var block**
+- Scope: `src/app/globals.css` lines 24 and 32 — `--color-brand-yellow: #FFC442`
+  and `--color-gold: #FFC442`. `#FFC442` is on the `legacy.bannedHex` list in
+  `packages/tokens/tokens.json` (retired TapCash Neon gold), but these two
+  vars sit in the "current" Aurora block (lines 16-32), not the "Legacy
+  aliases" block below it (lines 34-50) where the rest of the retired hex
+  correctly lives.
+- Not fixed here: `globals.css` is owned by the track2-palette-foundation
+  branch this work depends on, out of this task's file scope
+  (`src/components/sections/OffersSection.tsx` and `src/components/OfferCard.tsx`
+  only). Both new files avoid `--color-brand-yellow`/`--color-gold` entirely
+  and use `--color-brand-green`/`-purple`/`-cyan` (correctly on-Aurora) and
+  literal gold hex from `tokens.json` (`#F0CE97`/`#D9B678`/`#B98F4C`) instead,
+  so nothing shipped in this PR references the stale vars.
+- Action needed: whoever owns `globals.css` next should move those two vars
+  into the "Legacy aliases" block (or repoint them at `#D9B678`) so no
+  future component accidentally picks up banned Neon gold via Tailwind's
+  `text-gold`/`bg-brand-yellow` utilities.
+
+**Deferred: `OffersSection.tsx` offer list is static placeholder content**
+- Scope: `src/components/sections/OffersSection.tsx` `OFFERS` array (8
+  hardcoded games with fabricated prices/tags/images). Pre-existing before
+  this pass; left untouched per task scope ("do not touch how offers are
+  fetched/rendered functionally, only the visual layer") and per the
+  standing anti-pattern about not silently fixing fabricated-data issues as
+  a scope-creep side quest.
+- Action needed: wire to a real offers feed (mirrors the mobile
+  `loadOffers`/`/api/offers` pattern already used on `earn.tsx`) in a
+  follow-up functional pass.
+
+**Deferred: mobile offer detail screen (`mobile/app/(tabs)/offer/[id].tsx`) — partial retheme only**
+- Fixed in this pass (palette-correctness + a real bug, both low-risk):
+  swapped a hardcoded neon-green `rgba(0,255,133,...)` "thanks" banner to
+  gold; fixed `tag` style referencing `theme.colors.elevated`, which does
+  not exist on the regenerated `theme.ts` (was silently rendering
+  transparent); switched the `startBtn` CTA from `theme.colors.purple` to
+  `theme.colors.accent` (gold) to match the Start-Offer CTA convention used
+  everywhere else.
+- NOT done (explicitly lower priority per task instructions, left for a
+  dedicated pass): the bordered/filled panel chrome on this screen
+  (`GlassCard` usage for "Before You Start" / "Common Failure Reasons",
+  and the `tagsRow` pills) still uses box/border layout language, not the
+  spacing+shadow Aurora pattern applied to `OfferCard.tsx`/`earn.tsx` in
+  this PR.
+- Also flagged, not touched: "Real completions today: 1,240" (line ~160,
+  `InfoRow label="Real completions today" value="1,240"`) is a fabricated
+  stat, violating the standing `meta.antiPatterns` rule ("No fabricated
+  statistics — live data ... or the surface doesn't render"). Needs wiring
+  to a real value or removal, not a silent fix inside this visual-only PR.
+
+**Deferred: `GlassCard` (`mobile/src/components/GlassCard.tsx`) references undefined theme colors**
+- `tapCashTheme.colors.surfaceAlt` / `.surface` are read but don't exist on
+  the regenerated `theme.ts` (only `surfaceBase` does) — same class of bug
+  fixed in `OfferCard.tsx`/`earn.tsx` this pass, but `GlassCard` is a shared
+  primitive used well beyond the offers surface, so fixing it here was out
+  of scope. Needs its own audit of every `GlassCard` call site before
+  patching, since its visual result is currently silently degraded
+  (transparent fill) everywhere it's used.
+
+**Deferred: mobile TypeScript verification blocked by environment**
+- `mobile/node_modules` is not installed in this worktree; `npx tsc --noEmit`
+  fails with `TS6053: File 'expo/tsconfig.base' not found` (module
+  resolution, not a code error). Attempted `npm install` in `mobile/`;
+  it did not finish inside a 280s budget — consistent with the
+  already-documented Windows Defender/node_modules slowness issue on this
+  machine (see the 2026-08-05 "Full gate re-run" entry above). Not
+  re-attempted further per the standing guidance to note and move on rather
+  than fight it.
+- Web-side verification (the file scope that's actually new in this PR)
+  passed: `npx tsc --noEmit` at repo root — clean, zero errors.
+- Action needed: a future agent/session with a working `mobile/node_modules`
+  should run `cd mobile && npx tsc --noEmit` against
+  `mobile/src/components/OfferCard.tsx`, `mobile/app/(tabs)/earn.tsx`, and
+  `mobile/app/(tabs)/offer/[id].tsx` to confirm no type errors were
+  introduced by this pass.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ⚠️ **SUPERSEDED 2026-08-06 (same day, later)** — Palette: Model U was
    confirmed earlier, then explicitly overridden later the same day when
