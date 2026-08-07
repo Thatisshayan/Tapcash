@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { adminFetch } from "@/lib/adminApiClient";
 import ConversionStrip from "@/components/ConversionStrip";
 import { formatCadFromCoins } from "@/lib/currency";
 import Link from "next/link";
@@ -76,10 +77,9 @@ export default function AdminPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const token = await user.getIdToken();
       const [adminDataRes, usersRes] = await Promise.all([
-        fetch("/api/admin/withdrawals", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/admin/users?limit=10", { headers: { Authorization: `Bearer ${token}` } }),
+        adminFetch("/api/admin/withdrawals"),
+        adminFetch("/api/admin/users?limit=10"),
       ]);
 
       const adminData = await adminDataRes.json();
@@ -105,10 +105,9 @@ export default function AdminPage() {
 
     const run = async () => {
       try {
-        const token = await user.getIdToken();
         const [adminDataRes, usersRes] = await Promise.all([
-          fetch("/api/admin/withdrawals", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/admin/users?limit=10", { headers: { Authorization: `Bearer ${token}` } }),
+          adminFetch("/api/admin/withdrawals"),
+          adminFetch("/api/admin/users?limit=10"),
         ]);
 
         const adminData = await adminDataRes.json();
@@ -141,10 +140,7 @@ export default function AdminPage() {
   async function handleSearch() {
     if (!userSearch) return;
     try {
-      const token = await user!.getIdToken();
-      const res = await fetch(`/api/admin/users?email=${encodeURIComponent(userSearch)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await adminFetch(`/api/admin/users?email=${encodeURIComponent(userSearch)}`);
       const data = await res.json();
       if (data.users) setUsers(data.users);
     } catch (err) {
@@ -155,10 +151,9 @@ export default function AdminPage() {
   async function handleUserAction(targetUid: string, action: string, value?: unknown) {
     setActionLoading(targetUid + action);
     try {
-      const token = await user!.getIdToken();
-      const res = await fetch("/api/admin/users", {
+      const res = await adminFetch("/api/admin/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetUid, action, value }),
       });
       const data = await res.json();
@@ -184,10 +179,9 @@ export default function AdminPage() {
     }
     setActionLoading(withdrawalId + action);
     try {
-      const token = await user!.getIdToken();
-      const res = await fetch("/api/admin/withdrawals", {
+      const res = await adminFetch("/api/admin/withdrawals", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ withdrawalId, action, adminNote }),
       });
       const data = await res.json();
@@ -212,11 +206,10 @@ export default function AdminPage() {
   async function handleApproveAndPay(withdrawalId: string) {
     setActionLoading(withdrawalId + "approve_pay");
     try {
-      const token = await user!.getIdToken();
-      // Step 1: Approve
-      const approveRes = await fetch("/api/admin/withdrawals", {
+      // Step 1: Approve (admin_session cookie -- see adminFetch)
+      const approveRes = await adminFetch("/api/admin/withdrawals", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ withdrawalId, action: "approve" }),
       });
       const approveData = await approveRes.json();
@@ -224,7 +217,10 @@ export default function AdminPage() {
         setMessage({ text: approveData.error || "Approve failed", type: "error" });
         return;
       }
-      // Step 2: Process payout
+      // Step 2: Process payout -- /api/payout is a separate route, still
+      // Bearer-token-authenticated (not migrated by TASK-037), so this one
+      // keeps the Authorization header.
+      const token = await user!.getIdToken();
       const payoutRes = await fetch("/api/payout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -250,10 +246,9 @@ export default function AdminPage() {
     setActionLoading(withdrawalId + "mark_sent");
     setMarkSentSubmitting(true);
     try {
-      const token = await user!.getIdToken();
-      const res = await fetch("/api/admin/withdrawals", {
+      const res = await adminFetch("/api/admin/withdrawals", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ withdrawalId, action: "mark_sent", referenceNumber: markSentRef.trim() || undefined }),
       });
       const data = await res.json();
@@ -282,10 +277,9 @@ export default function AdminPage() {
     try {
       await handleUserAction(adjModal.uid, "adjust_balance", parsed.toString());
       // Write audit log entry
-      const token = await user!.getIdToken();
-      await fetch("/api/admin/users", {
+      await adminFetch("/api/admin/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUid: adjModal.uid,
           action: "audit_log",
