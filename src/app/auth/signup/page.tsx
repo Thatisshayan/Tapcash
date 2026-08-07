@@ -5,8 +5,9 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
-import { ArrowRight, CircleGauge, Loader2, Lock, Mail, ShieldCheck, Sparkles, User, MailCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, Loader2, MailCheck } from "lucide-react";
 import { MotionWrap } from "@/components/PremiumUi";
 import { auth } from "@/lib/firebase";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
@@ -74,172 +75,166 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen tap-shell text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(0,230,195,0.14),_transparent_35%),radial-gradient(circle_at_right,_rgba(58,123,255,0.12),_transparent_35%)]" />
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF]">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 15% 0%, rgba(217,182,120,0.08), transparent 45%), radial-gradient(circle at 85% 30%, rgba(108,92,224,0.06), transparent 50%)",
+        }}
+      />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] items-center">
-          <section className="space-y-8 max-w-2xl">
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 md:py-12">
+        <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr]">
+          <section className="max-w-2xl space-y-8">
             <MotionWrap delay={0}>
               <Link href="/" className="inline-flex items-center gap-3 group">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shadow-[0_12px_40px_rgba(58,123,255,0.22)] group-hover:scale-105 transition-transform">
-                  <CircleGauge className="w-5.5 h-5.5" />
+                <div
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-black text-[#0A0A0D] transition-transform group-hover:scale-105"
+                  style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)" }}
+                >
+                  TC
                 </div>
                 <div>
-                  <p className="text-xl font-black tracking-tight tap-gradient-text font-display">TapCash</p>
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-semibold">Ledger-first rewards</p>
+                  <p className="text-xl font-black tracking-tight text-[#F5F3EF]">TapCash</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[rgba(245,243,239,0.45)]">Ledger-first rewards</p>
                 </div>
               </Link>
 
               <div className="space-y-4">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full tap-badge text-[10px] font-black uppercase tracking-[0.28em] text-zinc-300">
-                  <Sparkles className="w-3.5 h-3.5 text-[#00e6c3]" />
-                  Create account
-                </span>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.92] font-display tap-gradient-text">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-[#D9B678]">Create account</p>
+                <h1 className="text-4xl font-black leading-[0.95] tracking-tight text-[#F5F3EF] md:text-6xl">
                   Join a rewards platform that feels clean, cinematic, and honest.
                 </h1>
-                <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-xl">
+                <p className="max-w-xl text-sm leading-relaxed text-[rgba(245,243,239,0.68)] md:text-base">
                   Signup now requires a verified inbox before the app opens. That keeps the user base real, the ledger cleaner, and the platform less bot-prone.
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
                 {["Verified email", "Device fingerprinting", "Policy confirmation"].map((item) => (
-                  <div key={item} className="tap-card rounded-[1.25rem] p-4">
-                    <div className="flex items-center gap-2 text-[#00e6c3] text-xs font-black uppercase tracking-[0.24em]">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Confirmed</span>
-                    </div>
-                    <p className="mt-2 text-sm text-zinc-200 font-medium">{item}</p>
+                  <div key={item} className="border-t border-[rgba(245,243,239,0.09)] pt-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D9B678]">Confirmed</p>
+                    <p className="mt-2 text-sm font-medium text-[rgba(245,243,239,0.68)]">{item}</p>
                   </div>
                 ))}
               </div>
             </MotionWrap>
           </section>
 
-          <section className="relative">
+          <section>
             <MotionWrap delay={0.12}>
-              <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-[#00e6c3]/10 via-transparent to-[#3a7bff]/12 blur-3xl" />
-              <div className="tap-card rounded-[2rem] p-6 md:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-[#00e6c3]">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black tracking-tight text-white">Create your account</h2>
-                    <p className="text-sm text-zinc-500">Start earning with a clean, premium onboarding flow.</p>
-                  </div>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-black tracking-tight text-[#F5F3EF]">Create your account</h2>
+                <p className="mt-1 text-sm text-[rgba(245,243,239,0.45)]">Start earning with a clean, premium onboarding flow.</p>
+              </div>
 
-{error && (
-                   <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 flex items-start gap-3">
-                     <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                     </svg>
-                     <p className="text-sm text-red-300">{error}</p>
-                   </div>
-                 )}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-5 flex items-start gap-3 rounded-2xl p-4"
+                  style={{ background: "rgba(255,47,66,0.08)" }}
+                >
+                  <AlertCircle className="h-5 w-5 shrink-0 text-[#FF2F42]" />
+                  <p className="text-sm text-[#ffb3ba]">{error}</p>
+                </motion.div>
+              )}
 
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Full name</span>
-                    <div className="relative">
-                      <User className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600" />
-                      <input
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
-                        className="w-full rounded-2xl border border-white/8 bg-white/4 py-3.5 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 focus:ring-1 focus:ring-[#00e6c3]/40"
-                      />
-                    </div>
-                  </label>
+              <form onSubmit={handleSignUp} className="space-y-6">
+                <label className="block">
+                  <span className="block text-xs font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Full name</span>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
+                  />
+                </label>
 
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Email address</span>
-                    <div className="relative">
-                      <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600" />
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        className="w-full rounded-2xl border border-white/8 bg-white/4 py-3.5 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 focus:ring-1 focus:ring-[#00e6c3]/40"
-                      />
-                    </div>
-                  </label>
+                <label className="block">
+                  <span className="block text-xs font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Email address</span>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
+                  />
+                </label>
 
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.24em] text-zinc-500">Password</span>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600" />
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="********"
-                        className="w-full rounded-2xl border border-white/8 bg-white/4 py-3.5 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 focus:ring-1 focus:ring-[#00e6c3]/40"
-                      />
-                    </div>
-                  </label>
+                <label className="block">
+                  <span className="block text-xs font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Password</span>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="********"
+                    className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
+                  />
+                </label>
 
-                  <label className="flex items-start gap-3 rounded-2xl tap-badge px-4 py-4">
-                    <input
-                      id="policy-agreement"
-                      type="checkbox"
-                      required
-                      checked={agreedToPolicies}
-                      onChange={(e) => setAgreedToPolicies(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-white/15 bg-white/5 text-[#00e6c3] focus:ring-[#00e6c3]/40"
-                    />
-                    <span className="text-sm text-zinc-400 leading-relaxed">
-                      I agree to the{" "}
-                      <Link href="/terms" className="font-bold text-[#00e6c3] hover:text-[#7dffe7]">Terms</Link>,{" "}
-                      <Link href="/privacy" className="font-bold text-[#00e6c3] hover:text-[#7dffe7]">Privacy Policy</Link>,{" "}
-                      <Link href="/cookies" className="font-bold text-[#00e6c3] hover:text-[#7dffe7]">Cookie Policy</Link>, and{" "}
-                      <Link href="/affiliate" className="font-bold text-[#00e6c3] hover:text-[#7dffe7]">Affiliate Disclosure</Link>.
-                    </span>
-                  </label>
+                <label className="flex items-start gap-3 rounded-2xl px-1 py-2">
+                  <input
+                    id="policy-agreement"
+                    type="checkbox"
+                    required
+                    checked={agreedToPolicies}
+                    onChange={(e) => setAgreedToPolicies(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-[rgba(245,243,239,0.25)] bg-transparent text-[#D9B678] focus:ring-[#D9B678]/40"
+                  />
+                  <span className="text-sm leading-relaxed text-[rgba(245,243,239,0.45)]">
+                    I agree to the{" "}
+                    <Link href="/terms" className="font-bold text-[#D9B678] hover:text-[#F0CE97]">Terms</Link>,{" "}
+                    <Link href="/privacy" className="font-bold text-[#D9B678] hover:text-[#F0CE97]">Privacy Policy</Link>,{" "}
+                    <Link href="/cookies" className="font-bold text-[#D9B678] hover:text-[#F0CE97]">Cookie Policy</Link>, and{" "}
+                    <Link href="/affiliate" className="font-bold text-[#D9B678] hover:text-[#F0CE97]">Affiliate Disclosure</Link>.
+                  </span>
+                </label>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-5 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)] disabled:opacity-60"
-                  >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                    <span>{loading ? "Creating account..." : "Create account"}</span>
-                  </button>
-                </form>
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={!loading ? { scale: 1.02 } : undefined}
+                  whileTap={!loading ? { scale: 0.98 } : undefined}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-black transition-all duration-200 disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)", color: "#0A0A0D", boxShadow: "0 12px 30px rgba(217,182,120,0.28)" }}
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  <span>{loading ? "Creating account..." : "Create account"}</span>
+                </motion.button>
+              </form>
 
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex-1 h-px bg-white/8" />
-                  <span className="text-xs text-zinc-600 font-semibold">or</span>
-                  <div className="flex-1 h-px bg-white/8" />
-                </div>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-[rgba(245,243,239,0.09)]" />
+                <span className="text-xs font-semibold text-[rgba(245,243,239,0.28)]">or</span>
+                <div className="h-px flex-1 bg-[rgba(245,243,239,0.09)]" />
+              </div>
 
+              <div className="mt-5">
                 <GoogleSignInButton label="Sign up with Google" />
+              </div>
 
-                <div className="rounded-2xl border border-[#00e6c3]/15 bg-[#00e6c3]/8 px-4 py-4 text-sm text-zinc-300 leading-relaxed">
-                  <div className="flex items-center gap-2 text-[#8cf8e9] font-black uppercase tracking-[0.24em] text-[10px]">
-                    <MailCheck className="w-3.5 h-3.5" />
-                    Verification required before access
-                  </div>
-                  <p className="mt-2 text-zinc-400">
-                    TapCash sends you to a verification step first. That keeps fake signups out and helps the real rewards flow stay clean.
-                  </p>
+              <div className="mt-6 border-t border-[rgba(245,243,239,0.09)] pt-5">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#D9B678]">
+                  <MailCheck className="h-3.5 w-3.5" />
+                  Verification required before access
                 </div>
-
-                <p className="mt-6 text-center text-sm text-zinc-500">
-                  Already have an account?{" "}
-                  <Link href="/auth/signin" className="font-bold text-[#00e6c3] hover:text-[#7dffe7]">
-                    Sign in
-                  </Link>
+                <p className="mt-2 text-sm leading-relaxed text-[rgba(245,243,239,0.45)]">
+                  TapCash sends you to a verification step first. That keeps fake signups out and helps the real rewards flow stay clean.
                 </p>
               </div>
+
+              <p className="mt-6 text-center text-sm text-[rgba(245,243,239,0.45)]">
+                Already have an account?{" "}
+                <Link href="/auth/signin" className="font-bold text-[#D9B678] transition-colors hover:text-[#F0CE97]">
+                  Sign in
+                </Link>
+              </p>
             </MotionWrap>
           </section>
         </div>
