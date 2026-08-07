@@ -216,7 +216,11 @@ export default function SignUpPage() {
               </div>
 
               <div className="mt-5">
-                <GoogleSignInButton label="Sign up with Google" />
+                <GoogleSignInButton
+                  label="Sign up with Google"
+                  requireAgreement={!agreedToPolicies}
+                  requireAgreementMessage="Please agree to the platform policies above before signing up with Google."
+                />
               </div>
 
               <div className="mt-6 border-t border-[rgba(245,243,239,0.09)] pt-5">

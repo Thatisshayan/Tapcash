@@ -68,7 +68,6 @@ export default function VerifyEmailPage() {
                 title="Verify your email to unlock TapCash"
                 description="This check keeps the platform cleaner, reduces bot signups, and makes sure real users are the ones entering the rewards flow."
                 nextHref={nextHref}
-                nextLabel="Continue to TapCash"
               />
             </MotionWrap>
           </section>
