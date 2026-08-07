@@ -343,6 +343,38 @@ except `GET/HEAD/OPTIONS` (i.e. `PUT` too) — updated both lists to
   documented in the boardroom's design doc, then reinstall `node_modules`
   from clean.
 
+**Deferred: no active admin-session revocation/logout path**
+- CodeRabbit flagged that `admin_session` is a self-contained 24-hour JWT
+  and `requireAdminSession()` only checks `payload.admin === true` — there
+  is no server-side revocation list, so a role downgrade, a Firebase
+  sign-out, or an admin being removed does not invalidate an
+  already-issued `admin_session` cookie until it naturally expires (max
+  24h). `src/app/admin/layout.tsx` also doesn't clear `admin_session`/
+  `csrf_token` on exit.
+- Not fixed in this pass: this is a real gap, but it's a new feature
+  (session revocation/invalidation infrastructure), not a regression
+  introduced by TASK-037's Bearer-to-cookie migration — the prior
+  Bearer-token scheme had the equivalent problem (a leaked/valid Firebase
+  ID token was usable until its own expiry with no revocation path
+  either). Out of scope for an auth-migration hardening pass.
+- Action needed: add a logout endpoint that clears `admin_session` +
+  `csrf_token` cookies and is called from `AdminLayout`'s exit path, and
+  consider a short-TTL + refresh pattern or a revocation-check
+  (e.g. Firestore-backed session denylist) if 24h standing access after a
+  role change is judged unacceptable risk.
+
+**Declined (out of scope, mislabeled by tool): CodeRabbit's `middleware.ts` → `proxy.ts` rename suggestion**
+- Flagged as a Next.js 16 deprecation note (`middleware.ts` deprecated in
+  favor of a `proxy.ts` + named `proxy` export). The comment itself was
+  misfiled against `functions/src/index.ts` by the review bot (that file
+  has no `middleware` export) — the actual file in question is the root
+  `middleware.ts`. This repo is currently on Next 16.3.0 where
+  `middleware.ts` still works (it's deprecated, not yet removed). Not a
+  TASK-037 regression and not touched in this pass; worth a small
+  follow-up chore when the repo does its next Next.js bump.
+- Action needed: rename `middleware.ts` → `proxy.ts` with a named `proxy`
+  export in a dedicated `chore/` branch, unrelated to admin-auth work.
+
 ## Open decisions for Shayan (carried from REDESIGN_SPEC §8)
 1. ✅ **RESOLVED 2026-08-06** — Palette: Model U. Confirmed by Shayan.
 2. ✅ **RESOLVED 2026-08-06** — Admin: retheme dark via `*Premium` reference. Confirmed by Shayan explicitly (was previously assumed by Track 2's plan without confirmation — now genuinely settled). See `docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md` Task 4.
