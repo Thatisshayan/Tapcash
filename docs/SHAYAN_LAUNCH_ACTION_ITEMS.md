@@ -20,6 +20,9 @@ You said you believe this is done too. Go through `NEEDSHAYANINPUT.md` §1-14 an
 ### 3. Legal review of Privacy Policy / ToS
 Still open, unscheduled. Pages exist (`src/app/privacy`, `src/app/terms`) but haven't been reviewed by counsel. Not agent work — needs an actual lawyer.
 
+### 3a. Confirm Firebase project is upgraded to Identity Platform (blocking for TASK-037's Functions deploy)
+TASK-037 migrates `functions/src/index.ts`'s `onUserCreated` to `beforeUserCreated` (Firebase Functions v2's blocking-function API). Per Firebase's own docs, v2 blocking functions require the project to be upgraded to Firebase Authentication with Identity Platform in the Firebase console — this is a project-level setting I can't verify or change from the repo. If it's not already upgraded, `onUserCreated` will fail to deploy. Please confirm (or perform the upgrade) before this PR's Functions changes are deployed.
+
 ---
 
 ## Do these when I tell you a specific PR/task is ready (not yet — nothing's ready right now)
