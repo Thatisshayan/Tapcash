@@ -22,13 +22,19 @@ export async function POST(request: NextRequest) {
     const uid = decodedToken.uid;
 
     const userDoc = await adminDb.collection('users').doc(uid).get();
-    
-    if (!userDoc.exists || userDoc.data()?.admin !== true) {
+    const userData = userDoc.data();
+
+    // Accept either `admin` or `isAdmin` -- the codebase has historically
+    // used both field names for the same concept (e.g. src/app/api/payout/
+    // route.ts checks isAdmin) and there's no single canonical source in
+    // this repo for which one production user docs actually carry. Checking
+    // both avoids locking out an admin whose doc uses the other convention.
+    if (!userDoc.exists || (userData?.admin !== true && userData?.isAdmin !== true)) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 
     const secret = new TextEncoder().encode(SESSION_SECRET);
-    const jwt = await new SignJWT({ uid, admin: true })
+    const jwt = await new SignJWT({ uid, email: decodedToken.email || userData?.email || '', admin: true })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('24h')

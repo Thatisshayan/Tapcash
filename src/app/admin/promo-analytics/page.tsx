@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { adminFetch } from "@/lib/adminApiClient";
 import { BarChart3, Loader2, TicketPercent, Search } from "lucide-react";
 
 interface PromoStats {
@@ -25,8 +26,7 @@ export default function PromoAnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/promo-analytics", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await adminFetch("/api/admin/promo-analytics");
       if (!res.ok) throw new Error("Failed to load analytics");
       const data = await res.json();
       setAnalytics(data.analytics || []);
