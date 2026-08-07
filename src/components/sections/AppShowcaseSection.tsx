@@ -3,27 +3,27 @@ const SCREENS = [
     label: 'Home',
     lines: [
       { type: 'tag', text: 'YOUR BALANCE', color: '#ffffff40' },
-      { type: 'hero', text: '$12.50', color: '#00FF85' },
-      { type: 'sub', text: '+$4.20 today', color: '#00FF8580' },
+      { type: 'hero', text: '$12.50', color: '#D9B678' },
+      { type: 'sub', text: '+$4.20 today', color: '#D9B67880' },
       { type: 'divider' },
       { type: 'tag', text: 'TOP OFFERS', color: '#ffffff40' },
-      { type: 'row', text: 'Coin Master', badge: '$35', color: '#7B5CF0' },
-      { type: 'row', text: 'Vegas Slots', badge: '$20', color: '#7B5CF0' },
+      { type: 'row', text: 'Coin Master', badge: '$35', color: '#6C5CE0' },
+      { type: 'row', text: 'Vegas Slots', badge: '$20', color: '#6C5CE0' },
     ],
   },
   {
     label: 'Top Picks',
     lines: [
-      { type: 'tag', text: 'RECOMMENDED', color: '#F5A62380' },
-      { type: 'card', text: 'Tycoon Go!', badge: 'HOT', color: '#FF4444' },
-      { type: 'card', text: 'Mythic Heroes', badge: '$120', color: '#7B5CF0' },
-      { type: 'row', text: 'Bingo Blitz', badge: '$25', color: '#7B5CF0' },
+      { type: 'tag', text: 'RECOMMENDED', color: '#F0CE9780' },
+      { type: 'card', text: 'Tycoon Go!', badge: 'HOT', color: '#FF2F42' },
+      { type: 'card', text: 'Mythic Heroes', badge: '$120', color: '#6C5CE0' },
+      { type: 'row', text: 'Bingo Blitz', badge: '$25', color: '#6C5CE0' },
     ],
   },
   {
     label: 'CashPath',
     lines: [
-      { type: 'tag', text: 'CASHPATH LIVE™', color: '#00FF8580' },
+      { type: 'tag', text: 'CASHPATH LIVE™', color: '#D9B67880' },
       { type: 'step', text: 'Choose Offer', done: true },
       { type: 'step', text: 'Tracking Active', done: true },
       { type: 'step', text: 'Pending', done: false },
@@ -34,12 +34,12 @@ const SCREENS = [
   {
     label: 'Missions',
     lines: [
-      { type: 'tag', text: 'DAILY MISSIONS', color: '#7B5CF080' },
+      { type: 'tag', text: 'DAILY MISSIONS', color: '#6C5CE080' },
       { type: 'mission', text: 'Play 3 offers', prog: 2, total: 3 },
       { type: 'mission', text: 'Earn $5 today', prog: 4.2, total: 5 },
       { type: 'mission', text: 'Invite a friend', prog: 0, total: 1 },
       { type: 'divider' },
-      { type: 'sub', text: 'Streak: 7 days 🔥', color: '#F5A623' },
+      { type: 'sub', text: 'Streak: 7 days 🔥', color: '#F0CE97' },
     ],
   },
   {
@@ -108,7 +108,7 @@ function ScreenContent({ lines }: { lines: ScreenLine[] }) {
               <div key={i} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full shrink-0"
-                  style={{ background: line.done ? '#00FF85' : 'rgba(255,255,255,0.1)' }}
+                  style={{ background: line.done ? '#D9B678' : 'rgba(255,255,255,0.1)' }}
                 />
                 <span className="text-[9px]" style={{ color: line.done ? '#ffffff' : 'rgba(255,255,255,0.4)' }}>
                   {line.text}
@@ -125,7 +125,7 @@ function ScreenContent({ lines }: { lines: ScreenLine[] }) {
                 <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${((line.prog ?? 0) / (line.total ?? 1)) * 100}%`, background: '#7B5CF0' }}
+                    style={{ width: `${((line.prog ?? 0) / (line.total ?? 1)) * 100}%`, background: '#6C5CE0' }}
                   />
                 </div>
               </div>
@@ -135,13 +135,13 @@ function ScreenContent({ lines }: { lines: ScreenLine[] }) {
               <div
                 key={i}
                 className="flex items-center gap-2 px-2 py-1 rounded-lg"
-                style={{ background: line.self ? 'rgba(0,255,133,0.08)' : 'rgba(255,255,255,0.03)' }}
+                style={{ background: line.self ? 'rgba(217,182,120,0.08)' : 'rgba(255,255,255,0.03)' }}
               >
-                <span className="text-[8px] font-bold w-4 text-center" style={{ color: line.pos === 1 ? '#F5A623' : 'rgba(255,255,255,0.3)' }}>
+                <span className="text-[8px] font-bold w-4 text-center" style={{ color: line.pos === 1 ? '#F0CE97' : 'rgba(255,255,255,0.3)' }}>
                   #{line.pos}
                 </span>
                 <span className="text-[9px] text-white/70 flex-1">{line.text}</span>
-                <span className="text-[9px] font-semibold" style={{ color: '#00FF85', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
+                <span className="text-[9px] font-semibold" style={{ color: '#D9B678', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
                   {line.val}
                 </span>
               </div>
@@ -163,9 +163,9 @@ function PhoneFrame({ label, lines }: { label: string; lines: ScreenLine[] }) {
         style={{
           width: '140px',
           height: '280px',
-          background: '#0d0d1a',
+          background: '#0A0A0D',
           border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 30px rgba(123,92,240,0.2)',
+          boxShadow: '0 0 30px rgba(108,92,224,0.2)',
           padding: '16px 12px',
           display: 'flex',
           flexDirection: 'column',
@@ -187,12 +187,12 @@ function PhoneFrame({ label, lines }: { label: string; lines: ScreenLine[] }) {
 
 export function AppShowcaseSection() {
   return (
-    <section className="py-20 lg:py-28 overflow-hidden" style={{ backgroundColor: '#0d0d1a' }}>
+    <section className="py-20 lg:py-28 overflow-hidden" style={{ backgroundColor: '#0A0A0D' }}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center mb-14 space-y-3">
           <p
             className="text-[11px] font-semibold tracking-[0.15em] uppercase"
-            style={{ color: '#7B5CF0' }}
+            style={{ color: '#6C5CE0' }}
           >
             The App
           </p>
