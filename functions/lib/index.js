@@ -74,7 +74,7 @@ exports.onUserCreated = (0, identity_1.beforeUserCreated)(async (event) => {
         console.log(`User ${user.uid} created.`);
     }
     catch (error) {
-        console.error(`Failed to initialize profile doc for user ${user.uid}:`, error);
+        console.error("Failed to initialize profile doc for user", user.uid, error);
     }
 });
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)

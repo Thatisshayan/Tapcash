@@ -77,7 +77,7 @@ export const onUserCreated = beforeUserCreated(async (event) => {
     await batch.commit();
     console.log(`User ${user.uid} created.`);
   } catch (error) {
-    console.error(`Failed to initialize profile doc for user ${user.uid}:`, error);
+    console.error("Failed to initialize profile doc for user", user.uid, error);
   }
 });
 
