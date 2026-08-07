@@ -158,6 +158,150 @@ function BrandMarquee() {
   );
 }
 
+function HeroLeftColumn({ prefersReduced }: { prefersReduced: boolean | null }) {
+  return (
+    <motion.div
+      variants={prefersReduced ? undefined : stagger}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 order-2 lg:order-1"
+    >
+      <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full" style={{ background: GOLD, boxShadow: `0 0 8px ${GOLD}` }} />
+        <span className="text-[13px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD_BRIGHT }}>
+          Verified payouts, real players
+        </span>
+      </motion.div>
+
+      <motion.h1
+        variants={prefersReduced ? undefined : fadeUp}
+        className="font-extrabold leading-[1.05] tracking-tight"
+        style={{ fontSize: 'clamp(42px, 5.5vw, 68px)' }}
+      >
+        <span className="block text-[#F5F3EF]">Play. Track.</span>
+        <span
+          className="block"
+          style={{
+            background: `linear-gradient(100deg, ${GOLD_BRIGHT}, ${GOLD} 60%, ${BLUE})`,
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+          }}
+        >
+          Cash Out.
+        </span>
+      </motion.h1>
+
+      <motion.p
+        variants={prefersReduced ? undefined : fadeUp}
+        className="text-[17px] leading-relaxed max-w-md"
+        style={{ color: 'rgba(245,243,239,0.6)' }}
+      >
+        Real offers. Real rewards. Real cash in your account.
+      </motion.p>
+
+      {/* Microbadges 2x2 */}
+      <motion.div variants={prefersReduced ? undefined : fadeUp} className="grid grid-cols-2 gap-2">
+        {MICROBADGES.map(({ icon: Icon, label }) => (
+          <span
+            key={label}
+            className="flex items-center gap-2 text-[12px] text-[rgba(245,243,239,0.6)] px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(245,243,239,0.04)', border: '1px solid rgba(245,243,239,0.07)' }}
+          >
+            <Icon size={13} style={{ color: GOLD, flexShrink: 0 }} />
+            {label}
+          </span>
+        ))}
+      </motion.div>
+
+      {/* CTAs */}
+      <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex flex-wrap gap-3">
+        <Link
+          href="/auth/signup"
+          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[15px] font-bold transition-transform hover:-translate-y-0.5"
+          style={{
+            background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
+            color: '#1a1408',
+            boxShadow: `0 10px 30px ${GOLD}47`,
+          }}
+        >
+          Start My First Offer
+          <ArrowRight size={16} />
+        </Link>
+        <Link
+          href="/how-it-works"
+          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[14px] font-medium text-[rgba(245,243,239,0.6)] hover:text-white border transition-all"
+          style={{ borderColor: 'rgba(245,243,239,0.14)' }}
+        >
+          See How It Works
+        </Link>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function HeroCharacterColumn({ prefersReduced }: { prefersReduced: boolean | null }) {
+  return (
+    <motion.div
+      initial={prefersReduced ? undefined : { opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+      className="relative flex items-center justify-center order-1 lg:order-2"
+      style={{ minHeight: '400px' }}
+    >
+      {/* Violet glow behind character */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden
+        style={{
+          background: `radial-gradient(ellipse 65% 70% at 50% 60%, ${VIOLET}47 0%, transparent 70%)`,
+        }}
+      />
+
+      {/* Floating game elements */}
+      <FloatingGameElement icon={DollarSign} color={GOLD} className="top-8 left-4" delay={0} />
+      <FloatingGameElement icon={Gamepad2} color={VIOLET} className="top-8 right-4" delay={1.5} />
+      <FloatingGameElement icon={Gem} color={BLUE} className="bottom-12 right-8" delay={0.8} />
+      <FloatingGameElement icon={Zap} color={GOLD_BRIGHT} className="bottom-8 left-8" delay={2} />
+
+      {/* Character image */}
+      <div
+        className="relative w-full"
+        style={{
+          maxWidth: '380px',
+          aspectRatio: '1 / 1.25',
+          animation: prefersReduced ? undefined : 'breathe 4.5s ease-in-out infinite',
+          filter: `drop-shadow(0 30px 60px ${VIOLET}3D)`,
+        }}
+      >
+        <Image
+          src="/images/aurora/mascot.webp"
+          alt="TapCash mascot"
+          fill
+          className="object-contain"
+          priority
+          sizes="(max-width: 768px) 80vw, 35vw"
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+function HeroPreviewColumn() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.6, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="order-3"
+    >
+      <BalancePreviewCard />
+      <BonusCard />
+      <PiggyMoment />
+    </motion.div>
+  );
+}
+
 export function HeroSection() {
   const prefersReduced = useReducedMotion();
 
@@ -178,147 +322,9 @@ export function HeroSection() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-[40%_35%_25%] gap-8 lg:gap-6 items-center min-h-[calc(100vh-64px)] py-16">
-
-          {/* LEFT COLUMN */}
-          <motion.div
-            variants={prefersReduced ? undefined : stagger}
-            initial="hidden"
-            animate="show"
-            className="space-y-6 order-2 lg:order-1"
-          >
-            <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ background: GOLD, boxShadow: `0 0 8px ${GOLD}` }} />
-              <span className="text-[13px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD_BRIGHT }}>
-                Verified payouts, real players
-              </span>
-            </motion.div>
-
-            <motion.h1
-              variants={prefersReduced ? undefined : fadeUp}
-              className="font-extrabold leading-[1.05] tracking-tight"
-              style={{ fontSize: 'clamp(42px, 5.5vw, 68px)' }}
-            >
-              <span className="block text-[#F5F3EF]">Play. Track.</span>
-              <span
-                className="block"
-                style={{
-                  background: `linear-gradient(100deg, ${GOLD_BRIGHT}, ${GOLD} 60%, ${BLUE})`,
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}
-              >
-                Cash Out.
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={prefersReduced ? undefined : fadeUp}
-              className="text-[17px] leading-relaxed max-w-md"
-              style={{ color: 'rgba(245,243,239,0.6)' }}
-            >
-              Real offers. Real rewards. Real cash in your account.
-            </motion.p>
-
-            {/* Microbadges 2x2 */}
-            <motion.div
-              variants={prefersReduced ? undefined : fadeUp}
-              className="grid grid-cols-2 gap-2"
-            >
-              {MICROBADGES.map(({ icon: Icon, label }) => (
-                <span
-                  key={label}
-                  className="flex items-center gap-2 text-[12px] text-[rgba(245,243,239,0.6)] px-3 py-2 rounded-xl"
-                  style={{ background: 'rgba(245,243,239,0.04)', border: '1px solid rgba(245,243,239,0.07)' }}
-                >
-                  <Icon size={13} style={{ color: GOLD, flexShrink: 0 }} />
-                  {label}
-                </span>
-              ))}
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div
-              variants={prefersReduced ? undefined : fadeUp}
-              className="flex flex-wrap gap-3"
-            >
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[15px] font-bold transition-transform hover:-translate-y-0.5"
-                style={{
-                  background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
-                  color: '#1a1408',
-                  boxShadow: `0 10px 30px ${GOLD}47`,
-                }}
-              >
-                Start My First Offer
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                href="/how-it-works"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[14px] font-medium text-[rgba(245,243,239,0.6)] hover:text-white border transition-all"
-                style={{ borderColor: 'rgba(245,243,239,0.14)' }}
-              >
-                See How It Works
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* CENTER COLUMN — character */}
-          <motion.div
-            initial={prefersReduced ? undefined : { opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex items-center justify-center order-1 lg:order-2"
-            style={{ minHeight: '400px' }}
-          >
-            {/* Violet glow behind character */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              aria-hidden
-              style={{
-                background: `radial-gradient(ellipse 65% 70% at 50% 60%, ${VIOLET}47 0%, transparent 70%)`,
-              }}
-            />
-
-            {/* Floating game elements */}
-            <FloatingGameElement icon={DollarSign} color={GOLD} className="top-8 left-4" delay={0} />
-            <FloatingGameElement icon={Gamepad2} color={VIOLET} className="top-8 right-4" delay={1.5} />
-            <FloatingGameElement icon={Gem} color={BLUE} className="bottom-12 right-8" delay={0.8} />
-            <FloatingGameElement icon={Zap} color={GOLD_BRIGHT} className="bottom-8 left-8" delay={2} />
-
-            {/* Character image */}
-            <div
-              className="relative w-full"
-              style={{
-                maxWidth: '380px',
-                aspectRatio: '1 / 1.25',
-                animation: prefersReduced ? undefined : 'breathe 4.5s ease-in-out infinite',
-                filter: `drop-shadow(0 30px 60px ${VIOLET}3D)`,
-              }}
-            >
-              <Image
-                src="/images/aurora/mascot.webp"
-                alt="TapCash mascot"
-                fill
-                className="object-contain"
-                priority
-                sizes="(max-width: 768px) 80vw, 35vw"
-              />
-            </div>
-          </motion.div>
-
-          {/* RIGHT COLUMN — balance/bonus preview */}
-          <motion.div
-            initial={prefersReduced ? undefined : { opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="order-3"
-          >
-            <BalancePreviewCard />
-            <BonusCard />
-            <PiggyMoment />
-          </motion.div>
+          <HeroLeftColumn prefersReduced={prefersReduced} />
+          <HeroCharacterColumn prefersReduced={prefersReduced} />
+          <HeroPreviewColumn />
         </div>
       </div>
 
