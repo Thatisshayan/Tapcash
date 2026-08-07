@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter, Link } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { theme } from "../../src/theme";
 import { useAuth } from "../../src/auth/AuthContext";
 
@@ -37,54 +37,60 @@ export default function SignInScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Sign in</Text>
-        <Text style={styles.title}>Welcome back.</Text>
-        <Text style={styles.description}>Use the same email and password as the web app. Verified inboxes unlock the tabs.</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            onFocus={() => setFocusedField("email")}
-            onBlur={() => setFocusedField(null)}
-            placeholder="you@example.com"
-            placeholderTextColor={theme.colors.ghost}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[styles.input, focusedField === "email" && styles.inputFocused]}
-          />
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+    >
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>Sign in</Text>
+          <Text style={styles.title}>Welcome back.</Text>
+          <Text style={styles.description}>Use the same email and password as the web app. Verified inboxes unlock the tabs.</Text>
         </View>
-        <View>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setFocusedField("password")}
-            onBlur={() => setFocusedField(null)}
-            placeholder="********"
-            placeholderTextColor={theme.colors.ghost}
-            secureTextEntry
-            style={[styles.input, focusedField === "password" && styles.inputFocused]}
-          />
-        </View>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={submitting}>
-          {submitting ? <ActivityIndicator color={theme.colors.bg} /> : <Text style={styles.primaryButtonText}>Sign in</Text>}
-        </Pressable>
-      </View>
 
-      <Link href="/(auth)/signup" asChild>
-        <Pressable style={styles.linkSection}>
-          <Text style={styles.linkTitle}>Need an account?</Text>
-          <Text style={styles.linkBody}>Create one, verify your inbox, and then the tabs unlock.</Text>
-        </Pressable>
-      </Link>
-    </ScrollView>
+        <View style={styles.form}>
+          <View>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="you@example.com"
+              placeholderTextColor={theme.colors.ghost}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={[styles.input, focusedField === "email" && styles.inputFocused]}
+            />
+          </View>
+          <View>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="********"
+              placeholderTextColor={theme.colors.ghost}
+              secureTextEntry
+              style={[styles.input, focusedField === "password" && styles.inputFocused]}
+            />
+          </View>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={submitting}>
+            {submitting ? <ActivityIndicator color={theme.colors.bg} /> : <Text style={styles.primaryButtonText}>Sign in</Text>}
+          </Pressable>
+        </View>
+
+        <Link href="/(auth)/signup" asChild>
+          <Pressable style={styles.linkSection}>
+            <Text style={styles.linkTitle}>Need an account?</Text>
+            <Text style={styles.linkBody}>Create one, verify your inbox, and then the tabs unlock.</Text>
+          </Pressable>
+        </Link>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -106,7 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   inputFocused: { borderBottomColor: theme.colors.accent },
-  errorText: { color: "#ffb3ba", fontSize: 13, lineHeight: 18 },
+  errorText: { color: theme.colors.danger, fontSize: 13, lineHeight: 18 },
   primaryButton: {
     minHeight: 50,
     borderRadius: theme.radius.full,

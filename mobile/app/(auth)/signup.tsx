@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter, Link } from "expo-router";
 import { updateProfile } from "firebase/auth";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { auth } from "../../src/lib/firebase";
 import { theme } from "../../src/theme";
 import { useAuth } from "../../src/auth/AuthContext";
@@ -39,69 +39,75 @@ export default function SignUpScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Create account</Text>
-        <Text style={styles.title}>Join the verified flow.</Text>
-        <Text style={styles.description}>Sign up on mobile, confirm your inbox, then open the full TapCash shell.</Text>
-      </View>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+    >
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>Create account</Text>
+          <Text style={styles.title}>Join the verified flow.</Text>
+          <Text style={styles.description}>Sign up on mobile, confirm your inbox, then open the full TapCash shell.</Text>
+        </View>
 
-      <View style={styles.form}>
-        <Text style={styles.formIntro}>
-          We send you to the verification screen immediately after signup so the app stays gated the same way as web.
-        </Text>
-        <View>
-          <Text style={styles.label}>Full name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            onFocus={() => setFocusedField("name")}
-            onBlur={() => setFocusedField(null)}
-            placeholder="John Doe"
-            placeholderTextColor={theme.colors.ghost}
-            style={[styles.input, focusedField === "name" && styles.inputFocused]}
-          />
+        <View style={styles.form}>
+          <Text style={styles.formIntro}>
+            We send you to the verification screen immediately after signup so the app stays gated the same way as web.
+          </Text>
+          <View>
+            <Text style={styles.label}>Full name</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              onFocus={() => setFocusedField("name")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="John Doe"
+              placeholderTextColor={theme.colors.ghost}
+              style={[styles.input, focusedField === "name" && styles.inputFocused]}
+            />
+          </View>
+          <View>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="you@example.com"
+              placeholderTextColor={theme.colors.ghost}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={[styles.input, focusedField === "email" && styles.inputFocused]}
+            />
+          </View>
+          <View>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="********"
+              placeholderTextColor={theme.colors.ghost}
+              secureTextEntry
+              style={[styles.input, focusedField === "password" && styles.inputFocused]}
+            />
+          </View>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={submitting}>
+            {submitting ? <ActivityIndicator color={theme.colors.bg} /> : <Text style={styles.primaryButtonText}>Create account</Text>}
+          </Pressable>
         </View>
-        <View>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            onFocus={() => setFocusedField("email")}
-            onBlur={() => setFocusedField(null)}
-            placeholder="you@example.com"
-            placeholderTextColor={theme.colors.ghost}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[styles.input, focusedField === "email" && styles.inputFocused]}
-          />
-        </View>
-        <View>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setFocusedField("password")}
-            onBlur={() => setFocusedField(null)}
-            placeholder="********"
-            placeholderTextColor={theme.colors.ghost}
-            secureTextEntry
-            style={[styles.input, focusedField === "password" && styles.inputFocused]}
-          />
-        </View>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <Pressable onPress={handleSubmit} style={styles.primaryButton} disabled={submitting}>
-          {submitting ? <ActivityIndicator color={theme.colors.bg} /> : <Text style={styles.primaryButtonText}>Create account</Text>}
-        </Pressable>
-      </View>
 
-      <Link href="/(auth)/signin" asChild>
-        <Pressable style={styles.linkSection}>
-          <Text style={styles.linkTitle}>Already have an account?</Text>
-          <Text style={styles.linkBody}>Go to sign in instead.</Text>
-        </Pressable>
-      </Link>
-    </ScrollView>
+        <Link href="/(auth)/signin" asChild>
+          <Pressable style={styles.linkSection}>
+            <Text style={styles.linkTitle}>Already have an account?</Text>
+            <Text style={styles.linkBody}>Go to sign in instead.</Text>
+          </Pressable>
+        </Link>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -124,7 +130,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   inputFocused: { borderBottomColor: theme.colors.accent },
-  errorText: { color: "#ffb3ba", fontSize: 13, lineHeight: 18 },
+  errorText: { color: theme.colors.danger, fontSize: 13, lineHeight: 18 },
   primaryButton: {
     minHeight: 50,
     borderRadius: theme.radius.full,
