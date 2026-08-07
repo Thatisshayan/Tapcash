@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { BadgeCheck, Coins, Loader2, Sparkles, Wallet, ArrowRight, AlertCircle, CheckCircle, X } from "lucide-react";
+import { CheckCircle, Coins, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
-import { accentClass, formatCoins, formatCadFromCoins } from "@shared/tapcash-content";
-import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
+import { formatCoins, formatCadFromCoins } from "@shared/tapcash-content";
+import { MotionWrap } from "@/components/PremiumUi";
 
 type LedgerSummaryResponse = {
   balanceCoins?: number;
@@ -20,24 +21,30 @@ type PayoutMethod = {
   subtitle: string;
   minCoins: number;
   eta: string;
-  accent: "teal" | "blue" | "gold";
   audience: string;
 };
 
+// NOTE: "interac" is intentionally kept in this list (data + validation +
+// submit path all still work) but filtered out of what actually renders,
+// via VISIBLE_METHODS below. Interac e-Transfer is under a standing product
+// freeze -- see docs/governance/DEFERRED_WORK.md -- so it must not be
+// selectable in the UI, but the code path stays intact rather than deleted.
 const ALL_METHODS: PayoutMethod[] = [
-  { id: "paypal", label: "PayPal", subtitle: "Fastest mainstream cashout", minCoins: 5000, eta: "Usually under 24h", accent: "teal", audience: "Most users" },
-  { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", accent: "blue", audience: "Canadian users" },
-  { id: "bitcoin", label: "Bitcoin", subtitle: "Direct crypto payout", minCoins: 10000, eta: "Queue based", accent: "gold", audience: "Crypto users" },
-  { id: "litecoin", label: "Litecoin", subtitle: "Lower-fee crypto option", minCoins: 10000, eta: "Queue based", accent: "gold", audience: "Crypto users" },
-  { id: "tremendous", label: "Gift Cards", subtitle: "Steam, Tim Hortons, and more", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Light redeemers" },
-  { id: "visa", label: "Visa Gift Card", subtitle: "Prepaid virtual Visa card", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Gift card users" },
-  { id: "steam", label: "Steam Gift Card", subtitle: "For your gaming library", minCoins: 5000, eta: "Processed manually", accent: "blue", audience: "Gamers" },
-  { id: "roblox", label: "Roblox", subtitle: "Robux gift card delivery", minCoins: 5000, eta: "Processed manually", accent: "blue", audience: "Gamers" },
-  { id: "tim_hortons", label: "Tim Hortons", subtitle: "Coffee & donuts on us", minCoins: 5000, eta: "Processed manually", accent: "gold", audience: "Canadians" },
-  { id: "canadian_tire", label: "Canadian Tire", subtitle: "Shop Canadian Tire rewards", minCoins: 5000, eta: "Processed manually", accent: "gold", audience: "Shoppers" },
-  { id: "cineplex", label: "Cineplex", subtitle: "Movie night on TapCash", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Movie lovers" },
-  { id: "shoppers", label: "Shoppers Drug Mart", subtitle: "Pharmacy & beauty rewards", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Canadians" },
+  { id: "paypal", label: "PayPal", subtitle: "Fastest mainstream cashout", minCoins: 5000, eta: "Usually under 24h", audience: "Most users" },
+  { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", audience: "Canadian users" },
+  { id: "bitcoin", label: "Bitcoin", subtitle: "Direct crypto payout", minCoins: 10000, eta: "Queue based", audience: "Crypto users" },
+  { id: "litecoin", label: "Litecoin", subtitle: "Lower-fee crypto option", minCoins: 10000, eta: "Queue based", audience: "Crypto users" },
+  { id: "tremendous", label: "Gift Cards", subtitle: "Steam, Tim Hortons, and more", minCoins: 5000, eta: "Processed manually", audience: "Light redeemers" },
+  { id: "visa", label: "Visa Gift Card", subtitle: "Prepaid virtual Visa card", minCoins: 5000, eta: "Processed manually", audience: "Gift card users" },
+  { id: "steam", label: "Steam Gift Card", subtitle: "For your gaming library", minCoins: 5000, eta: "Processed manually", audience: "Gamers" },
+  { id: "roblox", label: "Roblox", subtitle: "Robux gift card delivery", minCoins: 5000, eta: "Processed manually", audience: "Gamers" },
+  { id: "tim_hortons", label: "Tim Hortons", subtitle: "Coffee & donuts on us", minCoins: 5000, eta: "Processed manually", audience: "Canadians" },
+  { id: "canadian_tire", label: "Canadian Tire", subtitle: "Shop Canadian Tire rewards", minCoins: 5000, eta: "Processed manually", audience: "Shoppers" },
+  { id: "cineplex", label: "Cineplex", subtitle: "Movie night on TapCash", minCoins: 5000, eta: "Processed manually", audience: "Movie lovers" },
+  { id: "shoppers", label: "Shoppers Drug Mart", subtitle: "Pharmacy & beauty rewards", minCoins: 5000, eta: "Processed manually", audience: "Canadians" },
 ];
+
+const VISIBLE_METHODS = ALL_METHODS.filter((m) => m.id !== "interac");
 
 type ApiError = {
   status: number;
@@ -337,10 +344,10 @@ export default function CashoutPage() {
 
   if (authLoading || (user && loading && !summary)) {
     return (
-      <div className="min-h-screen bg-[#040913] text-white">
+      <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF]">
         <Navbar />
         <div className="flex min-h-[70vh] items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-[#00e6c3]" />
+          <Loader2 className="h-10 w-10 animate-spin text-[#D9B678]" />
         </div>
       </div>
     );
@@ -348,16 +355,27 @@ export default function CashoutPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#040913] text-white">
+      <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF]">
         <Navbar />
         <main className="mx-auto flex min-h-[75vh] max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
-          <MotionWrap>
-            <PageShell eyebrow="Payout store" title="Sign in to review cashout options" description="The payout store is private because the balance and withdrawal queue are user-specific.">
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <CTAButton href="/auth/signin" label="Sign in" />
-                <CTAButton href="/" label="Back home" variant="secondary" />
-              </div>
-            </PageShell>
+          <MotionWrap className="w-full text-center space-y-6">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#D9B678]">Payout store</p>
+            <h1 className="text-3xl font-black tracking-tight text-[#F5F3EF] md:text-4xl">Sign in to review cashout options</h1>
+            <p className="mx-auto max-w-xl text-sm leading-relaxed text-[rgba(245,243,239,0.68)] md:text-base">
+              The payout store is private because the balance and withdrawal queue are user-specific.
+            </p>
+            <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
+              <Link
+                href="/auth/signin"
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-black text-[#0A0A0D] transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
+              >
+                Sign in <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/" className="text-sm font-bold text-[rgba(245,243,239,0.68)] transition-colors hover:text-[#F5F3EF]">
+                Back home
+              </Link>
+            </div>
           </MotionWrap>
         </main>
         <Footer />
@@ -366,69 +384,87 @@ export default function CashoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#040913] text-white">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF]">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        {/* Hero -- de-boxed: spacing + typography hierarchy, no card chrome */}
         <MotionWrap>
-          <PageShell
-            eyebrow="Payout store"
-            title="Request a payout"
-            description="Select a method, enter your details, and submit your withdrawal request."
+          <div
+            className="relative pb-8"
+            style={{
+              backgroundImage: "radial-gradient(circle at 20% 0%, rgba(217,182,120,0.07), transparent 45%)",
+            }}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <StatCard label="Balance" value={formatCoins(balanceCoins)} detail={formatCadFromCoins(balanceCoins)} />
-              <StatCard label="Pending" value={formatCoins(pendingCoins)} detail="Queued for review" />
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#D9B678]">Payout store</p>
+            <h1 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-[#F5F3EF] sm:text-4xl">
+              Request a payout
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[rgba(245,243,239,0.68)] sm:text-base">
+              Select a method, enter your details, and submit your withdrawal request.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-end gap-x-12 gap-y-6">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Balance</p>
+                <p className="mt-2 font-mono text-3xl font-black tabular-nums text-[#F5F3EF] sm:text-4xl">{formatCoins(balanceCoins)}</p>
+                <p className="mt-1 font-mono text-sm tabular-nums text-[rgba(245,243,239,0.45)]">{formatCadFromCoins(balanceCoins)}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Pending</p>
+                <p className="mt-2 font-mono text-3xl font-black tabular-nums text-[rgba(245,243,239,0.68)] sm:text-4xl">{formatCoins(pendingCoins)}</p>
+                <p className="mt-1 text-sm text-[rgba(245,243,239,0.45)]">Queued for review</p>
+              </div>
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <CTAButton href="/cashout/status" label="Check payout status" />
-              <CTAButton href="/dashboard" label="Back to dashboard" variant="secondary" />
+
+            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
+              <Link href="/cashout/status" className="inline-flex items-center gap-1.5 text-sm font-bold text-[#D9B678] transition-colors hover:text-[#F0CE97]">
+                Check payout status <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link href="/dashboard" className="text-sm font-bold text-[rgba(245,243,239,0.45)] transition-colors hover:text-[#F5F3EF]">
+                Back to dashboard
+              </Link>
             </div>
-          </PageShell>
+          </div>
         </MotionWrap>
 
         <form onSubmit={handleSubmit}>
-          <div className="mt-8">
-            <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#8cf8e9] mb-4">Select payout method</p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ALL_METHODS.map((method, index) => {
-                const classes = accentClass(method.accent);
+          <div className="mt-10">
+            <p className="mb-5 text-[11px] font-black uppercase tracking-[0.26em] text-[rgba(245,243,239,0.45)]">Select payout method</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {VISIBLE_METHODS.map((method, index) => {
                 const isSelected = selectedMethod === method.id;
                 return (
                   <MotionWrap key={method.id} delay={index * 0.02}>
-                    <button
+                    <motion.button
                       type="button"
                       onClick={() => handleMethodSelect(method.id)}
-                      className={`w-full text-left rounded-[1.75rem] border p-5 transition-all duration-200 ${
-                        isSelected
-                          ? `${classes.ring} bg-white/[0.06] ${classes.glow} ring-2 ring-[#00e6c3]`
-                          : `${classes.ring} bg-white/[0.03] hover:bg-white/[0.05]`
-                      }`}
+                      whileHover={{ scale: reduceMotion ? 1 : 1.015 }}
+                      whileTap={{ scale: reduceMotion ? 1 : 0.985 }}
+                      animate={{ scale: isSelected && !reduceMotion ? 1.02 : 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-full rounded-2xl p-5 text-left transition-colors duration-200"
+                      style={{
+                        background: isSelected ? "rgba(217,182,120,0.06)" : "rgba(245,243,239,0.025)",
+                        boxShadow: isSelected ? "0 0 0 1px rgba(217,182,120,0.35), 0 12px 30px rgba(217,182,120,0.16)" : "none",
+                      }}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${classes.badge}`}>
-                            {method.audience}
-                          </div>
-                          <h2 className="mt-4 text-lg font-black text-white">{method.label}</h2>
+                          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#6C5CE0]">{method.audience}</p>
+                          <h2 className="mt-3 text-lg font-black text-[#F5F3EF]">{method.label}</h2>
                         </div>
-                        {isSelected ? (
-                          <CheckCircle className="h-5 w-5 text-[#00e6c3]" />
-                        ) : (
-                          <BadgeCheck className="h-5 w-5 text-[#8cf8e9]" />
-                        )}
+                        {isSelected && <CheckCircle className="h-5 w-5 shrink-0 text-[#D9B678]" />}
                       </div>
-                      <p className="mt-2 text-sm leading-relaxed text-zinc-400">{method.subtitle}</p>
-                      <div className="mt-4 space-y-2 border-t border-white/6 pt-3 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Minimum</span>
-                          <span className="font-semibold text-white">{formatCoins(method.minCoins)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Timing</span>
-                          <span className="font-semibold text-white">{method.eta}</span>
-                        </div>
+                      <p className="mt-2 text-sm leading-relaxed text-[rgba(245,243,239,0.45)]">{method.subtitle}</p>
+                      <div className="mt-4 flex items-center justify-between border-t border-[rgba(245,243,239,0.09)] pt-3 text-sm">
+                        <span className="text-[rgba(245,243,239,0.45)]">Min</span>
+                        <span className="font-mono font-semibold tabular-nums text-[#F5F3EF]">{formatCoins(method.minCoins)}</span>
                       </div>
-                    </button>
+                      <div className="mt-1.5 flex items-center justify-between text-sm">
+                        <span className="text-[rgba(245,243,239,0.45)]">Timing</span>
+                        <span className="font-semibold text-[#F5F3EF]">{method.eta}</span>
+                      </div>
+                    </motion.button>
                   </MotionWrap>
                 );
               })}
@@ -439,10 +475,10 @@ export default function CashoutPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-8 space-y-6"
+              className="mt-10 space-y-8"
             >
-              <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Destination</p>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Destination</p>
                 <input
                   type={destConfig?.type || "text"}
                   value={destination}
@@ -456,16 +492,16 @@ export default function CashoutPage() {
                     }
                   }}
                   placeholder={destConfig?.placeholder || ""}
-                  className="mt-3 w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                  className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
                 />
                 {destinationError && (
-                  <p className="mt-2 text-xs text-red-400">{destinationError}</p>
+                  <p className="mt-2 text-xs text-[#FF2F42]">{destinationError}</p>
                 )}
               </div>
 
               {selectedMethod === "interac" && (
-                <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6 space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Interac Security Details</p>
+                <div className="space-y-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Interac Security Details</p>
                   <div>
                     <input
                       type="text"
@@ -473,9 +509,9 @@ export default function CashoutPage() {
                       onChange={(e) => { setInteracQuestion(e.target.value); setInteracQuestionError(null); }}
                       onBlur={() => { if (interacQuestion.trim()) setInteracQuestionError(validateField("interacQuestion", interacQuestion)); }}
                       placeholder="Security question (min 10 chars)"
-                      className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                      className="w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
                     />
-                    {interacQuestionError && <p className="mt-1 text-xs text-red-400">{interacQuestionError}</p>}
+                    {interacQuestionError && <p className="mt-1 text-xs text-[#FF2F42]">{interacQuestionError}</p>}
                   </div>
                   <div>
                     <input
@@ -484,16 +520,16 @@ export default function CashoutPage() {
                       onChange={(e) => { setInteracAnswer(e.target.value); setInteracAnswerError(null); }}
                       onBlur={() => { if (interacAnswer.trim()) setInteracAnswerError(validateField("interacAnswer", interacAnswer)); }}
                       placeholder="Security answer (alphanumeric, no spaces, 6-25 chars)"
-                      className="w-full rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                      className="w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
                     />
-                    {interacAnswerError && <p className="mt-1 text-xs text-red-400">{interacAnswerError}</p>}
+                    {interacAnswerError && <p className="mt-1 text-xs text-[#FF2F42]">{interacAnswerError}</p>}
                   </div>
                 </div>
               )}
 
-              <div className="rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Amount</p>
-                <div className="mt-3 flex items-center gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Amount</p>
+                <div className="mt-3 flex items-center gap-3 border-b border-[rgba(245,243,239,0.14)] focus-within:border-[#D9B678] transition-colors">
                   <input
                     type="number"
                     value={amountStr}
@@ -501,13 +537,13 @@ export default function CashoutPage() {
                     placeholder="Enter coins"
                     min={minAmount}
                     max={maxAmount}
-                    className="flex-1 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-[#00e6c3]/40 transition-colors"
+                    className="flex-1 bg-transparent px-1 py-3 font-mono text-sm tabular-nums text-[#F5F3EF] placeholder:font-sans placeholder:text-[rgba(245,243,239,0.28)] focus:outline-none"
                   />
-                  <span className="text-sm font-semibold text-zinc-400">coins</span>
+                  <span className="pb-3 text-sm font-semibold text-[rgba(245,243,239,0.45)]">coins</span>
                 </div>
                 <div className="mt-3 flex items-center gap-2 text-sm">
-                  <span className="text-zinc-500">Value:</span>
-                  <span className="font-black text-[#00e6c3]">${cadValue} CAD</span>
+                  <span className="text-[rgba(245,243,239,0.45)]">Value:</span>
+                  <span className="font-mono font-black tabular-nums text-[#D9B678]">${cadValue} CAD</span>
                 </div>
                 <div className="mt-4 flex gap-2">
                   {[25, 50, 75, 100].map((pct) => (
@@ -515,14 +551,14 @@ export default function CashoutPage() {
                       key={pct}
                       type="button"
                       onClick={() => handleQuickSelect(pct)}
-                      className="flex-1 rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-xs font-bold text-zinc-300 hover:bg-white/[0.06] hover:text-white transition-colors"
+                      className="flex-1 rounded-full px-3 py-2 text-xs font-bold text-[rgba(245,243,239,0.68)] transition-colors hover:bg-[rgba(217,182,120,0.08)] hover:text-[#F0CE97]"
                     >
                       {pct === 100 ? "All" : `${pct}%`}
                     </button>
                   ))}
                 </div>
-                {amountError && <p className="mt-2 text-xs text-red-400">{amountError}</p>}
-                <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
+                {amountError && <p className="mt-2 text-xs text-[#FF2F42]">{amountError}</p>}
+                <div className="mt-3 flex items-center justify-between font-mono text-xs tabular-nums text-[rgba(245,243,239,0.45)]">
                   <span>Min: {formatCoins(minAmount)}</span>
                   <span>Max: {formatCoins(maxAmount)}</span>
                 </div>
@@ -534,17 +570,18 @@ export default function CashoutPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 flex items-start gap-3 rounded-[1.5rem] border border-red-500/30 bg-red-500/10 p-4"
+              className="mt-8 flex items-start gap-3 rounded-2xl p-4"
+              style={{ background: "rgba(255,47,66,0.08)" }}
             >
-              <AlertCircle className="h-5 w-5 shrink-0 text-red-400" />
+              <AlertCircle className="h-5 w-5 shrink-0 text-[#FF2F42]" />
               <div className="flex-1">
-                <p className="text-sm text-red-200">{errorMessage}</p>
+                <p className="text-sm text-[#ffb3ba]">{errorMessage}</p>
                 {submitError?.status === 429 && (
                   <button
                     type="button"
                     disabled={retrySecondsLeft > 0}
                     onClick={() => { setSubmitError(null); void handleSubmit(); }}
-                    className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                    className="mt-2 text-xs font-bold text-[#D9B678] hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
                   >
                     {retrySecondsLeft > 0 ? `Retry available in ${retrySecondsLeft}s` : "Retry"}
                   </button>
@@ -553,7 +590,7 @@ export default function CashoutPage() {
                   <button
                     type="button"
                     onClick={() => { setSubmitError(null); void handleSubmit(); }}
-                    className="mt-2 text-xs font-bold text-[#00e6c3] hover:underline"
+                    className="mt-2 text-xs font-bold text-[#D9B678] hover:underline"
                   >
                     Try again
                   </button>
@@ -562,40 +599,48 @@ export default function CashoutPage() {
             </motion.div>
           )}
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <motion.button
               type="submit"
               disabled={!canSubmit || submitting}
-              className={`inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-sm font-black transition-all ${
+              whileHover={canSubmit && !submitting ? { scale: 1.02 } : undefined}
+              whileTap={canSubmit && !submitting ? { scale: 0.98 } : undefined}
+              className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-black transition-all duration-200"
+              style={
                 canSubmit && !submitting
-                  ? "bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] text-[#050816] hover:shadow-[0_18px_50px_rgba(0,230,195,0.25)] hover:-translate-y-0.5"
-                  : "bg-white/[0.04] text-zinc-500 cursor-not-allowed border border-white/8"
-              }`}
+                  ? { background: "linear-gradient(135deg, #F0CE97, #D9B678)", color: "#0A0A0D", boxShadow: "0 12px 30px rgba(217,182,120,0.4)" }
+                  : { background: "rgba(245,243,239,0.04)", color: "rgba(245,243,239,0.3)" }
+              }
             >
               {submitting ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
               ) : (
                 <><ArrowRight className="h-4 w-4" /> Request Payout</>
               )}
-            </button>
-            <CTAButton href="/cashout/status" label="View payout history" variant="secondary" />
+            </motion.button>
+            <a
+              href="/cashout/status"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-black text-[#F5F3EF] transition-colors hover:text-[#D9B678]"
+            >
+              View payout history <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
         </form>
 
         <MotionWrap>
-          <div className="mt-8 rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-6">
+          <div className="mt-14 border-t border-[rgba(245,243,239,0.09)] pt-8">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Verification model</p>
-                <h2 className="mt-2 text-2xl font-black text-white">Server-approved, not client-pretend.</h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Verification model</p>
+                <h2 className="mt-2 text-2xl font-black text-[#F5F3EF]">Server-approved, not client-pretend.</h2>
               </div>
-              <Coins className="h-6 w-6 text-[#f5c842]" />
+              <Coins className="h-6 w-6 shrink-0 text-[#D9B678]" />
             </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="mt-6 grid gap-x-8 gap-y-4 md:grid-cols-3">
               {["Sensitive actions stay ledger-backed.", "The queue is visible before you request a payout.", "Users can review the status flow from one place."].map((point) => (
-                <div key={point} className="rounded-2xl border border-white/6 bg-black/15 px-4 py-3 text-sm text-zinc-300">
+                <p key={point} className="text-sm leading-relaxed text-[rgba(245,243,239,0.68)]">
                   {point}
-                </div>
+                </p>
               ))}
             </div>
           </div>
