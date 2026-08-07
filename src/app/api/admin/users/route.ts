@@ -1,28 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdminSession } from '@/lib/admin-session';
 
 // GET - Fetch all users
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'view_users',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
@@ -58,20 +47,8 @@ export async function GET(request: NextRequest) {
 // PATCH - Update user status
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const { userId, status } = await request.json();
 
@@ -87,8 +64,8 @@ export async function PATCH(request: NextRequest) {
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'update_user_status',
       targetUserId: userId,
       details: { newStatus: status },
@@ -107,20 +84,8 @@ export async function PATCH(request: NextRequest) {
 // POST - Adjust user balance or perform actions
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const { userId, action, amount, reason } = await request.json();
 
@@ -160,14 +125,14 @@ export async function POST(request: NextRequest) {
         amount: Math.abs(amount),
         status: 'completed',
         notes: reason,
-        adjustedBy: decodedToken.uid,
+        adjustedBy: auth.uid,
         timestamp: new Date()
       });
 
       // Log admin action
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'adjust_balance',
         targetUserId: userId,
         details: { amount, reason, oldBalance: currentBalance, newBalance },

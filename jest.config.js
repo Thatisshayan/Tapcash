@@ -15,4 +15,11 @@ const customJestConfig = {
   testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
 }
 
-module.exports = createJestConfig(customJestConfig)
+module.exports = async () => {
+  const config = await createJestConfig(customJestConfig)()
+  config.transformIgnorePatterns = [
+    '/node_modules/(?!(jose)/)',
+    '^.+\.module\.(css|sass|scss)$',
+  ]
+  return config
+}

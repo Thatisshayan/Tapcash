@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { adminFetch } from '@/lib/adminApiClient';
 
 interface DashboardStats {
   totalUsers: number;
@@ -36,12 +37,7 @@ export default function AdminDashboard() {
 
   const checkAdminAccess = useCallback(async () => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await adminFetch('/api/admin/stats');
 
       if (response.status === 403) {
         router.push('/dashboard');
