@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { MotionWrap, PageShell } from "@/components/PremiumUi";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { MotionWrap } from "@/components/PremiumUi";
 import { Calendar, ArrowRight, Sparkles } from "lucide-react";
+
+const GOLD = "#D9B678";
+const GOLD_BRIGHT = "#F0CE97";
+const VIOLET = "#6C5CE0";
 
 const POSTS = [
   {
@@ -37,42 +39,49 @@ const POSTS = [
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-[#050813] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
       <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-16">
         <MotionWrap>
-          <PageShell
-            eyebrow="Blog"
-            title="Latest from TapCash"
-            description="Product updates, earning tips, and platform announcements."
-            kicker={
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-white/60">
-                <Sparkles className="w-3.5 h-3.5" />
-                {POSTS.length} articles
-              </div>
-            }
-          />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-14">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: GOLD_BRIGHT }}>
+                Blog
+              </p>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">Latest from TapCash</h1>
+              <p className="text-base text-[rgba(245,243,239,0.68)]">Product updates, earning tips, and platform announcements.</p>
+            </div>
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em]" style={{ color: GOLD_BRIGHT }}>
+              <Sparkles className="w-3.5 h-3.5" />
+              {POSTS.length} articles
+            </div>
+          </div>
         </MotionWrap>
 
-        <div className="mt-10 space-y-4">
+        <div>
           {POSTS.map((post, i) => (
             <MotionWrap key={post.slug} delay={i * 0.08}>
-              <Link href={`/blog/${post.slug}`}>
-                <Card variant="interactive" className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <Link href={`/blog/${post.slug}`} className="group block">
+                <div
+                  className="flex flex-col sm:flex-row sm:items-center gap-4 py-6"
+                  style={{ borderBottom: "1px solid rgba(245,243,239,0.09)" }}
+                >
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Badge variant="green">{post.category}</Badge>
-                      <span className="text-[10px] text-white/30 flex items-center gap-1">
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: VIOLET }}>
+                        {post.category}
+                      </span>
+                      <span className="text-[10px] text-[rgba(245,243,239,0.4)] flex items-center gap-1">
                         <Calendar size={10} />
                         {post.date}
                       </span>
-                      <span className="text-[10px] text-white/30">{post.readTime}</span>
+                      <span className="text-[10px] text-[rgba(245,243,239,0.4)]">{post.readTime}</span>
                     </div>
-                    <h3 className="text-base font-bold text-white">{post.title}</h3>
-                    <p className="mt-1 text-sm text-white/50 leading-relaxed">{post.excerpt}</p>
+                    <h3 className="text-base font-bold">{post.title}</h3>
+                    <p className="mt-1 text-sm text-[rgba(245,243,239,0.5)] leading-relaxed">{post.excerpt}</p>
                   </div>
-                  <ArrowRight size={16} className="text-white/30 shrink-0 group-hover:translate-x-1 transition-transform" />
-                </Card>
+                  <ArrowRight size={16} style={{ color: GOLD }} className="shrink-0 transition-transform group-hover:translate-x-1" />
+                </div>
               </Link>
             </MotionWrap>
           ))}
