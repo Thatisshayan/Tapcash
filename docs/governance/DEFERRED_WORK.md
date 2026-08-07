@@ -343,6 +343,26 @@ except `GET/HEAD/OPTIONS` (i.e. `PUT` too) — updated both lists to
   documented in the boardroom's design doc, then reinstall `node_modules`
   from clean.
 
+**Deferred: `package.json` dependency versions use caret ranges (Codacy: "variant versions may lead to dependency hijack/confusion attacks")**
+- Codacy flagged `"next": "^16.3.0"` specifically (the line touched by an
+  earlier commit on this branch, TASK-034's npm-audit-remediation work,
+  which changed it from an exact-pinned `16.2.9` to a caret range). But
+  every other dependency in `package.json` already uses `^` ranges too —
+  this is the repo's existing, consistent convention, not something
+  introduced uniquely by this PR. Pinning only `next` to an exact version
+  while leaving the rest on `^` would be inconsistent and wouldn't
+  meaningfully reduce supply-chain risk on its own.
+- Not fixed in this pass: exact-pinning is a repo-wide dependency
+  management policy decision (`package.json` + `functions/package.json`
+  both affected), not a single-line fix, and out of scope for an
+  admin-auth hardening PR.
+- Action needed: Shayan/whoever owns dependency policy decides whether to
+  move the repo to exact-pinned versions (with Renovate/Dependabot doing
+  the version bumps via PRs instead of floating ranges) or accept caret
+  ranges as-is with lockfile-pinning (`package-lock.json` already commits
+  exact resolved versions, which mitigates most of the actual "hijack"
+  risk this rule is warning about) as the accepted tradeoff.
+
 **Deferred: no active admin-session revocation/logout path**
 - CodeRabbit flagged that `admin_session` is a self-contained 24-hour JWT
   and `requireAdminSession()` only checks `payload.admin === true` — there
