@@ -221,7 +221,11 @@ export default function SignUpPage() {
                   <div className="flex-1 h-px bg-white/8" />
                 </div>
 
-                <GoogleSignInButton label="Sign up with Google" />
+                <GoogleSignInButton
+                  label="Sign up with Google"
+                  requireAgreement={!agreedToPolicies}
+                  requireAgreementMessage="Please agree to the platform policies above before signing up with Google."
+                />
 
                 <div className="rounded-2xl border border-[#00e6c3]/15 bg-[#00e6c3]/8 px-4 py-4 text-sm text-zinc-300 leading-relaxed">
                   <div className="flex items-center gap-2 text-[#8cf8e9] font-black uppercase tracking-[0.24em] text-[10px]">

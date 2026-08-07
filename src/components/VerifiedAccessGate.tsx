@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { sendEmailVerification } from "firebase/auth";
 import { MailCheck, RefreshCcw, ShieldAlert, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +13,6 @@ type VerifiedAccessGateProps = {
   title: string;
   description: string;
   nextHref: string;
-  nextLabel: string;
 };
 
 type MessageType = "success" | "error" | null;
@@ -23,7 +21,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-export default function VerifiedAccessGate({ title, description, nextHref, nextLabel }: VerifiedAccessGateProps) {
+export default function VerifiedAccessGate({ title, description, nextHref }: VerifiedAccessGateProps) {
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -138,13 +136,6 @@ export default function VerifiedAccessGate({ title, description, nextHref, nextL
           <RefreshCcw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
           {refreshing ? "Checking..." : "I verified my email"}
         </button>
-        <Link
-          href={nextHref}
-          className="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3.5 text-sm font-bold text-[rgba(245,243,239,0.68)] hover:text-white transition-colors"
-          style={{ borderColor: "rgba(245,243,239,0.14)" }}
-        >
-          {nextLabel}
-        </Link>
       </div>
     </div>
   );
