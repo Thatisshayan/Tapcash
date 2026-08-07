@@ -4,10 +4,13 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
+import { Shield, Eye, Lock, FileText, CheckCircle2, RefreshCw, Layers, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
+import { MotionWrap } from "@/components/PremiumUi";
+
+const GOLD = "#D9B678";
+const GOLD_BRIGHT = "#F0CE97";
 
 export default function CookiePolicyPage() {
   const lastUpdated = "May 22, 2026";
@@ -49,7 +52,7 @@ export default function CookiePolicyPage() {
           <p>
             Cookies are small text files stored on your computer or mobile device when you browse websites. In addition to HTTP cookies, our application utilizes modern browser local storage technologies (such as HTML5 LocalStorage and SessionStorage) to store persistent, secure validation tokens.
           </p>
-          <p className="mt-2 text-zinc-400">
+          <p className="mt-2 text-[rgba(245,243,239,0.5)]">
             These files allow the platform to remember your active session, track tasks cleanly from start to finish, and prevent multiple users from farming offers on the same physical device.
           </p>
         </>
@@ -64,15 +67,15 @@ export default function CookiePolicyPage() {
           <p>
             We classify our tracking elements into three core categories:
           </p>
-          <ul className="list-disc pl-5 mt-2 space-y-2 text-zinc-400">
+          <ul className="list-disc pl-5 mt-2 space-y-2 text-[rgba(245,243,239,0.5)]">
             <li>
-              <strong className="text-white">Strictly Necessary &amp; Security:</strong> Required for the base application to function. These allow you to log in via Firebase Authentication and maintain your active wallet. They are also used for browser fingerprinting and multi-account checking, which are essential for maintaining anti-fraud shields.
+              <strong className="text-[#F5F3EF]">Strictly Necessary &amp; Security:</strong> Required for the base application to function. These allow you to log in via Firebase Authentication and maintain your active wallet. They are also used for browser fingerprinting and multi-account checking, which are essential for maintaining anti-fraud shields.
             </li>
             <li>
-              <strong className="text-white">Task &amp; Postback Conversion:</strong> Used by our offerwall networks (Lootably, HangMyAd, Wyzia) to track when you download a game or start a survey. These cookies match up clicks on our site with callbacks from advertiser servers. Without these, your offer completions cannot be credited.
+              <strong className="text-[#F5F3EF]">Task &amp; Postback Conversion:</strong> Used by our offerwall networks (Lootably, HangMyAd, Wyzia) to track when you download a game or start a survey. These cookies match up clicks on our site with callbacks from advertiser servers. Without these, your offer completions cannot be credited.
             </li>
             <li>
-              <strong className="text-white">Preferences &amp; Analytics:</strong> Remember your interface preferences (such as dark mode preferences and daily spin timings) and help us analyze site traffic anonymously.
+              <strong className="text-[#F5F3EF]">Preferences &amp; Analytics:</strong> Remember your interface preferences (such as dark mode preferences and daily spin timings) and help us analyze site traffic anonymously.
             </li>
           </ul>
         </>
@@ -89,27 +92,25 @@ export default function CookiePolicyPage() {
           </p>
           <div className="space-y-6">
             {cookieInventory.map((group, gIdx) => (
-              <div key={gIdx} className="overflow-hidden border border-zinc-900 rounded-2xl bg-zinc-950/20 backdrop-blur-sm">
-                <div className="bg-zinc-950/80 px-4 py-2.5 border-b border-zinc-900">
-                  <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest">{group.category}</h4>
-                </div>
+              <div key={gIdx} className="overflow-hidden" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
+                <h4 className="text-xs font-bold text-[#D9B678] uppercase tracking-widest pt-6 pb-2">{group.category}</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-zinc-900 text-zinc-500 font-bold uppercase tracking-wider bg-zinc-950/10">
-                        <th className="px-4 py-3">Cookie Name</th>
-                        <th className="px-4 py-3">Provider</th>
-                        <th className="px-4 py-3">Purpose</th>
-                        <th className="px-4 py-3">Duration</th>
+                      <tr className="text-[rgba(245,243,239,0.4)] font-bold uppercase tracking-wider" style={{ borderBottom: "1px solid rgba(245,243,239,0.09)" }}>
+                        <th className="px-2 py-3">Cookie Name</th>
+                        <th className="px-2 py-3">Provider</th>
+                        <th className="px-2 py-3">Purpose</th>
+                        <th className="px-2 py-3">Duration</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-900/50">
+                    <tbody>
                       {group.cookies.map((cookie, cIdx) => (
-                        <tr key={cIdx} className="hover:bg-zinc-900/10 transition">
-                          <td className="px-4 py-3 font-mono text-emerald-400 font-bold">{cookie.name}</td>
-                          <td className="px-4 py-3 text-white font-medium">{cookie.provider}</td>
-                          <td className="px-4 py-3 text-zinc-400 leading-relaxed min-w-[200px]">{cookie.purpose}</td>
-                          <td className="px-4 py-3 text-zinc-500 font-semibold uppercase">{cookie.duration}</td>
+                        <tr key={cIdx} style={{ borderBottom: "1px solid rgba(245,243,239,0.06)" }}>
+                          <td className="px-2 py-3 font-mono text-[#D9B678] font-bold">{cookie.name}</td>
+                          <td className="px-2 py-3 text-[#F5F3EF] font-medium">{cookie.provider}</td>
+                          <td className="px-2 py-3 text-[rgba(245,243,239,0.5)] leading-relaxed min-w-[200px]">{cookie.purpose}</td>
+                          <td className="px-2 py-3 text-[rgba(245,243,239,0.4)] font-semibold uppercase">{cookie.duration}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -130,7 +131,7 @@ export default function CookiePolicyPage() {
           <p>
             When you click on surveys or install advertiser apps, our partners (such as Lootably, HangMyAd, and auxiliary payment processors) may drop their own web beacons, tracking pixels, or cookie scripts to verify task completions.
           </p>
-          <p className="mt-2 text-zinc-400">
+          <p className="mt-2 text-[rgba(245,243,239,0.5)]">
             These third-party cookies are subject to the specific privacy and cookie guidelines of those external networks. We encourage you to review their policies prior to engaging in extensive offer sequences.
           </p>
         </>
@@ -145,7 +146,7 @@ export default function CookiePolicyPage() {
           <p>
             You can control or delete browser cookies and clear your local storage at any time through your web browser&apos;s built-in preference menus.
           </p>
-          <p className="mt-2 text-zinc-400">
+          <p className="mt-2 text-[rgba(245,243,239,0.5)]">
             Please note that if you choose to fully block or delete all cookies and local storage tokens, your active session on TapCash will be invalidated. Additionally, **our postback link matching will fail to recognize task completions**, meaning you will not receive Coins for completing surveys or downloading applications.
           </p>
         </>
@@ -154,67 +155,60 @@ export default function CookiePolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
       <Navbar />
 
-      {/* Background radial glows */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[120px] pointer-events-none" />
-
-      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
+      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
         <MotionWrap>
-          <section className="rounded-[2rem] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(0,230,195,0.12),transparent_35%),radial-gradient(circle_at_top_right,rgba(58,123,255,0.14),transparent_30%),linear-gradient(180deg,rgba(8,12,24,0.96),rgba(4,6,14,0.98))] p-6 sm:p-8 lg:p-10 mb-12">
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-start">
-              <div className="space-y-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#8cf8e9] text-[10px] font-black uppercase tracking-[0.28em]">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Cookie controls
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/8 bg-white/5 text-zinc-300 text-[10px] font-black uppercase tracking-[0.22em]">
-                    <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
-                    Offer attribution
-                  </span>
-                </div>
-                <div className="max-w-2xl space-y-3">
-                  <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                    Cookie policy that keeps the funnel measurable and secure.
-                  </h1>
-                  <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-                    We use storage, session tokens, and tracking keys to keep sign-in, offer attribution, and fraud controls working together.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <a href="/auth/signup" className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)]">
-                    Join TapCash
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                  <a href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/4 px-6 py-3.5 text-sm font-bold text-white hover:bg-white/7 transition-colors">
-                    Open dashboard
-                  </a>
-                </div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: GOLD_BRIGHT }}>
+            Cookie controls &middot; Offer attribution
+          </p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+            Cookie policy that keeps the funnel measurable and secure.
+          </h1>
+          <p className="text-base md:text-lg text-[rgba(245,243,239,0.68)] mb-8">
+            We use storage, session tokens, and tracking keys to keep sign-in, offer attribution, and fraud controls working together.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-3 py-6" style={{ borderTop: "1px solid rgba(245,243,239,0.09)", borderBottom: "1px solid rgba(245,243,239,0.09)" }}>
+            {[
+              { label: "Tracking scope", value: "Visible and controlled" },
+              { label: "Auth", value: "Secure, Firebase-backed" },
+              { label: "Match", value: "Reliable, postback-safe" },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[rgba(245,243,239,0.4)] mb-1">{s.label}</p>
+                <p className="text-sm font-bold">{s.value}</p>
               </div>
-
-              <div className="space-y-4">
-                <StatCard label="Tracking scope" value="Visible and controlled" detail="Cookies support login, offer matching, and fraud prevention." />
-                <div className="grid grid-cols-2 gap-3">
-                  <StatCard label="Auth" value="Secure" detail="Firebase-backed" />
-                  <StatCard label="Match" value="Reliable" detail="Postback-safe" />
-                </div>
-              </div>
-            </div>
-          </section>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+            <a
+              href="/auth/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold transition-transform hover:-translate-y-0.5"
+              style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#1a1408" }}
+            >
+              Join TapCash <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-bold text-[rgba(245,243,239,0.68)] hover:text-white transition-colors"
+              style={{ borderColor: "rgba(245,243,239,0.18)" }}
+            >
+              Open dashboard
+            </a>
+          </div>
         </MotionWrap>
 
-        <div className="space-y-4 text-center mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase rounded-full tracking-widest leading-none">
-            <FileText className="w-3.5 h-3.5 animate-pulse" />
+        <div className="space-y-4 text-center mt-16 mb-16">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: GOLD_BRIGHT }}>
+            <FileText className="w-3.5 h-3.5" />
             <span>Tracking Disclosures</span>
           </span>
-          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-[#F5F3EF] tracking-tight">
             Cookie Policy
           </h1>
-          <p className="text-zinc-500 text-sm font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5 text-zinc-600 animate-spin-slow" />
+          <p className="text-[rgba(245,243,239,0.4)] text-sm font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5 text-[rgba(245,243,239,0.28)]" />
             <span>Last Updated: {lastUpdated}</span>
           </p>
         </div>
@@ -230,23 +224,17 @@ export default function CookiePolicyPage() {
           bullets={["Secure auth session", "Offer attribution intact", "Fraud and duplicate protection"]}
         />
 
-        {/* Dynamic Legal sections list */}
-        <div className="space-y-12">
+        {/* Legal sections -- hairline-divided, no bordered card wrapper */}
+        <div>
           {sections.map((section) => {
             const Icon = section.icon;
             return (
-              <div
-                key={section.id}
-                id={section.id}
-                className="bg-zinc-950/30 border border-zinc-900 rounded-3xl p-6 sm:p-8 space-y-4 hover:border-zinc-800 transition duration-300"
-              >
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-4">
-                  <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-extrabold text-white tracking-tight">{section.title}</h3>
+              <div key={section.id} id={section.id} className="py-10 space-y-4" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5 shrink-0" style={{ color: GOLD }} />
+                  <h3 className="text-xl font-extrabold text-[#F5F3EF] tracking-tight">{section.title}</h3>
                 </div>
-                <div className="text-sm sm:text-base text-zinc-300 leading-relaxed space-y-4">
+                <div className="text-sm sm:text-base text-[rgba(245,243,239,0.68)] leading-relaxed space-y-4">
                   {section.content}
                 </div>
               </div>
@@ -255,11 +243,11 @@ export default function CookiePolicyPage() {
         </div>
 
         {/* Legal Footer Note */}
-        <div className="mt-16 pt-8 border-t border-zinc-900 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider space-y-2">
+        <div className="mt-6 pt-10 text-center text-xs font-semibold text-[rgba(245,243,239,0.28)] uppercase tracking-wider space-y-2" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
           <p>Have questions about how our cookies trace your survey clicks?</p>
           <p>
             Contact us directly at{" "}
-            <a href="mailto:HELLO@TAPCASH.ONLINE" className="text-emerald-400 hover:underline">
+            <a href="mailto:HELLO@TAPCASH.ONLINE" className="text-[#D9B678] hover:underline">
               HELLO@TAPCASH.ONLINE
             </a>
           </p>
@@ -267,14 +255,14 @@ export default function CookiePolicyPage() {
       </main>
       <Footer />
 
-      <footer className="border-t border-zinc-900 bg-[#080808] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-zinc-600 uppercase tracking-widest">
+      <footer className="border-t border-[rgba(245,243,239,0.09)] bg-[#0A0A0D] py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[rgba(245,243,239,0.28)] uppercase tracking-widest">
           <span>&copy; {new Date().getFullYear()} TapCash. All rights reserved.</span>
           <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center">
-            <Link href="/" className="hover:text-emerald-500 transition">Dashboard</Link>
-            <Link href="/terms" className="hover:text-emerald-500 transition">Terms of Service</Link>
-            <Link href="/privacy" className="hover:text-emerald-500 transition">Privacy</Link>
-            <Link href="/affiliate" className="hover:text-emerald-500 transition">Affiliates</Link>
+            <Link href="/" className="hover:text-[#D9B678] transition">Dashboard</Link>
+            <Link href="/terms" className="hover:text-[#D9B678] transition">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-[#D9B678] transition">Privacy</Link>
+            <Link href="/affiliate" className="hover:text-[#D9B678] transition">Affiliates</Link>
           </div>
         </div>
       </footer>
