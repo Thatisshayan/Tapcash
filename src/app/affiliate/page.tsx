@@ -4,9 +4,12 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, Sparkles, BadgeCheck, ArrowRight } from "lucide-react";
+import { Shield, Users, Award, AlertTriangle, RefreshCw, Scale, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
+import { MotionWrap } from "@/components/PremiumUi";
+
+const GOLD = "#D9B678";
+const GOLD_BRIGHT = "#F0CE97";
 
 export default function AffiliatePolicyPage() {
   const lastUpdated = "May 22, 2026";
@@ -21,17 +24,17 @@ export default function AffiliatePolicyPage() {
           <p>
             TapCash offers a highly lucrative Affiliate &amp; Referral Program that allows you to earn passive rewards by inviting friends to our community. When a user signs up using your unique referral link, they are permanently linked as your referee.
           </p>
-          <div className="my-4 p-5 bg-emerald-950/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between gap-4">
+          <div className="my-6 py-5 flex items-center justify-between gap-4" style={{ borderTop: "1px solid rgba(245,243,239,0.09)", borderBottom: "1px solid rgba(245,243,239,0.09)" }}>
             <div>
-              <h4 className="text-sm font-bold text-emerald-400">Standard Affiliate Commission</h4>
-              <p className="text-xs text-zinc-400 mt-1">Earn on every single offer wall, survey, and task your referral completes.</p>
+              <h4 className="text-sm font-bold" style={{ color: GOLD_BRIGHT }}>Standard Affiliate Commission</h4>
+              <p className="text-xs text-[rgba(245,243,239,0.5)] mt-1">Earn on every single offer wall, survey, and task your referral completes.</p>
             </div>
             <div className="text-center shrink-0">
-              <p className="text-2xl font-black text-emerald-400">20%</p>
-              <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Passive Rate</p>
+              <p className="text-2xl font-extrabold tabular-nums" style={{ color: GOLD_BRIGHT }}>20%</p>
+              <p className="text-[9px] font-bold uppercase text-[rgba(245,243,239,0.4)] tracking-wider">Passive Rate</p>
             </div>
           </div>
-          <p className="text-zinc-400 text-sm">
+          <p className="text-[rgba(245,243,239,0.5)] text-sm">
             This commission is funded entirely from our system marketing budget. Referees do not lose any part of their earnings; they receive 100% of their earned Coins, while you receive an additional 20% bonus on top.
           </p>
         </>
@@ -46,21 +49,21 @@ export default function AffiliatePolicyPage() {
           <p>
             To protect our advertiser relationships, we enforce strict guidelines on how you promote your referral links. The following promotional methods are strictly prohibited:
           </p>
-          <ul className="list-disc pl-5 mt-2 space-y-2 text-zinc-400 text-sm sm:text-base">
+          <ul className="list-disc pl-5 mt-2 space-y-2 text-[rgba(245,243,239,0.5)] text-sm sm:text-base">
             <li>
-              <strong className="text-white">Self-Referral:</strong> Creating multiple accounts yourself and linking them to your main affiliate link is strictly prohibited. Doing so will result in an immediate permanent ban on all associated accounts.
+              <strong className="text-[#F5F3EF]">Self-Referral:</strong> Creating multiple accounts yourself and linking them to your main affiliate link is strictly prohibited. Doing so will result in an immediate permanent ban on all associated accounts.
             </li>
             <li>
-              <strong className="text-white">Search Engine Hijacking:</strong> Bidding on trademarked search terms (e.g., &quot;TapCash&quot;, &quot;TapCash Codes&quot;, &quot;TapCash App&quot;) on search ad networks (Google Ads, Bing Ads, Yahoo) is strictly prohibited.
+              <strong className="text-[#F5F3EF]">Search Engine Hijacking:</strong> Bidding on trademarked search terms (e.g., &quot;TapCash&quot;, &quot;TapCash Codes&quot;, &quot;TapCash App&quot;) on search ad networks (Google Ads, Bing Ads, Yahoo) is strictly prohibited.
             </li>
             <li>
-              <strong className="text-white">Spamming:</strong> Posting your referral link inside irrelevant subreddits, comment sections of YouTube/TikTok, public chat channels, or sending unsolicited emails.
+              <strong className="text-[#F5F3EF]">Spamming:</strong> Posting your referral link inside irrelevant subreddits, comment sections of YouTube/TikTok, public chat channels, or sending unsolicited emails.
             </li>
             <li>
-              <strong className="text-white">Incentivized Signups:</strong> Paying other users to sign up using your link or promising separate payouts or cash rewards outside our platform.
+              <strong className="text-[#F5F3EF]">Incentivized Signups:</strong> Paying other users to sign up using your link or promising separate payouts or cash rewards outside our platform.
             </li>
             <li>
-              <strong className="text-white">Misrepresentation:</strong> Advertising TapCash using false, misleading, or hyper-inflated earning promises (e.g. &quot;earn $100 in 5 minutes!&quot;).
+              <strong className="text-[#F5F3EF]">Misrepresentation:</strong> Advertising TapCash using false, misleading, or hyper-inflated earning promises (e.g. &quot;earn $100 in 5 minutes!&quot;).
             </li>
           </ul>
         </>
@@ -75,7 +78,7 @@ export default function AffiliatePolicyPage() {
           <p>
             All referral commissions are subject to rigorous real-time and manual audit checks. We reserve the right to temporarily hold, reverse, or cancel referral earnings if:
           </p>
-          <ul className="list-disc pl-5 mt-2 space-y-2 text-zinc-400">
+          <ul className="list-disc pl-5 mt-2 space-y-2 text-[rgba(245,243,239,0.5)]">
             <li>Your referee completes tasks using forbidden networks (such as proxies, emulators, or VPNs).</li>
             <li>An advertiser reverses or chargebacks the task completion rewards due to non-compliance or poor response quality.</li>
             <li>Your affiliate profile is flagged for high-volume conversion anomalies (e.g., hundreds of signups with zero task completion rates).</li>
@@ -92,7 +95,7 @@ export default function AffiliatePolicyPage() {
           <p>
             Violations of this Affiliate Policy will result in immediate consequences determined at our sole discretion.
           </p>
-          <p className="mt-2 text-zinc-400">
+          <p className="mt-2 text-[rgba(245,243,239,0.5)]">
             Action can include reducing your commission rate to 0%, deleting your linked referral network, deleting your accumulated referral earnings, or permanently terminating your main TapCash profile.
           </p>
         </>
@@ -101,53 +104,60 @@ export default function AffiliatePolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060606] text-white flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
       <Navbar />
 
-      {/* Background radial glows */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-[120px] pointer-events-none" />
-
-      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
+      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
         <MotionWrap>
-          <PageShell
-            eyebrow="Referral policy"
-            title="Affiliate policy that protects growth and keeps the program sustainable."
-            description="TapCash’s referral engine is designed to drive growth without compromising fairness. This page explains how commissions, audits, and limits work."
-            kicker={
-              <>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-[#8cf8e9]">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Referral policy
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-300">
-                  <BadgeCheck className="w-3.5 h-3.5 text-[#7aa7ff]" />
-                  Commission rules
-                </div>
-              </>
-            }
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              <StatCard label="Policy date" value="Updated" detail={lastUpdated} />
-              <StatCard label="Referral bonus" value="5%" detail="Lifetime per referee" />
-              <StatCard label="Enforcement" value="Audited" detail="Real-time + manual" />
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <CTAButton href="/auth/signup" label="Join TapCash" variant="gradient" />
-              <CTAButton href="/dashboard" label="Open dashboard" variant="secondary" />
-            </div>
-          </PageShell>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: GOLD_BRIGHT }}>
+            Referral policy
+          </p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+            Affiliate policy that protects growth and keeps the program sustainable.
+          </h1>
+          <p className="text-base md:text-lg text-[rgba(245,243,239,0.68)] mb-8">
+            TapCash&rsquo;s referral engine is designed to drive growth without compromising fairness. This page explains how commissions, audits, and limits work.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-3 py-6" style={{ borderTop: "1px solid rgba(245,243,239,0.09)", borderBottom: "1px solid rgba(245,243,239,0.09)" }}>
+            {[
+              { label: "Policy date", value: lastUpdated },
+              { label: "Referral bonus", value: "5% lifetime per referee" },
+              { label: "Enforcement", value: "Audited, real-time + manual" },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[rgba(245,243,239,0.4)] mb-1">{s.label}</p>
+                <p className="text-sm font-bold">{s.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold transition-transform hover:-translate-y-0.5"
+              style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#1a1408" }}
+            >
+              Join TapCash <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-bold text-[rgba(245,243,239,0.68)] hover:text-white transition-colors"
+              style={{ borderColor: "rgba(245,243,239,0.18)" }}
+            >
+              Open dashboard
+            </Link>
+          </div>
         </MotionWrap>
 
-        <div className="space-y-4 text-center mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase rounded-full tracking-widest leading-none">
-            <Award className="w-3.5 h-3.5 animate-pulse" />
+        <div className="space-y-4 text-center mt-16 mb-16">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: GOLD_BRIGHT }}>
+            <Award className="w-3.5 h-3.5" />
             <span>Referral Program Terms</span>
           </span>
-          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-[#F5F3EF] tracking-tight">
             Affiliate Policy
           </h2>
-          <p className="text-zinc-500 text-sm font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5 text-zinc-600 animate-spin-slow" />
+          <p className="text-[rgba(245,243,239,0.4)] text-sm font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5 text-[rgba(245,243,239,0.28)]" />
             <span>Last Updated: {lastUpdated}</span>
           </p>
         </div>
@@ -163,23 +173,22 @@ export default function AffiliatePolicyPage() {
           bullets={["Fast signup flow", "Referral tracking built in", "Passive earning through offers"]}
         />
 
-        {/* Dynamic Legal sections list */}
-        <div className="space-y-12">
-          {sections.map((section) => {
+        {/* Legal sections -- hairline-divided, no bordered card wrapper */}
+        <div>
+          {sections.map((section, i) => {
             const Icon = section.icon;
             return (
               <div
                 key={section.id}
                 id={section.id}
-                className="bg-zinc-950/30 border border-zinc-900 rounded-3xl p-6 sm:p-8 space-y-4 hover:border-zinc-800 transition duration-300"
+                className={`py-10 space-y-4 ${i === 0 ? "" : ""}`}
+                style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}
               >
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-4">
-                  <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-extrabold text-white tracking-tight">{section.title}</h3>
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5 shrink-0" style={{ color: GOLD }} />
+                  <h3 className="text-xl font-extrabold text-[#F5F3EF] tracking-tight">{section.title}</h3>
                 </div>
-                <div className="text-sm sm:text-base text-zinc-300 leading-relaxed space-y-4">
+                <div className="text-sm sm:text-base text-[rgba(245,243,239,0.68)] leading-relaxed space-y-4">
                   {section.content}
                 </div>
               </div>
@@ -188,29 +197,17 @@ export default function AffiliatePolicyPage() {
         </div>
 
         {/* Legal Footer Note */}
-        <div className="mt-16 pt-8 border-t border-zinc-900 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider space-y-2">
+        <div className="mt-6 pt-10 text-center text-xs font-semibold text-[rgba(245,243,239,0.28)] uppercase tracking-wider space-y-2" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
           <p>Are you a high-traffic influencer or website owner seeking custom commission tiers?</p>
           <p>
             Apply for our Elite Partner status at{" "}
-            <a href="mailto:HELLO@TAPCASH.ONLINE" className="text-emerald-400 hover:underline">
+            <a href="mailto:HELLO@TAPCASH.ONLINE" className="hover:underline" style={{ color: GOLD }}>
               HELLO@TAPCASH.ONLINE
             </a>
           </p>
         </div>
       </main>
       <Footer />
-
-      <footer className="border-t border-zinc-900 bg-[#080808] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-zinc-600 uppercase tracking-widest">
-          <span>&copy; {new Date().getFullYear()} TapCash. All rights reserved.</span>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center">
-            <Link href="/" className="hover:text-emerald-500 transition">Dashboard</Link>
-            <Link href="/terms" className="hover:text-emerald-500 transition">Terms of Service</Link>
-            <Link href="/privacy" className="hover:text-emerald-500 transition">Privacy Policy</Link>
-            <Link href="/cookies" className="hover:text-emerald-500 transition">Cookies</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

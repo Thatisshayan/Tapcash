@@ -6,9 +6,6 @@ import { MailCheck, RefreshCcw, ShieldAlert, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 
-const GOLD = "#D9B678";
-const GOLD_BRIGHT = "#F0CE97";
-
 type VerifiedAccessGateProps = {
   title: string;
   description: string;
@@ -25,21 +22,25 @@ function GateHeader({ title, description }: { title: string; description: string
   return (
     <>
       <div className="flex items-start gap-4">
-        <ShieldAlert className="w-6 h-6 shrink-0 mt-0.5" style={{ color: GOLD }} />
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shrink-0">
+          <ShieldAlert className="w-5 h-5" />
+        </div>
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-[rgba(245,243,239,0.4)] font-bold">Verification required</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#F5F3EF]">{title}</h2>
-          <p className="text-sm md:text-base text-[rgba(245,243,239,0.5)] leading-relaxed max-w-2xl">{description}</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Verification required</p>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">{title}</h2>
+          <p className="text-sm md:text-base text-zinc-400 leading-relaxed max-w-2xl">{description}</p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {[
           "Verify your inbox",
           "Keep the platform bot-resistant",
           "Unlock offers, cashout, and referrals",
         ].map((item) => (
-          <p key={item} className="text-sm text-[rgba(245,243,239,0.68)] font-medium leading-relaxed">{item}</p>
+          <div key={item} className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+            <p className="text-sm text-zinc-200 font-medium leading-relaxed">{item}</p>
+          </div>
         ))}
       </div>
     </>
@@ -49,13 +50,11 @@ function GateHeader({ title, description }: { title: string; description: string
 function GateMessage({ message, messageType }: { message: string | null; messageType: MessageType }) {
   if (!message) return null;
   return (
-    <div
-      className="mt-5 py-3 text-sm flex items-start gap-2"
-      style={{
-        borderTop: "1px solid rgba(245,243,239,0.09)",
-        color: messageType === "success" ? GOLD_BRIGHT : "#FF2F42",
-      }}
-    >
+    <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm flex items-start gap-2 ${
+      messageType === "success"
+        ? "border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#b9fff3]"
+        : "border-red-500/20 bg-red-500/10 text-red-300"
+    }`}>
       {messageType === "error" && <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
       {messageType === "success" && <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />}
       <span>{message}</span>
@@ -123,7 +122,7 @@ export default function VerifiedAccessGate({ title, description, nextHref }: Ver
   };
 
   return (
-    <div className="py-6" style={{ borderTop: "1px solid rgba(245,243,239,0.09)" }}>
+    <div className="rounded-[2rem] border border-white/8 bg-white/[0.04] p-6 md:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
       <GateHeader title={title} description={description} />
       <GateMessage message={message} messageType={messageType} />
 
@@ -132,8 +131,7 @@ export default function VerifiedAccessGate({ title, description, nextHref }: Ver
           type="button"
           onClick={handleResend}
           disabled={sending}
-          className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold transition-transform hover:-translate-y-0.5 disabled:opacity-60"
-          style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#1a1408" }}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-5 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)] disabled:opacity-60"
         >
           <MailCheck className="w-4 h-4" />
           {sending ? "Resending..." : "Resend verification email"}
@@ -142,8 +140,7 @@ export default function VerifiedAccessGate({ title, description, nextHref }: Ver
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3.5 text-sm font-bold text-[rgba(245,243,239,0.68)] hover:text-white transition-colors disabled:opacity-60"
-          style={{ borderColor: "rgba(245,243,239,0.14)" }}
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.07] transition-colors disabled:opacity-60"
         >
           <RefreshCcw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
           {refreshing ? "Checking..." : "I verified my email"}
