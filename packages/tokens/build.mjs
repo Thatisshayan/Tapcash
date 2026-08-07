@@ -150,6 +150,6 @@ export const leaderboard = [
 const mobilePath = resolve(root, 'mobile', 'src', 'theme.ts');
 writeFileSync(mobilePath, mobileTheme, 'utf8');
 
-console.log('[tokens] wrote', mobilePath.replace(root, '.'));
-console.log('[tokens] mobile theme converged to Aurora:', p.gold, p.violet, p.obsidian);
+console.log('[tokens] wrote mobile/src/theme.ts');
+console.log('[tokens] mobile theme converged to Aurora.');
 console.log('[tokens] OK — run `jest packages/tokens/tokens.test.ts` to verify parity.');
