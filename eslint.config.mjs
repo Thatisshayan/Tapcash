@@ -28,6 +28,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Orphan components staged for deletion (2026-08-06 cleanup pass) — not
+    // part of the build, kept only for Shayan's review before removal.
+    "_cleanup-2026-08-06/**",
   ]),
 ]);
 

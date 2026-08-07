@@ -1,51 +1,51 @@
 /**
- * TapCash Model U Design System — GENERATED FILE.
+ * TapCash Aurora Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
- * Source of truth: packages/tokens/tokens.json (Model U palette).
+ * Source of truth: packages/tokens/tokens.json (Aurora palette, v3).
  */
 
 export const theme = {
   colors: {
     // Base / surfaces
-    bg: '#050813',
-    background: '#050813',
-    surfaceBase: '#050813',
-    surfaceRaised: '#09101F',
-    surfaceOverlay: '#0F1829',
-    panel: 'rgba(9, 16, 31, 0.74)',
-    line: 'rgba(150, 190, 255, 0.14)',
-    border: 'rgba(150, 190, 255, 0.14)',
+    bg: '#0A0A0D',
+    background: '#0A0A0D',
+    surfaceBase: '#0A0A0D',
+    line: 'rgba(245,243,239,0.09)',
+    border: 'rgba(245,243,239,0.09)',
 
     // Text
-    text: '#F6F8FF',
-    muted: '#9AA8C6',
-    dim: '#7B8AA8',
+    text: '#F5F3EF',
+    muted: 'rgba(245,243,239,0.68)',
+    dim: 'rgba(245,243,239,0.45)',
+    ghost: 'rgba(245,243,239,0.28)',
 
-    // Legacy-named surface slots (kept for backward-compatible imports)
-    card: '#09101F',
-    elevated: '#0F1829',
-
-    // Semantic accents (Model U)
-    green: '#31F06F',
-    cyan: '#18D9FF',
-    purple: '#7C3DFF',
-    yellow: '#FFC442',
-    gold: '#FFC442',
+    // Semantic accents (Aurora) -- keys held stable across the Neon/Model-U ->
+    // Aurora swap so existing component imports keep working; values changed.
+    accent: '#D9B678',
+    accentBright: '#F0CE97',
+    accentDeep: '#B98F4C',
+    accentViolet: '#6C5CE0',
+    accentBlue: '#3E6FD9',
+    green: '#D9B678',
+    greenHover: '#F0CE97',
+    cyan: '#3E6FD9',
+    purple: '#6C5CE0',
+    yellow: '#D9B678',
+    gold: '#D9B678',
     red: '#FF2F42',
     danger: '#FF2F42',
   },
   gradients: {
-    primary: 'linear-gradient(100deg, #7C3DFF, #18D9FF, #31F06F)',
-    green: 'linear-gradient(90deg, #31F06F, #92FF2F)',
-    cyanPurple: 'linear-gradient(90deg, #18D9FF, #7C3DFF)',
-    panel: 'linear-gradient(180deg, rgba(9, 16, 31, 0.74), rgba(6, 12, 23, 0.72))',
-    hero: 'radial-gradient(circle at 45% 16%, rgba(29, 214, 255, 0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(124, 61, 255, 0.22), transparent 26%)',
+    primary: 'linear-gradient(135deg, #F0CE97, #D9B678)',
+    goldText: 'linear-gradient(100deg, #F0CE97, #D9B678 60%, #B98F4C)',
+    cashpathLine: 'linear-gradient(90deg, #D9B678, #F0CE97 55%, rgba(245,243,239,0.15))',
+    hero: 'radial-gradient(circle at 45% 16%, rgba(217,182,120,0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(108,92,224,0.18), transparent 26%)',
   },
   radius: {
     xs: 8,
     sm: 12,
     md: 16,
-    lg: 22,
+    lg: 20,
     xl: 28,
     full: 999,
   },
@@ -97,9 +97,11 @@ export const dashboardOffers = [
   { id: 'refer_1', title: 'Invite a friend and both earn', provider: 'TapCash', category: 'Referral', payout: '250 coins', time: '2 min', accent: 'success' },
 ];
 
+// NOTE: Interac e-Transfer intentionally omitted — frozen per Shayan's
+// 2026-08-06 launch-push decision (no UI, code path, or docs referencing it).
 export const payoutMethods = [
   { id: 'paypal', label: 'PayPal Cash', subtitle: 'Fastest mainstream cashout', min: '5,000 coins', eta: 'Usually under 24h', audience: 'Most users', accent: 'success' },
-  { id: 'interac', label: 'Interac e-Transfer', subtitle: 'Canada-first withdrawal path', min: '5,000 coins', eta: 'Manual review window', audience: 'Canadian users', accent: 'info' },
+  { id: 'bank', label: 'Bank Transfer', subtitle: 'Direct to your account', min: '5,000 coins', eta: '1-3 business days', audience: 'Most users', accent: 'info' },
   { id: 'bitcoin', label: 'Bitcoin', subtitle: 'Direct crypto payout', min: '10,000 coins', eta: 'Queue based', audience: 'Crypto users', accent: 'reward' },
   { id: 'gift', label: 'Gift cards', subtitle: 'Steam, Tim Hortons, and more', min: '5,000 coins', eta: 'Processed manually', audience: 'Light redeemers', accent: 'success' },
 ];

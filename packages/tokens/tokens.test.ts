@@ -1,8 +1,8 @@
 /**
  * Phase 1 token-foundation drift test.
  * Enforces the REDESIGN_SPEC Phase 1 gate:
- *   - One palette (Model U) shared across web + mobile.
- *   - No retired legacy hex (e.g. #00FF85 / #7B5CF0 / #0d0d1a) in either platform output.
+ *   - One palette (Aurora) shared across web + mobile.
+ *   - No retired legacy hex (Neon, Model U, or the original legacy palette) in either platform output.
  *
  * Runs in the web Jest suite (next-jest) so it gates PRs to main.
  */
@@ -15,34 +15,34 @@ const tokens = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tokens/tokens
 const { primitives, legacy } = tokens;
 
 const mobileTheme = readFileSync(resolve(repoRoot, 'mobile/src/theme.ts'), 'utf8');
-// Web renders tokens in globals.css; read the active Model U @theme block.
+// Web renders tokens in globals.css; read the active Aurora @theme block.
 const globals = readFileSync(resolve(repoRoot, 'src/app/globals.css'), 'utf8');
 
 describe('Phase 1 token foundation', () => {
-  test('mobile theme converged to Model U primitives (no legacy drift)', () => {
-    // Core Model U anchors must be present in generated mobile theme.
-    expect(mobileTheme).toContain(primitives.green);   // #31F06F
-    expect(mobileTheme).toContain(primitives.purple);  // #7C3DFF
-    expect(mobileTheme).toContain(primitives['ink-950']); // #050813
-    // Mobile must NOT still carry the legacy palette.
+  test('mobile theme converged to Aurora primitives (no legacy drift)', () => {
+    // Core Aurora anchors must be present in generated mobile theme.
+    expect(mobileTheme).toContain(primitives.gold);      // #D9B678
+    expect(mobileTheme).toContain(primitives.violet);    // #6C5CE0
+    expect(mobileTheme).toContain(primitives.obsidian);  // #0A0A0D
+    // Mobile must NOT still carry a retired palette.
     for (const banned of legacy.bannedHex) {
       expect(mobileTheme.toLowerCase()).not.toContain(banned.toLowerCase());
     }
   });
 
-  test('web globals.css anchors on Model U primitives', () => {
-    expect(globals).toContain(primitives.green);
-    expect(globals).toContain(primitives.purple);
-    expect(globals).toContain(primitives['ink-950']);
+  test('web globals.css anchors on Aurora primitives', () => {
+    expect(globals).toContain(primitives.gold);
+    expect(globals).toContain(primitives.violet);
+    expect(globals).toContain(primitives.obsidian);
   });
 
-  // Skipped 2026-08-06: src/app/globals.css does not yet have full Model U
+  // Skipped 2026-08-06: src/app/globals.css does not yet have full Aurora
   // primitive parity -- that migration is TASK-038 (Track 2 UI/UX redesign),
   // not this Track 1 build-fix push. Un-skip once Track 2's token-migration
   // batches land. Tracked, not silently dropped -- see
   // docs/superpowers/plans/2026-08-06-track2-uiux-redesign.md.
   test.skip('web + mobile share the same canonical accent set', () => {
-    const common = [primitives.green, primitives.cyan, primitives.purple, primitives.gold, primitives.red];
+    const common = [primitives.gold, primitives.blue, primitives.violet, primitives.red];
     for (const hex of common) {
       expect(mobileTheme.toLowerCase()).toContain(hex.toLowerCase());
       expect(globals.toLowerCase()).toContain(hex.toLowerCase());
