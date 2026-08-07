@@ -158,14 +158,9 @@ function BrandMarquee() {
   );
 }
 
-function HeroLeftColumn({ prefersReduced }: { prefersReduced: boolean | null }) {
+function HeroHeadline({ prefersReduced }: { prefersReduced: boolean | null }) {
   return (
-    <motion.div
-      variants={prefersReduced ? undefined : stagger}
-      initial="hidden"
-      animate="show"
-      className="space-y-6 order-2 lg:order-1"
-    >
+    <>
       <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full" style={{ background: GOLD, boxShadow: `0 0 8px ${GOLD}` }} />
         <span className="text-[13px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD_BRIGHT }}>
@@ -199,43 +194,64 @@ function HeroLeftColumn({ prefersReduced }: { prefersReduced: boolean | null }) 
       >
         Real offers. Real rewards. Real cash in your account.
       </motion.p>
+    </>
+  );
+}
 
-      {/* Microbadges 2x2 */}
-      <motion.div variants={prefersReduced ? undefined : fadeUp} className="grid grid-cols-2 gap-2">
-        {MICROBADGES.map(({ icon: Icon, label }) => (
-          <span
-            key={label}
-            className="flex items-center gap-2 text-[12px] text-[rgba(245,243,239,0.6)] px-3 py-2 rounded-xl"
-            style={{ background: 'rgba(245,243,239,0.04)', border: '1px solid rgba(245,243,239,0.07)' }}
-          >
-            <Icon size={13} style={{ color: GOLD, flexShrink: 0 }} />
-            {label}
-          </span>
-        ))}
-      </motion.div>
+function HeroMicrobadges({ prefersReduced }: { prefersReduced: boolean | null }) {
+  return (
+    <motion.div variants={prefersReduced ? undefined : fadeUp} className="grid grid-cols-2 gap-2">
+      {MICROBADGES.map(({ icon: Icon, label }) => (
+        <span
+          key={label}
+          className="flex items-center gap-2 text-[12px] text-[rgba(245,243,239,0.6)] px-3 py-2 rounded-xl"
+          style={{ background: 'rgba(245,243,239,0.04)', border: '1px solid rgba(245,243,239,0.07)' }}
+        >
+          <Icon size={13} style={{ color: GOLD, flexShrink: 0 }} />
+          {label}
+        </span>
+      ))}
+    </motion.div>
+  );
+}
 
-      {/* CTAs */}
-      <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex flex-wrap gap-3">
-        <Link
-          href="/auth/signup"
-          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[15px] font-bold transition-transform hover:-translate-y-0.5"
-          style={{
-            background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
-            color: '#1a1408',
-            boxShadow: `0 10px 30px ${GOLD}47`,
-          }}
-        >
-          Start My First Offer
-          <ArrowRight size={16} />
-        </Link>
-        <Link
-          href="/how-it-works"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[14px] font-medium text-[rgba(245,243,239,0.6)] hover:text-white border transition-all"
-          style={{ borderColor: 'rgba(245,243,239,0.14)' }}
-        >
-          See How It Works
-        </Link>
-      </motion.div>
+function HeroCTAs({ prefersReduced }: { prefersReduced: boolean | null }) {
+  return (
+    <motion.div variants={prefersReduced ? undefined : fadeUp} className="flex flex-wrap gap-3">
+      <Link
+        href="/auth/signup"
+        className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[15px] font-bold transition-transform hover:-translate-y-0.5"
+        style={{
+          background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`,
+          color: '#1a1408',
+          boxShadow: `0 10px 30px ${GOLD}47`,
+        }}
+      >
+        Start My First Offer
+        <ArrowRight size={16} />
+      </Link>
+      <Link
+        href="/how-it-works"
+        className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[14px] font-medium text-[rgba(245,243,239,0.6)] hover:text-white border transition-all"
+        style={{ borderColor: 'rgba(245,243,239,0.14)' }}
+      >
+        See How It Works
+      </Link>
+    </motion.div>
+  );
+}
+
+function HeroLeftColumn({ prefersReduced }: { prefersReduced: boolean | null }) {
+  return (
+    <motion.div
+      variants={prefersReduced ? undefined : stagger}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 order-2 lg:order-1"
+    >
+      <HeroHeadline prefersReduced={prefersReduced} />
+      <HeroMicrobadges prefersReduced={prefersReduced} />
+      <HeroCTAs prefersReduced={prefersReduced} />
     </motion.div>
   );
 }
