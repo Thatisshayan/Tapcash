@@ -16,25 +16,26 @@ const tokens = JSON.parse(readFileSync(resolve(__dirname, 'tokens.json'), 'utf8'
 
 const { primitives: p, semantic: s, typeScale: t, space: sp, radius: r, gradients: g } = tokens;
 
-// ── Mobile theme.ts (TapCash Neon, typed, generated) ─────────────────────────
+// ── Mobile theme.ts (TapCash Aurora, typed, generated) ───────────────────────
 // Sample data kept but emoji iconography removed (REDESIGN_SPEC anti-pattern);
 // fabricated-statistics / fake-live-activity anti-patterns still enforced —
 // see packages/tokens/tokens.json meta.antiPatterns and meta.decisionLog.
+// Colour KEYS below (green/purple/etc) are kept as the stable public API so
+// existing component imports don't break across palette swaps -- only the
+// hex VALUES they resolve to change. New code should prefer the semantic
+// names (accent, accentBright, accentDeep, accentViolet, accentBlue).
 const mobileTheme = `/**
- * TapCash Neon Design System — GENERATED FILE.
+ * TapCash Aurora Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
- * Source of truth: packages/tokens/tokens.json (TapCash Neon palette, v2).
+ * Source of truth: packages/tokens/tokens.json (Aurora palette, v3).
  */
 
 export const theme = {
   colors: {
     // Base / surfaces
-    bg: '${p['ink-950']}',
-    background: '${p['ink-950']}',
+    bg: '${p.obsidian}',
+    background: '${p.obsidian}',
     surfaceBase: '${s['surface-base']}',
-    surfaceRaised: '${s['surface-raised']}',
-    surfaceOverlay: '${s['surface-overlay']}',
-    panel: '${s.panel}',
     line: '${s['border-hairline']}',
     border: '${s['border-hairline']}',
 
@@ -42,27 +43,29 @@ export const theme = {
     text: '${s['text-primary']}',
     muted: '${s['text-secondary']}',
     dim: '${s['text-tertiary']}',
+    ghost: '${s['text-ghost']}',
 
-    // Legacy-named surface slots (kept for backward-compatible imports)
-    card: '${s['surface-raised']}',
-    elevated: '${s['surface-overlay']}',
-
-    // Semantic accents (Model U)
-    green: '${p.green}',
-    greenHover: '${p.greenHover}',
-    cyan: '${p.cyan}',
-    purple: '${p.purple}',
+    // Semantic accents (Aurora) -- keys held stable across the Neon/Model-U ->
+    // Aurora swap so existing component imports keep working; values changed.
+    accent: '${p.gold}',
+    accentBright: '${p.goldBright}',
+    accentDeep: '${p.goldDeep}',
+    accentViolet: '${p.violet}',
+    accentBlue: '${p.blue}',
+    green: '${p.gold}',
+    greenHover: '${p.goldBright}',
+    cyan: '${p.blue}',
+    purple: '${p.violet}',
     yellow: '${p.gold}',
     gold: '${p.gold}',
     red: '${p.red}',
     danger: '${p.red}',
   },
   gradients: {
-    primary: '${g.primary}',
-    green: '${g.green}',
-    cyanPurple: '${g.cyanPurple}',
-    panel: '${g.panel}',
-    hero: 'radial-gradient(circle at 45% 16%, rgba(29, 214, 255, 0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(124, 61, 255, 0.22), transparent 26%)',
+    primary: '${g.goldPrimary}',
+    goldText: '${g.goldText}',
+    cashpathLine: '${g.cashpathLine}',
+    hero: 'radial-gradient(circle at 45% 16%, rgba(217,182,120,0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(108,92,224,0.18), transparent 26%)',
   },
   radius: {
     xs: ${Number(r.sm.replace('px', ''))},
@@ -148,5 +151,5 @@ const mobilePath = resolve(root, 'mobile', 'src', 'theme.ts');
 writeFileSync(mobilePath, mobileTheme, 'utf8');
 
 console.log('[tokens] wrote', mobilePath.replace(root, '.'));
-console.log('[tokens] mobile theme converged to TapCash Neon:', p.green, p.purple, p['ink-950']);
+console.log('[tokens] mobile theme converged to Aurora:', p.gold, p.violet, p.obsidian);
 console.log('[tokens] OK — run `jest packages/tokens/tokens.test.ts` to verify parity.');

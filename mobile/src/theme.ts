@@ -1,52 +1,51 @@
 /**
- * TapCash Neon Design System — GENERATED FILE.
+ * TapCash Aurora Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
- * Source of truth: packages/tokens/tokens.json (TapCash Neon palette, v2).
+ * Source of truth: packages/tokens/tokens.json (Aurora palette, v3).
  */
 
 export const theme = {
   colors: {
     // Base / surfaces
-    bg: '#080C14',
-    background: '#080C14',
-    surfaceBase: '#080C14',
-    surfaceRaised: '#111624',
-    surfaceOverlay: '#1A2133',
-    panel: 'rgba(17, 22, 36, 0.9)',
-    line: 'rgba(255, 255, 255, 0.08)',
-    border: 'rgba(255, 255, 255, 0.08)',
+    bg: '#0A0A0D',
+    background: '#0A0A0D',
+    surfaceBase: '#0A0A0D',
+    line: 'rgba(245,243,239,0.09)',
+    border: 'rgba(245,243,239,0.09)',
 
     // Text
-    text: '#FFFFFF',
-    muted: '#B5B6B9',
-    dim: '#84868A',
+    text: '#F5F3EF',
+    muted: 'rgba(245,243,239,0.68)',
+    dim: 'rgba(245,243,239,0.45)',
+    ghost: 'rgba(245,243,239,0.28)',
 
-    // Legacy-named surface slots (kept for backward-compatible imports)
-    card: '#111624',
-    elevated: '#1A2133',
-
-    // Semantic accents (Model U)
-    green: '#14F195',
-    greenHover: '#00E676',
-    cyan: '#00B4D8',
-    purple: '#6D28D9',
-    yellow: '#FFC442',
-    gold: '#FFC442',
+    // Semantic accents (Aurora) -- keys held stable across the Neon/Model-U ->
+    // Aurora swap so existing component imports keep working; values changed.
+    accent: '#D9B678',
+    accentBright: '#F0CE97',
+    accentDeep: '#B98F4C',
+    accentViolet: '#6C5CE0',
+    accentBlue: '#3E6FD9',
+    green: '#D9B678',
+    greenHover: '#F0CE97',
+    cyan: '#3E6FD9',
+    purple: '#6C5CE0',
+    yellow: '#D9B678',
+    gold: '#D9B678',
     red: '#FF2F42',
     danger: '#FF2F42',
   },
   gradients: {
-    primary: 'linear-gradient(135deg, #14F195, #00B4D8)',
-    green: 'linear-gradient(90deg, #14F195, #00E676)',
-    cyanPurple: 'linear-gradient(90deg, #00B4D8, #6D28D9)',
-    panel: 'linear-gradient(145deg, rgba(17, 22, 36, 0.9), rgba(12, 16, 26, 0.9))',
-    hero: 'radial-gradient(circle at 45% 16%, rgba(29, 214, 255, 0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(124, 61, 255, 0.22), transparent 26%)',
+    primary: 'linear-gradient(135deg, #F0CE97, #D9B678)',
+    goldText: 'linear-gradient(100deg, #F0CE97, #D9B678 60%, #B98F4C)',
+    cashpathLine: 'linear-gradient(90deg, #D9B678, #F0CE97 55%, rgba(245,243,239,0.15))',
+    hero: 'radial-gradient(circle at 45% 16%, rgba(217,182,120,0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(108,92,224,0.18), transparent 26%)',
   },
   radius: {
     xs: 8,
     sm: 12,
     md: 16,
-    lg: 22,
+    lg: 20,
     xl: 28,
     full: 999,
   },

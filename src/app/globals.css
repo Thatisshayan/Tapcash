@@ -6,19 +6,21 @@
   --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 
-  /* ── TapCash Neon Color System (packages/tokens/tokens.json v2.0.0) ──
-     Root primitives updated 2026-08-06 to match the approved neon palette.
-     Component-level hex purge (the ~1,150 raw literals still on Model U /
-     legacy values) is separate Track 2 scope, not done in this pass — see
-     packages/tokens/tokens.test.ts and DEFERRED_WORK.md. ── */
-  --color-bg-base: #080C14;
-  --color-bg-card: rgba(17, 22, 36, 0.9);
-  --color-bg-elevated: #1A2133;
-  --color-bg-input: #111624;
-  --color-brand-green: #14F195;
-  --color-brand-green-hover: #00E676;
-  --color-brand-purple: #6D28D9;
-  --color-brand-cyan: #00B4D8;
+  /* ── TapCash Aurora Color System (packages/tokens/tokens.json v3.0.0) ──
+     Root primitives updated 2026-08-06 to the final Aurora palette (the
+     Neon palette this replaced was retracted the same day it landed — see
+     tokens.json meta.decisionLog for the full history before touching this
+     again). Component-level hex purge (the ~1,150 raw literals still on
+     retired palettes) is separate Track 2 scope, not done in this pass —
+     see packages/tokens/tokens.test.ts and DEFERRED_WORK.md. ── */
+  --color-bg-base: #0A0A0D;
+  --color-bg-card: rgba(20, 20, 24, 0.85);
+  --color-bg-elevated: #17171B;
+  --color-bg-input: #111114;
+  --color-brand-green: #D9B678;
+  --color-brand-green-hover: #F0CE97;
+  --color-brand-purple: #6C5CE0;
+  --color-brand-cyan: #3E6FD9;
   --color-brand-yellow: #FFC442;
   --color-brand-purple-dark: #5b3fd4;
   --color-text-primary: #F6F8FF;
