@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   refreshBtnText: { color: theme.colors.accentBright, fontSize: 14, fontWeight: "700" },
   settingsList: { borderTopWidth: 1, borderTopColor: theme.colors.line },
   settingsRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.line },
-  settingsRowLast: {},
+  settingsRowLast: { borderBottomWidth: 0 },
   settingsLabel: { flex: 1, color: theme.colors.text, fontSize: theme.font.md, fontWeight: "600" },
   settingsLabelDanger: { color: theme.colors.red },
   signOutText: { color: theme.colors.red },

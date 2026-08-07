@@ -187,7 +187,7 @@ export default function TransactionsLedgerPage() {
                     style={{ background: statusColor(tx.status), boxShadow: `0 0 8px ${statusColor(tx.status)}88` }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold capitalize truncate">{tx.type.replaceAll("_", " ")}</p>
+                    <p className="text-sm font-semibold capitalize truncate">{(tx.type ?? "activity").replaceAll("_", " ")}</p>
                     <p className="mt-0.5 text-xs text-[rgba(245,243,239,0.45)]">
                       {tx.status}
                       {tx.method ? ` · ${tx.method}` : ""}
