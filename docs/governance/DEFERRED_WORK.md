@@ -2,6 +2,19 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Cashout page (Aurora rollout)
+
+**Note: Interac e-Transfer freeze — cashout page**
+- `src/app/cashout/page.tsx` keeps full Interac data model, validation, and
+  submission logic (`ALL_METHODS`, `interacQuestion`/`interacAnswer`
+  state, security-question fields) but filters it out of the
+  user-visible list via `VISIBLE_METHODS = ALL_METHODS.filter(m =>
+  m.id !== "interac")`. This is intentional and matches the standing
+  Interac freeze referenced elsewhere in this file (PayPal logo entry
+  above) — not a bug, and not yet formally logged against the cashout
+  page specifically until this entry. Re-enable by removing the filter
+  once the freeze lifts.
+
 ## 2026-08-05 — Hermes — UI/UX Phase 1 token foundation
 
 **Deferred: Orphan component deletion (REDESIGN_SPEC §4.2)**

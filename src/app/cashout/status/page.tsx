@@ -24,7 +24,7 @@ interface Payout {
 // approved/in-progress states, violet for "sent" (secondary accent), red
 // for rejected. No neon green/cyan carried over from the retired palette.
 const STATUS_META: Record<Payout["status"], { label: string; color: string; icon: React.ReactNode; step: number }> = {
-  pending_review: { label: "Submitted",     color: "rgba(245,243,239,0.45)", icon: <Clock className="w-4 h-4" />,                 step: 1 },
+  pending_review: { label: "Submitted",     color: "#F5F3EF",               icon: <Clock className="w-4 h-4" />,                 step: 1 },
   processing:     { label: "Processing",    color: "#D9B678",               icon: <Loader2 className="w-4 h-4 animate-spin" />,   step: 2 },
   approved:       { label: "Approved",      color: "#F0CE97",               icon: <CheckCircle2 className="w-4 h-4" />,          step: 3 },
   sent:           { label: "Sent",          color: "#6C5CE0",               icon: <CheckCircle2 className="w-4 h-4" />,          step: 4 },
@@ -146,7 +146,7 @@ export default function PayoutStatusPage() {
                     <div className="shrink-0 text-right">
                       <p className="text-sm font-black" style={{ color: meta.color }}>{meta.label}</p>
                       <p className="font-mono text-xs tabular-nums text-[rgba(245,243,239,0.68)]">
-                        ${(p.amountCents / 100).toFixed(2) || (p.amountCoins / 1000).toFixed(2)} CAD
+                        ${(p.amountCents != null ? p.amountCents / 100 : p.amountCoins / 1000).toFixed(2)} CAD
                       </p>
                     </div>
                   </div>
