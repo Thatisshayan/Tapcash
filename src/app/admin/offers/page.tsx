@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { adminFetch } from '@/lib/adminApiClient';
 
 interface Offer {
   id: string;
@@ -36,12 +37,7 @@ export default function OfferManagement() {
 
   const loadOffers = useCallback(async () => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/offers', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await adminFetch('/api/admin/offers');
 
       if (response.status === 403) {
         router.push('/dashboard');
@@ -94,13 +90,9 @@ export default function OfferManagement() {
 
   const handleSaveOffer = async (offer: Offer) => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/offers', {
+      const response = await adminFetch('/api/admin/offers', {
         method: isCreating ? 'POST' : 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(offer)
       });
 
@@ -120,13 +112,9 @@ export default function OfferManagement() {
     if (!confirm('Are you sure you want to delete this offer?')) return;
 
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/offers', {
+      const response = await adminFetch('/api/admin/offers', {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ offerId })
       });
 

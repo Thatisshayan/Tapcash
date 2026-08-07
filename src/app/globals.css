@@ -21,7 +21,6 @@
   --color-brand-green-hover: #F0CE97;
   --color-brand-purple: #6C5CE0;
   --color-brand-cyan: #3E6FD9;
-  --color-brand-yellow: #FFC442;
   --color-brand-purple-dark: #5b3fd4;
   --color-text-primary: #F6F8FF;
   --color-text-muted: #9AA8C6;
@@ -29,9 +28,16 @@
   --color-border: rgba(150, 190, 255, 0.14);
   --color-border-purple: rgba(124, 61, 255, 0.22);
   --color-hot-red: #FF2F42;
-  --color-gold: #FFC442;
 
-  /* ── Legacy aliases ── */
+  /* ── Legacy aliases ──
+     #FFC442 is the retired TapCash Neon gold (packages/tokens/tokens.json
+     legacy.bannedHex). --color-brand-yellow and --color-gold used to sit in
+     the "current" block above despite carrying that banned hex; repointed
+     to the real Aurora gold so any surviving reference to these var names
+     (via Tailwind's text-gold/bg-brand-yellow utilities) can't silently
+     reintroduce the old palette. ── */
+  --color-brand-yellow: #D9B678;
+  --color-gold: #D9B678;
   --color-brand-300: #31F06F;
   --color-brand-400: #00CC6A;
   --color-brand-600: #009E62;
@@ -45,7 +51,7 @@
   --color-green: #31F06F;
   --color-emerald: #00CC6A;
   --color-emerald-light: #31F06F;
-  --color-gold-300: #FFC442;
+  --color-gold-300: #D9B678;
   --color-gold-400: #F5A623;
   --color-warning-yellow: #FFC442;
 

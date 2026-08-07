@@ -1,28 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdminSession } from '@/lib/admin-session';
 
 // GET - Fetch all offers
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'view_offers',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
@@ -60,20 +49,8 @@ export async function GET(request: NextRequest) {
 // POST - Create new offer
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const offerData = await request.json();
 
@@ -95,15 +72,15 @@ export async function POST(request: NextRequest) {
       revenue: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: decodedToken.uid
+      createdBy: auth.uid
     };
 
     const docRef = await adminDb.collection('offers').add(newOffer);
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'create_offer',
       targetOfferId: docRef.id,
       details: { name: offerData.name, reward: offerData.reward },
@@ -122,20 +99,8 @@ export async function POST(request: NextRequest) {
 // PATCH - Update existing offer
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const offerData = await request.json();
 
@@ -151,7 +116,7 @@ export async function PATCH(request: NextRequest) {
     // Update offer
     const updateData: any = {
       updatedAt: new Date(),
-      updatedBy: decodedToken.uid
+      updatedBy: auth.uid
     };
 
     if (offerData.name) updateData.name = offerData.name;
@@ -166,8 +131,8 @@ export async function PATCH(request: NextRequest) {
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'update_offer',
       targetOfferId: offerData.id,
       details: updateData,
@@ -186,20 +151,8 @@ export async function PATCH(request: NextRequest) {
 // DELETE - Delete offer
 export async function DELETE(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const { offerId } = await request.json();
 
@@ -217,8 +170,8 @@ export async function DELETE(request: NextRequest) {
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'delete_offer',
       targetOfferId: offerId,
       details: offerDoc.data(),
