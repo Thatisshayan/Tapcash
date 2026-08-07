@@ -1,4 +1,6 @@
-import * as functions from "firebase-functions/v1";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { beforeUserCreated } from "firebase-functions/v2/identity";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -44,33 +46,57 @@ async function getUserPushTokens(uid: string): Promise<string[]> {
   return tokens;
 }
 
-// 1. Auth Hook: Initialize user profile on new signup
-export const onUserCreated = functions.auth.user().onCreate(async (user) => {
-  const userRef = db.collection("users").doc(user.uid);
-  const batch = db.batch();
+// 1. Auth Hook: Initialize user profile on new signup.
+// v2 has no direct non-blocking onCreate-equivalent for Auth users — the
+// closest v2 primitive is beforeUserCreated (firebase-functions/v2/identity),
+// a blocking function that runs synchronously during signup and can reject
+// it by throwing. It runs before the Auth user record is fully committed,
+// so this write happens inline with the signup flow rather than as an
+// async fire-and-forget trigger the way the v1 version did — that is an
+// intentional, documented behavior change of this migration, not a bug.
+export const onUserCreated = beforeUserCreated(async (event) => {
+  const user = event.data;
+  if (!user) return;
 
-  batch.set(userRef, {
+  // Unlike v1's onCreate (async, ran after the Auth record already existed
+  // -- a Firestore failure there only lost the profile doc), this runs
+  // inline during signup: an uncaught error here aborts account creation
+  // itself. Catch and log instead of letting a transient Firestore error
+  // turn into a failed signup; the profile doc can be backfilled later if
+  // it's ever actually missing.
+  try {
+    const userRef = db.collection("users").doc(user.uid);
+    const batch = db.batch();
+
+    batch.set(userRef, {
       email: user.email,
       createdAt: FieldValue.serverTimestamp(),
       lastLogin: FieldValue.serverTimestamp(),
     });
 
-  await batch.commit();
-  console.log(`User ${user.uid} created.`);
+    await batch.commit();
+    console.log(`User ${user.uid} created.`);
+  } catch (error) {
+    console.error("Failed to initialize profile doc for user", user.uid, error);
+  }
 });
 
 // 2. Task Completion (Callable from client for MVP, eventually from Webhook)
-export const completeTask = functions.https.onCall(async (data: any, context: any) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+export const completeTask = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { taskId, offerId, rewardCents } = data;
+  const { taskId, offerId, rewardCents } = (request.data || {}) as {
+    taskId?: string;
+    offerId?: string;
+    rewardCents?: number;
+  };
   if (!taskId || !offerId || !rewardCents || rewardCents <= 0) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing task data.");
+    throw new HttpsError("invalid-argument", "Missing task data.");
   }
 
-  const uid = context.auth.uid;
+  const uid = request.auth.uid;
   const taskRef = db.collection("tasks").doc(taskId);
   const ledgerRef = db.collection("ledger_transactions").doc();
 
@@ -78,7 +104,7 @@ export const completeTask = functions.https.onCall(async (data: any, context: an
     await db.runTransaction(async (transaction: any) => {
       const taskDoc = await transaction.get(taskRef);
       if (taskDoc.exists && taskDoc.data()?.status === "completed") {
-        throw new functions.https.HttpsError("already-exists", "Task already completed.");
+        throw new HttpsError("already-exists", "Task already completed.");
       }
 
       transaction.set(taskRef, {
@@ -117,36 +143,49 @@ export const completeTask = functions.https.onCall(async (data: any, context: an
     return { success: true, rewardCents };
   } catch (error: any) {
     console.error("Error in completeTask:", error);
-    if (error instanceof functions.https.HttpsError) throw error;
-    throw new functions.https.HttpsError("internal", error.message || "Failed to complete task");
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to complete task");
   }
 });
 
 // 3. Request Payout (Callable)
-export const requestPayout = functions.https.onCall(async (data: any, context: any) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+export const requestPayout = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
   }
 
-  const { amountCents, method, payoutAddress } = data;
+  const { amountCents, method, payoutAddress } = (request.data || {}) as {
+    amountCents?: number;
+    method?: string;
+    payoutAddress?: string;
+  };
   if (!amountCents || amountCents <= 0 || !payoutAddress) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid payout request.");
+    throw new HttpsError("invalid-argument", "Invalid payout request.");
   }
 
-  const uid = context.auth.uid;
+  const uid = request.auth.uid;
   const withdrawalRef = db.collection("cashout_requests").doc();
   const ledgerRef = db.collection("ledger_transactions").doc();
 
   try {
-    const ledgerSnap = await db.collection("ledger_transactions").where("userId", "==", uid).get();
-    let currentBalance = 0;
-    ledgerSnap.forEach((doc: any) => {
-      currentBalance += Number(doc.data().balanceEffectCoins || 0);
-    });
-
     await db.runTransaction(async (transaction: any) => {
+      // The balance read must happen inside the transaction (via
+      // transaction.get) so it participates in Firestore's conflict
+      // detection. Reading it beforehand via a plain .get() registers no
+      // read on ledger_transactions, so two concurrent requestPayout calls
+      // for the same user would both observe the same stale balance, both
+      // pass this check, and both create a cashout request -- letting a
+      // user withdraw more than their available balance.
+      const ledgerSnap = await transaction.get(
+        db.collection("ledger_transactions").where("userId", "==", uid)
+      );
+      let currentBalance = 0;
+      ledgerSnap.forEach((doc: any) => {
+        currentBalance += Number(doc.data().balanceEffectCoins || 0);
+      });
+
       if (currentBalance < amountCents) {
-        throw new functions.https.HttpsError("failed-precondition", "Insufficient funds.");
+        throw new HttpsError("failed-precondition", "Insufficient funds.");
       }
 
       transaction.set(withdrawalRef, {
@@ -188,93 +227,96 @@ export const requestPayout = functions.https.onCall(async (data: any, context: a
     return { success: true, message: "Payout request submitted." };
   } catch (error: any) {
     console.error("Error in requestPayout:", error);
-    if (error instanceof functions.https.HttpsError) throw error;
-    throw new functions.https.HttpsError("internal", error.message || "Failed to process payout");
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to process payout");
   }
 });
 
 // 4. Push notification on offer approval (ledger transaction status change to approved)
-export const onOfferApproved = functions.firestore
-  .document("ledger_transactions/{transactionId}")
-  .onCreate(async (snap) => {
-    const data = snap.data();
-    if (!data || data.type !== "approved_credit" || data.status !== "approved") return;
+export const onOfferApproved = onDocumentCreated("ledger_transactions/{transactionId}", async (event) => {
+  const snap = event.data;
+  const data = snap?.data();
+  if (!data || data.type !== "approved_credit" || data.status !== "approved") return;
 
-    const uid = data.userId;
-    const amountCoins = Number(data.amountCoins || 0);
+  const uid = data.userId;
+  const amountCoins = Number(data.amountCoins || 0);
 
-    const tokens = await getUserPushTokens(uid);
-    if (tokens.length === 0) return;
+  const tokens = await getUserPushTokens(uid);
+  if (tokens.length === 0) return;
 
-    await Promise.all(
-      tokens.map((token) =>
-        sendExpoPush(
-          token,
-          "🎉 You earned coins!",
-          `You earned ${amountCoins} coins from an offer!`,
-          { screen: "activity" }
-        )
+  await Promise.all(
+    tokens.map((token) =>
+      sendExpoPush(
+        token,
+        "🎉 You earned coins!",
+        `You earned ${amountCoins} coins from an offer!`,
+        { screen: "activity" }
       )
-    );
-  });
+    )
+  );
+});
 
 // 5. Push notification on cashout sent
-export const onCashoutSent = functions.firestore
-  .document("cashout_requests/{requestId}")
-  .onUpdate(async (change) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    if (!before || !after) return;
+export const onCashoutSent = onDocumentUpdated("cashout_requests/{requestId}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after) return;
 
-    if (before.status !== "pending_review" && before.status !== "processing" && after.status !== "sent") return;
+  // Only fire on the transition INTO "sent". The three-negation form this
+  // replaced (`before.status !== "pending_review" && before.status !==
+  // "processing" && after.status !== "sent"`) only returned early when ALL
+  // three held, so it fired whenever before was pending_review/processing
+  // regardless of what after.status actually became -- including a
+  // rejection, which incorrectly sent "Payout on the way!" alongside
+  // onCashoutRejected's own (correct) notification. Pre-existing bug, not
+  // introduced by the v1->v2 migration; fixed while touching this function.
+  if (after.status !== "sent" || before.status === "sent") return;
 
-    const uid = after.userId;
-    const amountCoins = Number(after.amountCoins || 0);
-    const method = after.method || "your account";
+  const uid = after.userId;
+  const amountCoins = Number(after.amountCoins || 0);
+  const method = after.method || "your account";
 
-    const tokens = await getUserPushTokens(uid);
-    if (tokens.length === 0) return;
+  const tokens = await getUserPushTokens(uid);
+  if (tokens.length === 0) return;
 
-    await Promise.all(
-      tokens.map((token) =>
-        sendExpoPush(
-          token,
-          "💸 Payout on the way!",
-          `Your ${method} payout of ${amountCoins} coins is on the way!`,
-          { screen: "cashout" }
-        )
+  await Promise.all(
+    tokens.map((token) =>
+      sendExpoPush(
+        token,
+        "💸 Payout on the way!",
+        `Your ${method} payout of ${amountCoins} coins is on the way!`,
+        { screen: "cashout" }
       )
-    );
-  });
+    )
+  );
+});
 
 // 6. Push notification on cashout rejected
-export const onCashoutRejected = functions.firestore
-  .document("cashout_requests/{requestId}")
-  .onUpdate(async (change) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    if (!before || !after) return;
+export const onCashoutRejected = onDocumentUpdated("cashout_requests/{requestId}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after) return;
 
-    if (before.status === after.status) return;
+  if (before.status === after.status) return;
 
-    const wasApproved = before.status === "pending_review" || before.status === "processing";
-    const isRejected = after.status === "rejected" || after.status === "failed";
+  const wasApproved = before.status === "pending_review" || before.status === "processing";
+  const isRejected = after.status === "rejected" || after.status === "failed";
 
-    if (!wasApproved || !isRejected) return;
+  if (!wasApproved || !isRejected) return;
 
-    const uid = after.userId;
+  const uid = after.userId;
 
-    const tokens = await getUserPushTokens(uid);
-    if (tokens.length === 0) return;
+  const tokens = await getUserPushTokens(uid);
+  if (tokens.length === 0) return;
 
-    await Promise.all(
-      tokens.map((token) =>
-        sendExpoPush(
-          token,
-          "Update on your cashout request",
-          "Your cashout was rejected. Tap to see details.",
-          { screen: "cashout" }
-        )
+  await Promise.all(
+    tokens.map((token) =>
+      sendExpoPush(
+        token,
+        "Update on your cashout request",
+        "Your cashout was rejected. Tap to see details.",
+        { screen: "cashout" }
       )
-    );
-  });
+    )
+  );
+});

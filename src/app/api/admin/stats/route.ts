@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdminSession } from '@/lib/admin-session';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify admin authentication
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    // Check if user is admin
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'view_stats',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
