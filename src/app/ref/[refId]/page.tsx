@@ -31,19 +31,23 @@ async function getReferrerInfo(refId: string) {
   }
 }
 
+// Aurora palette (packages/tokens/tokens.json v3.0.0). Tier accent still
+// reflects real user data, but the color set is the locked Aurora palette
+// (gold family + muted violet/blue secondaries) rather than the old
+// teal/neon-blue set.
 function getTierColor(tier: string) {
-  if (tier === "Diamond") return "#3a7bff";
-  if (tier === "Platinum") return "#00e6c3";
-  if (tier === "Gold") return "#f5c842";
-  if (tier === "Silver") return "#94a3b8";
-  return "#f59e0b";
+  if (tier === "Diamond") return "#3E6FD9"; // accent-secondary-blue
+  if (tier === "Platinum") return "#6C5CE0"; // accent-secondary-violet
+  if (tier === "Gold") return "#D9B678"; // accent-primary
+  if (tier === "Silver") return "#B8B4AC"; // neutral, no palette match needed
+  return "#B98F4C"; // accent-primary-deep (Bronze/default)
 }
 
 export default async function ReferralLandingPage({ params }: Props) {
   const { refId } = await params;
   const referrer = await getReferrerInfo(refId);
 
-  const accentColor = referrer ? getTierColor(referrer.tier) : "#00e6c3";
+  const accentColor = referrer ? getTierColor(referrer.tier) : "#D9B678";
   const maskedName = referrer
     ? referrer.displayName.length > 3
       ? referrer.displayName.slice(0, 2) + "***" + referrer.displayName.slice(-1)
@@ -51,94 +55,92 @@ export default async function ReferralLandingPage({ params }: Props) {
     : "Someone";
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white overflow-x-hidden">
-      {/* Ambient glow */}
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] overflow-x-hidden">
+      {/* Hero atmosphere -- soft radial wash, not an ambient looping glow on
+          static decoration (glow is reserved for the interactive CTA below) */}
       <div
-        className="fixed -top-60 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[180px] pointer-events-none opacity-20"
+        className="fixed -top-60 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-[180px] pointer-events-none opacity-[0.08]"
         style={{ background: accentColor }}
       />
 
-      <div className="relative max-w-lg mx-auto px-4 py-12 sm:py-20 flex flex-col items-center gap-10">
+      <div className="relative max-w-lg mx-auto px-4 py-12 sm:py-20 flex flex-col items-center gap-14">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-11 h-11 rounded-2xl bg-[#00e6c3] flex items-center justify-center shadow-[0_0_30px_rgba(0,230,195,0.3)]">
-            <Sparkles className="w-5 h-5 text-[#050816]" />
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #F0CE97, #D9B678)" }}
+          >
+            <Sparkles className="w-5 h-5 text-[#0A0A0D]" />
           </div>
           <div>
-            <p className="text-xl font-black tracking-tight text-white">TapCash</p>
-            <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">Ledger-first rewards</p>
+            <p className="text-xl font-black tracking-tight text-[#F5F3EF]">TapCash</p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-[rgba(245,243,239,0.45)] font-semibold">Ledger-first rewards</p>
           </div>
         </Link>
 
-        {/* Invite card */}
-        <div
-          className="w-full rounded-[2rem] border p-8 text-center space-y-4 shadow-[0_40px_100px_rgba(0,0,0,0.5)]"
-          style={{ borderColor: `${accentColor}30`, background: `radial-gradient(ellipse at top, ${accentColor}08 0%, #080c1a 65%)` }}
-        >
+        {/* Invite -- de-boxed: spacing + typography hierarchy, no bordered
+            card chrome (Aurora anti-pattern: no bounded card/box as default
+            layout language) */}
+        <div className="w-full text-center space-y-5">
           <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-[0.2em]"
-            style={{ color: accentColor, borderColor: `${accentColor}33`, background: `${accentColor}10` }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]"
+            style={{ color: accentColor, background: `${accentColor}14` }}
           >
             <Users className="w-3 h-3" /> You Were Invited
           </div>
 
           <div className="space-y-1">
-            <p className="text-5xl font-black text-white leading-tight">
+            <p className="text-4xl font-black leading-tight text-[#F5F3EF] sm:text-5xl">
               {maskedName} wants
             </p>
-            <p className="text-5xl font-black leading-tight" style={{ color: accentColor }}>
+            <p className="text-4xl font-black leading-tight sm:text-5xl" style={{ color: accentColor }}>
               you to earn too.
             </p>
           </div>
 
           {referrer && (
-            <div
-              className="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl border mx-auto w-fit"
-              style={{ borderColor: `${accentColor}22`, background: `${accentColor}08` }}
-            >
+            <div className="flex items-center justify-center gap-2 pt-1">
               <Trophy className="w-4 h-4" style={{ color: accentColor }} />
-              <span className="text-sm font-black" style={{ color: accentColor }}>
+              <span className="font-mono text-sm font-black tabular-nums" style={{ color: accentColor }}>
                 {referrer.tier} VIP · {referrer.totalCoins.toLocaleString()} coins earned
               </span>
             </div>
           )}
 
-          <p className="text-zinc-400 text-sm leading-relaxed max-w-xs mx-auto">
+          <p className="text-[rgba(245,243,239,0.68)] text-sm leading-relaxed max-w-xs mx-auto pt-1">
             Complete surveys, do app tasks & watch videos. Real coins, ledger-backed balance, cash out anytime.
           </p>
 
+          {/* Glow permitted here -- this is the interactive hero CTA */}
           <Link
             href={`/auth/signup?ref=${refId}`}
-            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-sm text-[#050816] shadow-lg hover:opacity-90 hover:-translate-y-0.5 transition-all"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-full font-black text-sm text-[#0A0A0D] transition-all duration-200 hover:-translate-y-0.5"
             style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`, boxShadow: `0 16px 40px ${accentColor}30` }}
           >
             Claim Your Invite <ArrowRight className="w-4 h-4" />
           </Link>
 
-          <p className="text-xs text-zinc-600">Free to join · No credit card · Instant access</p>
+          <p className="text-xs text-[rgba(245,243,239,0.3)]">Free to join · No credit card · Instant access</p>
         </div>
 
-        {/* Perk pills */}
-        <div className="grid grid-cols-3 gap-3 w-full">
+        {/* Perks -- spacing + icon + typography, no bordered panel grid */}
+        <div className="grid grid-cols-3 gap-6 w-full">
           {[
             { icon: <Coins className="w-5 h-5" />, label: "Real Coins", sub: "Ledger-verified" },
             { icon: <Zap className="w-5 h-5" />, label: "Instant Credit", sub: "No delays" },
             { icon: <Users className="w-5 h-5" />, label: "Refer Friends", sub: "20% forever" },
           ].map((p) => (
-            <div
-              key={p.label}
-              className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 text-center space-y-1.5"
-            >
+            <div key={p.label} className="text-center space-y-1.5">
               <div className="flex justify-center" style={{ color: accentColor }}>{p.icon}</div>
-              <p className="text-xs font-black text-white">{p.label}</p>
-              <p className="text-[10px] text-zinc-600 font-medium">{p.sub}</p>
+              <p className="text-xs font-black text-[#F5F3EF]">{p.label}</p>
+              <p className="text-[10px] text-[rgba(245,243,239,0.3)] font-medium">{p.sub}</p>
             </div>
           ))}
         </div>
 
         {/* Trust note */}
-        <p className="text-xs text-zinc-700 text-center">
+        <p className="text-xs text-[rgba(245,243,239,0.28)] text-center">
           When you sign up with this link, {maskedName} earns a commission on your rewards forever.
         </p>
 
