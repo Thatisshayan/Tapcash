@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useId } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useReducedMotion } from "framer-motion";
@@ -72,6 +72,7 @@ function CashoutProgressRing({ progress, size = 120, strokeWidth = 7 }: { progre
   const circumference = 2 * Math.PI * radius;
   const [animated, setAnimated] = useState(0);
   const reduceMotion = useReducedMotion();
+  const gradientId = useId();
 
   useEffect(() => {
     if (reduceMotion) {
@@ -98,7 +99,7 @@ function CashoutProgressRing({ progress, size = 120, strokeWidth = 7 }: { progre
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={HAIRLINE} strokeWidth={strokeWidth} />
         <defs>
-          <linearGradient id="cashoutRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#F0CE97" />
             <stop offset="100%" stopColor="#D9B678" />
           </linearGradient>
@@ -108,14 +109,14 @@ function CashoutProgressRing({ progress, size = 120, strokeWidth = 7 }: { progre
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="url(#cashoutRingGradient)"
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeDasharray={`${dash} ${circumference}`}
           strokeLinecap="round"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono text-lg font-black tabular-nums text-[#F5F3EF]">{Math.round(animated)}%</span>
+        <span className="font-mono text-lg font-black tabular-nums text-[#F5F3EF]">{Math.round(Math.min(Math.max(animated, 0), 100))}%</span>
       </div>
     </div>
   );
