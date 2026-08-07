@@ -2,6 +2,14 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Rewards / transactions / cashPath pages (Aurora rollout)
+
+**Note: Interac e-Transfer freeze — rewards page**
+- `src/app/rewards/page.tsx` filters Interac out of the visible payout
+  method grid (`methods = tapCashPayoutMethods.filter(m => m.id !==
+  "interac")`), matching the standing freeze referenced elsewhere in
+  this file. Intentional, now formally logged for this page.
+
 ## 2026-08-07 — Claude Code — Dashboard/cashout ledger endpoint audit
 
 **Fixed: dashboard leaderboard/activity silently passed off seed data as live**
