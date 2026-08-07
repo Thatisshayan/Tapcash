@@ -101,6 +101,63 @@ function BonusCard() {
   );
 }
 
+// Illustrative motion moment (empty piggy filling, then breaking open to pay
+// out) reinforcing the "cash out" promise -- decorative, not a data claim.
+function PiggyMoment() {
+  return (
+    <div
+      className="relative mt-3 flex items-center gap-3 p-4"
+      style={{ borderTop: '1px solid rgba(245,243,239,0.09)' }}
+    >
+      <div className="relative w-12 h-12 shrink-0">
+        <Image
+          src="/images/aurora/piggy-intact.webp"
+          alt=""
+          fill
+          className="object-contain"
+          style={{ animation: 'pigIntactCycle 9s ease-in-out infinite' }}
+        />
+        <Image
+          src="/images/aurora/piggy-broken.webp"
+          alt=""
+          fill
+          className="object-contain absolute inset-0"
+          style={{ animation: 'pigBrokenCycle 9s ease-in-out infinite' }}
+        />
+      </div>
+      <p className="text-[12px] leading-snug" style={{ color: 'rgba(245,243,239,0.5)' }}>
+        Every offer fills your balance. Hit the minimum, and it&apos;s yours.
+      </p>
+    </div>
+  );
+}
+
+const MARQUEE_LOGOS = [
+  { src: '/images/logos/timhortons.svg', alt: 'Tim Hortons' },
+  { src: '/images/logos/shoppers.svg', alt: 'Shoppers Drug Mart' },
+  { src: '/images/logos/cineplex.svg', alt: 'Cineplex' },
+  { src: '/images/logos/canadiantire.svg', alt: 'Canadian Tire' },
+];
+
+function BrandMarquee() {
+  const track = [...MARQUEE_LOGOS, ...MARQUEE_LOGOS];
+  return (
+    <div
+      className="relative z-10 py-6 overflow-hidden"
+      style={{ borderTop: '1px solid rgba(245,243,239,0.09)' }}
+      aria-hidden="true"
+    >
+      <div className="flex w-max animate-marquee gap-16 px-8">
+        {track.map((logo, i) => (
+          <div key={`${logo.alt}-${i}`} className="relative h-6 w-24 shrink-0 opacity-50 grayscale">
+            <Image src={logo.src} alt={logo.alt} fill className="object-contain" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function HeroSection() {
   const prefersReduced = useReducedMotion();
 
@@ -236,12 +293,13 @@ export function HeroSection() {
               style={{
                 maxWidth: '380px',
                 aspectRatio: '1 / 1.25',
-                animation: prefersReduced ? undefined : 'float 6s ease-in-out infinite',
+                animation: prefersReduced ? undefined : 'breathe 4.5s ease-in-out infinite',
+                filter: `drop-shadow(0 30px 60px ${VIOLET}3D)`,
               }}
             >
               <Image
-                src="/images/hero/character.png"
-                alt="TapCash character holding phone"
+                src="/images/aurora/mascot.webp"
+                alt="TapCash mascot"
                 fill
                 className="object-contain"
                 priority
@@ -259,9 +317,12 @@ export function HeroSection() {
           >
             <BalancePreviewCard />
             <BonusCard />
+            <PiggyMoment />
           </motion.div>
         </div>
       </div>
+
+      <BrandMarquee />
     </section>
   );
 }
