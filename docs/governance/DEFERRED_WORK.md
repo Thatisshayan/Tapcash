@@ -2,6 +2,35 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Payouts / referrals pages (Aurora rollout)
+
+**Note: Interac e-Transfer freeze — payouts page**
+- `src/app/payouts/page.tsx` filters Interac out of the visible method
+  list (`VISIBLE_METHODS = tapCashPayoutMethods.filter(m => m.id !==
+  "interac")`), matching the standing freeze referenced elsewhere in
+  this file. Intentional, now formally logged for this page.
+
+**Fixed: public referral page leaked a real user's lifetime earnings**
+- `src/app/ref/[refId]/page.tsx` looked up the referrer's total lifetime
+  coins (via a `ledger_transactions` query) and rendered the exact
+  figure to any anonymous visitor. Removed the query and the earnings
+  display; the page now only shows a masked display name and a coarse
+  VIP tier badge (used for accent color, not a real dollar amount).
+
+**Deferred: referral links are keyed by the raw Firebase Auth UID**
+- `src/app/referrals/page.tsx` builds the shareable invite link as
+  `/ref/${user.uid}` (pre-existing, not introduced by this retheme
+  pass), and `/ref/[refId]/page.tsx` looks that UID up directly in
+  `users/{uid}`. This makes the UID public and lets anyone probe
+  `/ref/<any-uid>` to check whether a given ID belongs to a real user
+  (a display-name/tier oracle, though the earnings leak above is now
+  closed). A proper fix would introduce a separate opaque referral
+  code decoupled from the auth UID -- that needs a new field, a
+  uniqueness index, updated signup attribution, and a backfill/alias
+  plan for links already shared in the wild. Out of scope for a retheme
+  pass; flagging for Shayan to decide whether/when to take on the
+  migration.
+
 ## 2026-08-07 — Claude Code — Cashout page (Aurora rollout)
 
 **Deferred: cashout status page depends on a `/api/debug/*` route**
