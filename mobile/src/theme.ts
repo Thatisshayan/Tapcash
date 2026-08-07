@@ -1,44 +1,45 @@
 /**
- * TapCash Model U Design System — GENERATED FILE.
+ * TapCash Neon Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
- * Source of truth: packages/tokens/tokens.json (Model U palette).
+ * Source of truth: packages/tokens/tokens.json (TapCash Neon palette, v2).
  */
 
 export const theme = {
   colors: {
     // Base / surfaces
-    bg: '#050813',
-    background: '#050813',
-    surfaceBase: '#050813',
-    surfaceRaised: '#09101F',
-    surfaceOverlay: '#0F1829',
-    panel: 'rgba(9, 16, 31, 0.74)',
-    line: 'rgba(150, 190, 255, 0.14)',
-    border: 'rgba(150, 190, 255, 0.14)',
+    bg: '#080C14',
+    background: '#080C14',
+    surfaceBase: '#080C14',
+    surfaceRaised: '#111624',
+    surfaceOverlay: '#1A2133',
+    panel: 'rgba(17, 22, 36, 0.9)',
+    line: 'rgba(255, 255, 255, 0.08)',
+    border: 'rgba(255, 255, 255, 0.08)',
 
     // Text
-    text: '#F6F8FF',
-    muted: '#9AA8C6',
-    dim: '#7B8AA8',
+    text: '#FFFFFF',
+    muted: '#B5B6B9',
+    dim: '#84868A',
 
     // Legacy-named surface slots (kept for backward-compatible imports)
-    card: '#09101F',
-    elevated: '#0F1829',
+    card: '#111624',
+    elevated: '#1A2133',
 
     // Semantic accents (Model U)
-    green: '#31F06F',
-    cyan: '#18D9FF',
-    purple: '#7C3DFF',
+    green: '#14F195',
+    greenHover: '#00E676',
+    cyan: '#00B4D8',
+    purple: '#6D28D9',
     yellow: '#FFC442',
     gold: '#FFC442',
     red: '#FF2F42',
     danger: '#FF2F42',
   },
   gradients: {
-    primary: 'linear-gradient(100deg, #7C3DFF, #18D9FF, #31F06F)',
-    green: 'linear-gradient(90deg, #31F06F, #92FF2F)',
-    cyanPurple: 'linear-gradient(90deg, #18D9FF, #7C3DFF)',
-    panel: 'linear-gradient(180deg, rgba(9, 16, 31, 0.74), rgba(6, 12, 23, 0.72))',
+    primary: 'linear-gradient(135deg, #14F195, #00B4D8)',
+    green: 'linear-gradient(90deg, #14F195, #00E676)',
+    cyanPurple: 'linear-gradient(90deg, #00B4D8, #6D28D9)',
+    panel: 'linear-gradient(145deg, rgba(17, 22, 36, 0.9), rgba(12, 16, 26, 0.9))',
     hero: 'radial-gradient(circle at 45% 16%, rgba(29, 214, 255, 0.16), transparent 28%), radial-gradient(circle at 64% 8%, rgba(124, 61, 255, 0.22), transparent 26%)',
   },
   radius: {
@@ -97,9 +98,11 @@ export const dashboardOffers = [
   { id: 'refer_1', title: 'Invite a friend and both earn', provider: 'TapCash', category: 'Referral', payout: '250 coins', time: '2 min', accent: 'success' },
 ];
 
+// NOTE: Interac e-Transfer intentionally omitted — frozen per Shayan's
+// 2026-08-06 launch-push decision (no UI, code path, or docs referencing it).
 export const payoutMethods = [
   { id: 'paypal', label: 'PayPal Cash', subtitle: 'Fastest mainstream cashout', min: '5,000 coins', eta: 'Usually under 24h', audience: 'Most users', accent: 'success' },
-  { id: 'interac', label: 'Interac e-Transfer', subtitle: 'Canada-first withdrawal path', min: '5,000 coins', eta: 'Manual review window', audience: 'Canadian users', accent: 'info' },
+  { id: 'bank', label: 'Bank Transfer', subtitle: 'Direct to your account', min: '5,000 coins', eta: '1-3 business days', audience: 'Most users', accent: 'info' },
   { id: 'bitcoin', label: 'Bitcoin', subtitle: 'Direct crypto payout', min: '10,000 coins', eta: 'Queue based', audience: 'Crypto users', accent: 'reward' },
   { id: 'gift', label: 'Gift cards', subtitle: 'Steam, Tim Hortons, and more', min: '5,000 coins', eta: 'Processed manually', audience: 'Light redeemers', accent: 'success' },
 ];

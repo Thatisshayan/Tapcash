@@ -1,4 +1,3 @@
-export { default as Hero } from './Hero';
 export { default as TopOffers } from './TopOffers';
 export { default as CashPathLive } from './CashPathLive';
 export { default as AppPreview } from './AppPreview';

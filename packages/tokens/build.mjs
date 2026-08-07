@@ -16,12 +16,14 @@ const tokens = JSON.parse(readFileSync(resolve(__dirname, 'tokens.json'), 'utf8'
 
 const { primitives: p, semantic: s, typeScale: t, space: sp, radius: r, gradients: g } = tokens;
 
-// ── Mobile theme.ts (Model U, typed, generated) ──────────────────────────────
-// Sample data kept but emoji iconography removed (REDESIGN_SPEC anti-pattern).
+// ── Mobile theme.ts (TapCash Neon, typed, generated) ─────────────────────────
+// Sample data kept but emoji iconography removed (REDESIGN_SPEC anti-pattern);
+// fabricated-statistics / fake-live-activity anti-patterns still enforced —
+// see packages/tokens/tokens.json meta.antiPatterns and meta.decisionLog.
 const mobileTheme = `/**
- * TapCash Model U Design System — GENERATED FILE.
+ * TapCash Neon Design System — GENERATED FILE.
  * Do not edit by hand. Edit packages/tokens/tokens.json and run build.mjs.
- * Source of truth: packages/tokens/tokens.json (Model U palette).
+ * Source of truth: packages/tokens/tokens.json (TapCash Neon palette, v2).
  */
 
 export const theme = {
@@ -47,6 +49,7 @@ export const theme = {
 
     // Semantic accents (Model U)
     green: '${p.green}',
+    greenHover: '${p.greenHover}',
     cyan: '${p.cyan}',
     purple: '${p.purple}',
     yellow: '${p.gold}',
@@ -117,9 +120,11 @@ export const dashboardOffers = [
   { id: 'refer_1', title: 'Invite a friend and both earn', provider: 'TapCash', category: 'Referral', payout: '250 coins', time: '2 min', accent: 'success' },
 ];
 
+// NOTE: Interac e-Transfer intentionally omitted — frozen per Shayan's
+// 2026-08-06 launch-push decision (no UI, code path, or docs referencing it).
 export const payoutMethods = [
   { id: 'paypal', label: 'PayPal Cash', subtitle: 'Fastest mainstream cashout', min: '5,000 coins', eta: 'Usually under 24h', audience: 'Most users', accent: 'success' },
-  { id: 'interac', label: 'Interac e-Transfer', subtitle: 'Canada-first withdrawal path', min: '5,000 coins', eta: 'Manual review window', audience: 'Canadian users', accent: 'info' },
+  { id: 'bank', label: 'Bank Transfer', subtitle: 'Direct to your account', min: '5,000 coins', eta: '1-3 business days', audience: 'Most users', accent: 'info' },
   { id: 'bitcoin', label: 'Bitcoin', subtitle: 'Direct crypto payout', min: '10,000 coins', eta: 'Queue based', audience: 'Crypto users', accent: 'reward' },
   { id: 'gift', label: 'Gift cards', subtitle: 'Steam, Tim Hortons, and more', min: '5,000 coins', eta: 'Processed manually', audience: 'Light redeemers', accent: 'success' },
 ];
@@ -143,5 +148,5 @@ const mobilePath = resolve(root, 'mobile', 'src', 'theme.ts');
 writeFileSync(mobilePath, mobileTheme, 'utf8');
 
 console.log('[tokens] wrote', mobilePath.replace(root, '.'));
-console.log('[tokens] mobile theme converged to Model U:', p.green, p.purple, p['ink-950']);
+console.log('[tokens] mobile theme converged to TapCash Neon:', p.green, p.purple, p['ink-950']);
 console.log('[tokens] OK — run `jest packages/tokens/tokens.test.ts` to verify parity.');
