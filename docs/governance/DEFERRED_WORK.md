@@ -2,6 +2,32 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — globals.css banned-hex cleanup
+
+**Fixed: two current-block vars carried retired Neon gold hex**
+- `--color-brand-yellow` and `--color-gold` sat in the "current" Aurora
+  `@theme` block (not the "Legacy aliases" block below it) but held
+  `#FFC442`, the retired TapCash Neon gold on `packages/tokens/tokens.json`
+  `legacy.bannedHex`. Confirmed no component referenced the
+  `text-gold`/`bg-brand-yellow` Tailwind utilities these vars back, so
+  repointed both to the real Aurora gold (`#D9B678`) and moved them into
+  the Legacy aliases block. Also repointed `--color-gold-300` the same way
+  (was also `#FFC442`).
+
+**Deferred: broader legacy Neon/Model U CSS still present (utility classes, gradients, glow)**
+- `globals.css` still ships several hundred lines of retired-palette
+  utility classes (`.glass-card`, `.btn-primary`, `.btn-gradient`,
+  `.text-gradient-green-cyan`, Model U gradient classes, neon glow
+  shadows) using the old `#00FF85`/`#7B5CF0`/`#18D9FF` hex directly, not
+  through tokens. Confirmed several are still actively used by real
+  components on this branch (`PremiumUi.tsx`, `AppPreview.tsx`, and the
+  pre-Aurora `HeroSection.tsx` this branch still carries) -- removing them
+  outright would break those pages' styling. This is the same scope
+  already tracked under "Per-component raw-hex purge + contrast audit"
+  below: migrate each dependent component to Aurora tokens first, then
+  delete the dead legacy classes. Not attempted here; too large and too
+  risky to do as a drive-by fix.
+
 ## 2026-08-05 — Hermes — UI/UX Phase 1 token foundation
 
 **Deferred: Orphan component deletion (REDESIGN_SPEC §4.2)**
