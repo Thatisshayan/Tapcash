@@ -125,7 +125,7 @@ function ScreenContent({ lines }: { lines: ScreenLine[] }) {
                 <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${((line.prog ?? 0) / (line.total ?? 1)) * 100}%`, background: '#6C5CE0' }}
+                    style={{ width: `${((line.prog ?? 0) / (line.total || 1)) * 100}%`, background: '#6C5CE0' }}
                   />
                 </div>
               </div>

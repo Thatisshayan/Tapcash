@@ -1,6 +1,5 @@
 import { Shield, DollarSign, Gift, Zap, ShieldCheck } from 'lucide-react';
 
-const GOLD = '#D9B678';
 const VIOLET = '#6C5CE0';
 
 const TRUST_ITEMS = [
