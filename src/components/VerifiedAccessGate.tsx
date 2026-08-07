@@ -18,6 +18,50 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function GateHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <>
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shrink-0">
+          <ShieldAlert className="w-5 h-5" />
+        </div>
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Verification required</p>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">{title}</h2>
+          <p className="text-sm md:text-base text-zinc-400 leading-relaxed max-w-2xl">{description}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        {[
+          "Verify your inbox",
+          "Keep the platform bot-resistant",
+          "Unlock offers, cashout, and referrals",
+        ].map((item) => (
+          <div key={item} className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+            <p className="text-sm text-zinc-200 font-medium leading-relaxed">{item}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function GateMessage({ message, messageType }: { message: string | null; messageType: MessageType }) {
+  if (!message) return null;
+  return (
+    <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm flex items-start gap-2 ${
+      messageType === "success"
+        ? "border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#b9fff3]"
+        : "border-red-500/20 bg-red-500/10 text-red-300"
+    }`}>
+      {messageType === "error" && <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+      {messageType === "success" && <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+      <span>{message}</span>
+    </div>
+  );
+}
+
 export default function VerifiedAccessGate({ title, description, nextHref }: VerifiedAccessGateProps) {
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
@@ -79,44 +123,8 @@ export default function VerifiedAccessGate({ title, description, nextHref }: Ver
 
   return (
     <div className="rounded-[2rem] border border-white/8 bg-white/[0.04] p-6 md:p-8 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00e6c3] to-[#3a7bff] flex items-center justify-center text-[#050816] shrink-0">
-          <ShieldAlert className="w-5 h-5" />
-        </div>
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 font-black">Verification required</p>
-          <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">{title}</h2>
-          <p className="text-sm md:text-base text-zinc-400 leading-relaxed max-w-2xl">{description}</p>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        {[
-          "Verify your inbox",
-          "Keep the platform bot-resistant",
-          "Unlock offers, cashout, and referrals",
-        ].map((item) => (
-          <div key={item} className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
-            <p className="text-sm text-zinc-200 font-medium leading-relaxed">{item}</p>
-          </div>
-        ))}
-      </div>
-
-      {message && (
-        <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm flex items-start gap-2 ${
-          messageType === "success"
-            ? "border-[#00e6c3]/20 bg-[#00e6c3]/10 text-[#b9fff3]"
-            : "border-red-500/20 bg-red-500/10 text-red-300"
-        }`}>
-          {messageType === "error" && (
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          )}
-          {messageType === "success" && (
-            <MailCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          )}
-          <span>{message}</span>
-        </div>
-      )}
+      <GateHeader title={title} description={description} />
+      <GateMessage message={message} messageType={messageType} />
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <button
