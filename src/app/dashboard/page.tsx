@@ -19,7 +19,12 @@ import StreakWidget from "@/components/StreakWidget";
 // so a column of rows reads as a system, not a single flat color.
 const AURORA_ACCENTS = ["#D9B678", "#6C5CE0", "#3E6FD9"] as const;
 const HAIRLINE = "rgba(245,243,239,0.09)";
-const MIN_CASHOUT_COINS = 20000; // $20.00 CAD minimum, canonical rate 1000 coins = $1 CAD
+// Lowest per-method minimum on /cashout (PayPal/gift cards/Interac all use
+// 5,000 coins = $5.00 CAD); the payout API's own hard floor is 2,000 coins
+// ($2.00), so 5,000 is the true "you can cash out via at least one method"
+// threshold. This used to be hardcoded to 20,000/$20.00, which matched
+// neither the API nor any real method on /cashout.
+const MIN_CASHOUT_COINS = 5000; // $5.00 CAD, canonical rate 1000 coins = $1 CAD
 
 type LedgerTx = {
   id: string;
@@ -165,6 +170,12 @@ export default function DashboardPage() {
   const [offers, setOffers] = useState(tapCashOffers);
   const [leaderboard, setLeaderboard] = useState(tapCashLeaderboardSeed);
   const [liveActivity, setLiveActivity] = useState(tapCashActivity);
+  // Whether leaderboard/liveActivity currently hold a real API response or
+  // are still the static seed fallback -- both sections make present-tense
+  // "this is happening now" claims, so the UI must not pass off the seed
+  // content as real (tokens.json meta.antiPatterns: no fake live activity).
+  const [leaderboardLive, setLeaderboardLive] = useState(false);
+  const [activityLive, setActivityLive] = useState(false);
   const [transactions, setTransactions] = useState<LedgerTx[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,6 +227,7 @@ export default function DashboardPage() {
           const data = await leaderboardResponse.value.json();
           if (Array.isArray(data.leaderboard) && data.leaderboard.length > 0) {
             setLeaderboard(data.leaderboard.slice(0, 4));
+            setLeaderboardLive(true);
           }
         }
       } catch (dashboardError) {
@@ -268,9 +280,10 @@ export default function DashboardPage() {
             value: a.amount ? `+${a.amount} coins` : "",
           })),
         );
+        setActivityLive(true);
       }
     } catch {
-      // silent fallback stays at seed data
+      // fallback stays at seed data -- surfaced to the user via activityLive, not silent
     }
   }, []);
 
@@ -283,9 +296,10 @@ export default function DashboardPage() {
       const data = await res.json();
       if (Array.isArray(data.leaderboard) && data.leaderboard.length > 0) {
         setLeaderboard(data.leaderboard.slice(0, 4));
+        setLeaderboardLive(true);
       }
     } catch {
-      // silent fallback stays at seed data
+      // fallback stays at seed data -- surfaced to the user via leaderboardLive, not silent
     }
   }, [user]);
 
@@ -392,7 +406,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-3 self-center">
               <CashoutProgressRing progress={cashoutProgress} />
               <p className="max-w-[10rem] text-center text-xs text-[rgba(245,243,239,0.45)]">
-                <span className="font-mono tabular-nums text-[#F5F3EF]">{formatCadFromCoins(balanceCoins)}</span> of $20.00 min cashout
+                <span className="font-mono tabular-nums text-[#F5F3EF]">{formatCadFromCoins(balanceCoins)}</span> of {formatCadFromCoins(MIN_CASHOUT_COINS)} min cashout
               </p>
             </div>
           </div>
@@ -476,6 +490,9 @@ export default function DashboardPage() {
                 <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[rgba(245,243,239,0.45)]">Leaderboard</p>
               </div>
               <h2 className="text-2xl font-black tracking-tight text-[#F5F3EF]">Top earners</h2>
+              {!leaderboardLive && (
+                <p className="text-xs font-semibold text-[rgba(245,243,239,0.4)]">Sample data — live leaderboard unavailable right now.</p>
+              )}
               <div>
                 {leaderboard.map((row, i) => (
                   <div
@@ -496,7 +513,10 @@ export default function DashboardPage() {
 
             <div className="space-y-4">
               <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[rgba(245,243,239,0.45)]">Recent activity</p>
-              <h2 className="text-2xl font-black tracking-tight text-[#F5F3EF]">What people are doing now</h2>
+              <h2 className="text-2xl font-black tracking-tight text-[#F5F3EF]">{activityLive ? "What people are doing now" : "Example activity"}</h2>
+              {!activityLive && (
+                <p className="text-xs font-semibold text-[rgba(245,243,239,0.4)]">Sample data — live activity feed unavailable right now.</p>
+              )}
               <div>
                 {liveActivity.map((item, i) => (
                   <div
