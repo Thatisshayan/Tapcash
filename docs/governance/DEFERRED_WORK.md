@@ -2,6 +2,28 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-07 — Claude Code — Mobile home screen (Aurora dashboard rollout)
+
+**Deferred: Real CashPath step tracking on mobile home**
+- `mobile/app/(tabs)/index.tsx` had a `CASHPATH` stepper hardcoded to
+  `ACTIVE = 2` for every user (exactly the bug REDESIGN_SPEC.md §5.5
+  flagged). Removed rather than reskinned — this screen has no per-user
+  "which stage is my most recent earning at" data source wired to it.
+- Action needed: either wire a real per-user CashPath status query (check
+  if `mobile/app/(tabs)/activity.tsx` / the transactions ledger already
+  has this data, since if so it may just need surfacing here too), or
+  decide the mobile home screen doesn't need a CashPath widget at all
+  and drop the concept from this screen permanently.
+
+**Deferred: Platform stats on mobile home**
+- Same file had hardcoded `50K+ Users / $2.5M+ Paid / 98% Verified`
+  stat tiles with no backing API — fabricated statistics, banned per
+  `packages/tokens/tokens.json` `meta.antiPatterns`. Removed, not
+  reskinned. The web landing page already had its own version of this
+  same bug removed for the same reason (see REDESIGN_SPEC.md §5.1) —
+  if/when a real `/api/stats/platform`-equivalent exists for mobile,
+  wire both surfaces from it.
+
 ## 2026-08-05 — Hermes — UI/UX Phase 1 token foundation
 
 **Deferred: Orphan component deletion (REDESIGN_SPEC §4.2)**
