@@ -59,7 +59,16 @@
 - **3.2.1**: Created `src/app/blog/[slug]/page.tsx` as dynamic route with static content map for all 3 existing posts. Navbar/Footer links preserved.
 
 ### Task 3.3 — Games Page ✅
-- **3.3.1**: Page retitled "Offers & Surveys", "Games" category tab removed. All links route to RapidoReach. CTA is "Start earning".
+- **3.3.1**: Page retitled "Offers & Surveys". All links route to RapidoReach. CTA is "Start earning".
+- ⚠️ **2026-08-07 update**: the "Games" category tab described as removed
+  here was re-added during the Aurora retheme (`src/app/games/page.tsx`,
+  PR #70) because without it, offers in the `Games` category (e.g.
+  `gaming_bonus`) were unreachable by filter — visible only under "All",
+  with no way to isolate them. This directly contradicts this task's
+  original directive, so flagging rather than silently deviating: if the
+  tab's removal was itself the deliberate choice (not the unreachable
+  offer), the fix should instead move `Games`-category offers into
+  another existing category, not restore the tab. Needs Shayan's call.
 
 ---
 
