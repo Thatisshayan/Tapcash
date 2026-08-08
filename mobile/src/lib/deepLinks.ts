@@ -10,10 +10,19 @@ export function getRouteFromUrl(url: string | null | undefined): string | null {
     return null;
   }
 
+  if (parsed.protocol !== "tapcash:") {
+    return null;
+  }
+
   const host = parsed.hostname.toLowerCase();
   const path = parsed.pathname.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const slug = decodeURIComponent(normalizedPath.replace(/^\/+/, ""));
+  let slug: string;
+  try {
+    slug = decodeURIComponent(normalizedPath.replace(/^\/+/, ""));
+  } catch {
+    return null;
+  }
 
   if (host === "activity" || normalizedPath === "/activity") {
     return "/(tabs)/activity";

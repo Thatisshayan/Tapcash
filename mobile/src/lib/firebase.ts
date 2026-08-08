@@ -16,7 +16,7 @@ const expoFirebaseConfig = Constants.expoConfig?.extra?.firebase as
   | undefined;
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || expoFirebaseConfig?.apiKey || "AIzaSyACKd9BuIVbwADY8P1Ap3_gHdDoLs3uGdw",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || expoFirebaseConfig?.apiKey,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || expoFirebaseConfig?.authDomain || "tapcash-16238.firebaseapp.com",
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || expoFirebaseConfig?.projectId || "tapcash-16238",
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || expoFirebaseConfig?.storageBucket || "tapcash-16238.firebasestorage.app",

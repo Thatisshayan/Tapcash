@@ -30,17 +30,10 @@
       }
     },
     "android": {
-      "package": "com.tapcash.mobile",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0A0D"
       }
-    },
-    "extra": {
-      "router": {},
-      "eas": { "projectId": "1c561a9d-ac22-47db-b376-921c6e4b5086" },
-      "apiBaseUrl": "https://tapcash.online"
     },
     "owner": "obsidianmedia"
   }

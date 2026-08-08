@@ -82,7 +82,9 @@ export default function CashoutScreen() {
     setOptimisticDeduction(amountCoins);
 
     try {
-      const result = await requestPayout(amountCoins, selected, destination.trim().toLowerCase());
+      const trimmedDestination = destination.trim();
+      const normalizedDestination = selected === "bitcoin" ? trimmedDestination : trimmedDestination.toLowerCase();
+      const result = await requestPayout(amountCoins, selected, normalizedDestination);
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert("Request submitted!", "Your cashout is under review.");

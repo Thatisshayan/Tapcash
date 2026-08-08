@@ -43,7 +43,7 @@ export default {
       eas: { projectId: process.env.EAS_PROJECT_ID || "1c561a9d-ac22-47db-b376-921c6e4b5086" },
       apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || "https://tapcash.online",
       firebase: {
-        apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyACKd9BuIVbwADY8P1Ap3_gHdDoLs3uGdw",
+        apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
         authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "tapcash-16238.firebaseapp.com",
         projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "tapcash-16238",
         storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "tapcash-16238.firebasestorage.app",

@@ -12,6 +12,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { API_BASE_URL } from "../lib/api";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { registerPushToken, setupNotificationHandlers } from "../lib/notifications";
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setupNotificationHandlers(async (newToken) => {
       const idToken = await auth.currentUser?.getIdToken();
       if (idToken) {
-        await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/api/user/push-token`, {
+        await fetch(`${API_BASE_URL}/api/user/push-token`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -203,8 +204,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await handleAuthSuccess();
     },
     signUp: async (email, password) => {
-      const credentials = await createUserWithEmailAndPassword(auth, email, password);
-      await sendEmailVerification(credentials.user);
+      await createUserWithEmailAndPassword(auth, email, password);
       await SecureStore.setItemAsync("tapcash_creds", JSON.stringify({ email, password }));
       await handleAuthSuccess();
     },

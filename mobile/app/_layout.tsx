@@ -35,10 +35,22 @@ function NotificationHandler() {
       }
     });
 
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const routeFromNotification = (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data as { screen?: string; url?: string };
-      const route = getRouteFromUrl(data?.url) ||
+      return getRouteFromUrl(data?.url) ||
         (data?.screen === "activity" ? "/(tabs)/activity" : data?.screen === "cashout" ? "/(tabs)/cashout" : null);
+    };
+
+    const lastResponse = Notifications.getLastNotificationResponse();
+    if (lastResponse) {
+      const route = routeFromNotification(lastResponse);
+      if (route) {
+        router.push(route as never);
+      }
+    }
+
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const route = routeFromNotification(response);
       if (route) {
         router.push(route as never);
       }
