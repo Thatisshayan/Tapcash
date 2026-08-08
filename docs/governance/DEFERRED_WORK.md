@@ -2,6 +2,90 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-08 — Claude Code — TASK-039 EAS Android build still failing (monorepo shared/ resolution)
+
+**Status: blocked, not fixed.** Two real bugs found and fixed this pass;
+a third, structural one remains.
+
+1. **Fixed**: `mobile/android/` was committed to git (36 files, incl.
+   `gradlew`) despite the repo's own `.gitignore` marking `/mobile/android`
+   as CNG-generated. EAS's archiver drops gitignored paths regardless of
+   git-tracked status, so `gradlew` never reached the builder -> ENOENT on
+   `FIX_GRADLEW`. Untracked via `git rm -r --cached mobile/android`
+   (commit `30da82f`, Shayan's R14 approval given 2026-08-08).
+2. **Blocked**: retried build (`138bb53f-4b2b-4478-ae89-f2a6133561fd`)
+   got past gradlew but failed at the `EAGER_BUNDLE` phase: Metro cannot
+   resolve `@shared/currency` (aliased in `mobile/tsconfig.json` and
+   `mobile/babel.config.js` to `../shared`, i.e. the repo-root `shared/`
+   folder sibling to `mobile/`). `shared/currency.ts` and
+   `shared/tapcash-content.ts` ARE git-tracked and not gitignored, so the
+   most likely cause is that EAS Build doesn't know this is a monorepo
+   (no `workspaces` field in the root `package.json`, no
+   `EAS_BUILD_RUN_FROM_REPO_ROOT`-equivalent config found in
+   `mobile/eas.json`/`app.json`/`app.config.js`) and only packages the
+   `mobile/` subtree, silently dropping the sibling `shared/` folder.
+   Not fixed in this pass — the candidate fixes (declaring `mobile` as an
+   npm/yarn workspace at repo root, or an EAS monorepo-root setting)
+   both touch build tooling shared with the Next.js web app and need
+   verification against current Expo/EAS docs before changing, which
+   wasn't done here.
+   - Action needed: confirm the correct current Expo EAS monorepo
+     mechanism (check https://docs.expo.dev for "monorepo" — likely
+     either root `package.json` `workspaces`, or an EAS build profile
+     setting), apply it, and retry
+     `eas build --platform android --profile preview` from `mobile/`.
+   - Web (Next.js/Vercel) builds already work correctly with `shared/`
+     since Vercel builds from the repo root by default — this is
+     EAS-build-specific.
+
+## 2026-08-07 — Codex — TASK-039 Track 3 mobile rebuild
+
+**Completed in this pass**
+- Replaced the mobile 1x1 placeholder PNGs with real generated assets:
+  `mobile/assets/icon.png`, `mobile/assets/adaptive-icon.png`,
+  `mobile/assets/splash.png`, and `mobile/assets/offers/offer-*.png`.
+- Wired those assets into both Expo config surfaces:
+  `mobile/app.json` and `mobile/app.config.js`.
+- Fixed a real crash bug in `mobile/src/auth/AuthContext.tsx`: it called
+  `SplashScreen.hideAsync()` without importing `expo-splash-screen`.
+- Removed Interac from the mobile cashout UI
+  (`mobile/app/(tabs)/cashout.tsx`) to match the standing launch freeze.
+- Added code-level deep-link routing for `tapcash://activity`,
+  `tapcash://cashout`, and `tapcash://offer/<id>` via
+  `mobile/src/lib/deepLinks.ts` + `mobile/app/_layout.tsx`.
+- Added a regression guard at
+  `tests/mobile/mobile-track3-regression.test.ts`.
+
+**Deferred: Android EAS preview build still requires authenticated external execution**
+- `eas-cli` is installed locally (`eas-cli/20.5.1` reported on
+  2026-08-07), but the acceptance criterion
+  `eas build --platform android --profile preview` was not executed from
+  this session because it requires Expo account authentication, external
+  network access, and triggers a real remote build. Under this repo's
+  Rule 24 spend/cost guardrail, that needs Shayan-approved execution in a
+  logged-in environment rather than being implied from local config.
+- Action needed: from `mobile/`, run
+  `eas whoami`, confirm the `obsidianmedia` account/project link, then
+  run `eas build --platform android --profile preview` and record the
+  resulting build URL/artifact.
+
+**Deferred: physical-device verification still required for biometrics, push, and deep links**
+- Code paths now exist and mobile typecheck is clean, but no physical
+  Android or iPhone device was available in this session to verify:
+  Face ID / fingerprint auth, push receipt/open behavior, or
+  `tapcash://` deep-link opens from the OS / notifications.
+- Action needed: install the preview build on one Android device and one
+  iPhone, then verify:
+  1. Sign-in + biometric unlock
+  2. Push token registration + receipt + notification-open navigation
+  3. `tapcash://activity`, `tapcash://cashout`, `tapcash://offer/<id>`
+
+**Deferred: full mobile screen parity with Track 2 remains a follow-up**
+- This pass hardened the mobile codebase and assets, but it did not claim
+  full screen-by-screen redesign parity with the still-moving Track 2
+  web Aurora work. `LAUNCH_CHECKLIST.md` continues to treat
+  "All screens rebuilt to match web" as incomplete.
+
 ## 2026-08-07 — Claude Code — Payouts / referrals pages (Aurora rollout)
 
 **Note: Interac e-Transfer freeze — payouts page**
