@@ -10,6 +10,8 @@ import { NetworkBanner } from "../src/components/NetworkBanner";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import * as Linking from "expo-linking";
+import { getRouteFromUrl } from "../src/lib/deepLinks";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,16 +21,33 @@ function NotificationHandler() {
   const router = useRouter();
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as { screen?: string };
-      if (data?.screen === "activity") {
-        router.push("/(tabs)/activity");
-      } else if (data?.screen === "cashout") {
-        router.push("/(tabs)/cashout");
+    Linking.getInitialURL().then((url) => {
+      const route = getRouteFromUrl(url);
+      if (route) {
+        router.push(route as never);
+      }
+    }).catch(() => {});
+
+    const urlSubscription = Linking.addEventListener("url", ({ url }) => {
+      const route = getRouteFromUrl(url);
+      if (route) {
+        router.push(route as never);
       }
     });
 
-    return () => subscription.remove();
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { screen?: string; url?: string };
+      const route = getRouteFromUrl(data?.url) ||
+        (data?.screen === "activity" ? "/(tabs)/activity" : data?.screen === "cashout" ? "/(tabs)/cashout" : null);
+      if (route) {
+        router.push(route as never);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+      urlSubscription.remove();
+    };
   }, [router]);
 
   return null;

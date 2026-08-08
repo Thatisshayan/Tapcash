@@ -1,8 +1,8 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AppState } from "react-native";
 import { isDevice } from "expo-device";
-import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -203,7 +203,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await handleAuthSuccess();
     },
     signUp: async (email, password) => {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const credentials = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(credentials.user);
       await SecureStore.setItemAsync("tapcash_creds", JSON.stringify({ email, password }));
       await handleAuthSuccess();
     },

@@ -14,7 +14,7 @@ export function GlassCard({ variant = "default", children, style }: GlassCardPro
       style={[
         styles.card,
         {
-          backgroundColor: isElevated ? tapCashTheme.colors.surfaceAlt : tapCashTheme.colors.surface,
+          backgroundColor: isElevated ? "rgba(245,243,239,0.08)" : "rgba(245,243,239,0.04)",
           borderColor: isElevated ? "rgba(255,255,255,0.10)" : tapCashTheme.colors.border,
         },
         style,

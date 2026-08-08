@@ -4,6 +4,12 @@
 **Sprint:** Sprint 4 — Mobile Build  
 **Purpose:** Step-by-step guide for building, testing, and deploying TapCash mobile
 
+## Track 3 Status — 2026-08-07
+
+- Completed in-repo: real `mobile/assets/*` icon/splash/offer PNGs replaced the 1x1 placeholders, `app.json` + `app.config.js` now reference the app icon / splash / adaptive icon, the `AuthContext.tsx` `SplashScreen` crash bug is fixed, Interac is removed from the mobile cashout flow, and `tapcash://` deep-link routing is wired in app code.
+- Still blocked outside the repo: `eas build --platform android --profile preview`, push-notification receipt, biometric auth, and deep-link verification on real hardware all require Expo account access plus physical Android/iOS devices.
+- Explicit non-goal for this phase: App Store / Play Store submission stays out of scope until Track 2's UI redesign is approved by Shayan.
+
 ---
 
 ## Prerequisites
@@ -117,11 +123,11 @@ eas submit --platform android
 ## 5. Pre-Build Verification Checklist
 
 - [ ] `mobile/.env` has all `EXPO_PUBLIC_*` values
-- [ ] Firebase config in `mobile/src/lib/firebase.ts` matches project
+- [x] Firebase config in `mobile/src/lib/firebase.ts` reads the `EXPO_PUBLIC_*` values (with Expo `extra` mirrors for build-time config)
 - [ ] `eas.json` has correct EAS project ID
 - [ ] `app.config.js` has correct bundle identifiers
-- [ ] Push notification icon exists at `assets/icon.png`
-- [ ] App icon and splash screen configured
+- [x] Push notification icon exists at `assets/icon.png`
+- [x] App icon and splash screen configured
 - [ ] Deep linking scheme `tapcash://` configured
 
 ---
@@ -167,14 +173,16 @@ eas submit --platform android
 | Issue | Status | Workaround |
 |-------|--------|------------|
 | PremiumUi imports | ✅ Fixed | No broken imports |
-| EAS project linked | ⚠️ Needs verification | Run `eas init` |
+| EAS project linked | ⚠️ Needs remote verification | Run `eas whoami` / `eas init --id 1c561a9d-ac22-47db-b376-921c6e4b5086` once authenticated |
 | Biometric auth | ⚠️ Needs real device | Test on physical device |
 | Push notifications | ⚠️ Needs real device | Test on physical device |
-| Deep linking | ⚠️ Needs verification | Test `tapcash://` URLs |
+| Deep linking | ⚠️ Needs real device | Test `tapcash://activity`, `tapcash://cashout`, and `tapcash://offer/<id>` on device |
 
 ---
 
 ## 8. App Store Submission
+
+Submission is intentionally deferred. Do not run these steps until Track 2's redesign is approved and the real-device verification items above are complete.
 
 ### iOS App Store
 1. Build production: `eas build --platform ios --profile production`
