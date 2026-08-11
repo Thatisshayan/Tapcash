@@ -45,8 +45,8 @@ on a `/api/debug/*` route" entries (2026-08-07, cashout page and
 dashboard/cashout ledger endpoint audit, below). Both were originally
 deferred only because two parallel in-flight branches
 (`038-dashboard-page-aurora`, `038-cashout-page-aurora`) depended on the
-old path and would've broken; both have since merged to `main` (PRs #66,
-#67), so the blocker no longer applies.
+old path and would've broken; both have since merged to `main` (PRs `#66`
+and `#67`), so the blocker no longer applies.
 - Moved the real implementation to `src/app/api/ledger/summary/route.ts`.
 - `src/app/api/debug/ledger-summary/route.ts` now re-exports that `GET`
   handler instead of duplicating it — kept, not deleted, per Rule 14.
@@ -56,6 +56,15 @@ old path and would've broken; both have since merged to `main` (PRs #66,
   `/api/ledger/summary` (added in a later, independent pass) against a
   route that didn't exist yet — that page's balance display has been
   silently 404ing since it shipped. Fixed as a side effect of this rename.
+- Not fixed (pre-existing, inherited verbatim from the old route, not
+  introduced by this rename): CodeRabbit flagged that `balanceCoins`/
+  `pendingCoins`/`approvedCoins` are summed from a `.limit(100)` query, so
+  totals silently go wrong for any user with more than 100 ledger
+  transactions; and that the catch handler returns raw `error.message` to
+  the client instead of a generic message. Both are real, but changing
+  balance-aggregation or error-shape behavior is out of scope for a route
+  rename — needs its own reviewed pass given it's financial-calculation
+  code.
 
 **Fixed: no admin-session logout path** — resolves "no active
 admin-session revocation/logout path" (2026-08-06, TASK-037

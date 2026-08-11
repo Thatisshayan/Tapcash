@@ -32,12 +32,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   async function handleExitAdmin() {
     setSigningOut(true);
     try {
-      await fetch('/api/auth/session', { method: 'DELETE' });
+      const res = await fetch('/api/auth/session', { method: 'DELETE' });
+      if (!res.ok) {
+        // Don't swallow this: if admin_session wasn't actually cleared
+        // server-side, it stays valid (up to 24h) even though the client
+        // thinks it logged out.
+        console.error('Failed to clear admin_session cookie on exit:', res.status);
+      }
+    } catch (err) {
+      console.error('Failed to reach /api/auth/session on exit:', err);
+    }
+    try {
       await signOut(auth);
-    } catch {
-      // Best-effort: still navigate away even if a step failed, so the
-      // user isn't stuck on the admin panel.
+    } catch (err) {
+      console.error('Firebase signOut failed on exit:', err);
     } finally {
+      // Still navigate away either way -- staying stuck on the admin
+      // panel isn't a safer fallback than an already-logged failure.
       router.push('/');
     }
   }
