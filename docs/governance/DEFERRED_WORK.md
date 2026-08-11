@@ -2,6 +2,106 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-10 — Claude Code — Autonomous sweep of open issues + deferred-work register (branch `agent/codex/039-mobile-rebuild`)
+
+**Fixed: Deploy Preview CI failure (`--pre` flag)** — resolves the
+"Deploy Preview workflow is broken" entry logged 2026-08-06 below.
+- Root cause confirmed by running `vercel deploy --help` against the
+  actually-resolved CLI (`vercel@50.44.0`): `--pre` is not a valid flag on
+  any current Vercel CLI command. Removed `vercel-args: '--pre'` from
+  `.github/workflows/deploy.yml`'s `Deploy Preview` job — the job already
+  deploys as a preview by default (no `--prod` passed), so the arg was
+  both invalid and redundant, not standing in for real behavior.
+
+**Fixed: `/api/debug/ledger-summary` renamed to the properly-namespaced
+`/api/ledger/summary`** — resolves the "dashboard and cashout both depend
+on a `/api/debug/*` route" entries (2026-08-07, cashout page and
+dashboard/cashout ledger endpoint audit, below). Both were originally
+deferred only because two parallel in-flight branches
+(`038-dashboard-page-aurora`, `038-cashout-page-aurora`) depended on the
+old path and would've broken; both have since merged to `main` (PRs #66,
+#67), so the blocker no longer applies.
+- Moved the real implementation to `src/app/api/ledger/summary/route.ts`.
+- `src/app/api/debug/ledger-summary/route.ts` now re-exports that `GET`
+  handler instead of duplicating it — kept, not deleted, per Rule 14.
+- Repointed `src/app/dashboard/page.tsx`, `src/app/cashout/page.tsx`, and
+  `mobile/src/lib/api.ts` (`loadUserBalance`) to the new path.
+- Bonus find: `src/app/cashout/status/page.tsx` was already calling
+  `/api/ledger/summary` (added in a later, independent pass) against a
+  route that didn't exist yet — that page's balance display has been
+  silently 404ing since it shipped. Fixed as a side effect of this rename.
+
+**Fixed: no admin-session logout path** — resolves "no active
+admin-session revocation/logout path" (2026-08-06, TASK-037
+re-verification, below), the concrete "action needed" from that entry
+(a logout endpoint + `AdminLayout` wiring), not the broader
+revocation-denylist idea floated as optional in the same entry.
+- Added `DELETE /api/auth/session` (`src/app/api/auth/session/route.ts`)
+  that clears both `admin_session` and `csrf_token` cookies.
+- `src/app/admin/layout.tsx`'s "Exit Admin" control now calls that
+  endpoint and `firebase/auth`'s `signOut()` before navigating away,
+  instead of just linking to `/` and leaving both sessions live.
+- Still not done (unchanged from the original entry): no server-side
+  revocation list, so an already-issued `admin_session` JWT from a
+  *different*, still-open device is still valid until its own 24h expiry
+  even after this logout runs on the current device. That's the harder,
+  genuinely-new-infrastructure half of the original entry and remains
+  out of scope here.
+
+**Attempted, reverted: EAS Android monorepo `shared/` resolution fix**
+- Investigated the 2026-08-08 entry below. Confirmed via Expo's official
+  "Work with monorepos" guide (docs.expo.dev/guides/monorepos) that the
+  documented npm-specific fix is a root `package.json` `"workspaces"`
+  field (e.g. `"workspaces": ["mobile"]`) — this is what lets EAS Build's
+  monorepo-root detection walk up from `mobile/` to the repo root and
+  archive/upload the whole tree (including sibling `shared/`) instead of
+  just the `mobile/` subtree.
+- Applied the one-line `package.json` change and tried to verify it
+  wouldn't break the existing, working Next.js/Vercel root build (root
+  and `mobile/` currently have independent `package-lock.json` files and
+  slightly different React versions — 19.2.7 vs 19.2.3 — so enabling
+  workspaces changes root `npm install` resolution behavior for both
+  apps, not just an EAS-side setting).
+- Could not complete that verification in this environment: `npm
+  install`/`npm ci` at the repo root repeatedly failed to finish across
+  many attempts (background processes silently orphaned past their
+  reported "killed" status and kept running/colliding with later
+  retries; `rm -rf node_modules` itself hit `EPERM`/`fts_read` errors
+  consistent with Windows file-lock or antivirus contention; no attempt
+  finished with a working `tsc`/`next` binary). This looks like a
+  local-sandbox I/O/process-lifecycle issue, not a problem with the fix
+  itself.
+- Reverted the `package.json` change rather than commit an unverified
+  change to build tooling shared with the production web app. **Action
+  needed:** from a machine/CI runner that can complete `npm install`
+  reliably, add `"workspaces": ["mobile"]` to root `package.json`, run
+  `npm install` from the repo root, confirm `npm run build` (web) and
+  `mobile`'s typecheck both still pass, then retry `eas build --platform
+  android --profile preview` from `mobile/` per the existing action item
+  below.
+
+**Note: local build/typecheck verification not completed this session**
+- For the same reason as above, `tsc --noEmit` / `next build` could not
+  be run locally to verify the ledger-route-rename and admin-logout
+  changes in this entry. Both were reviewed by hand instead (diffs are
+  small: an import rename, a re-export, one new route handler using an
+  already-exported `clearCsrfCookie` helper, one new button handler using
+  already-imported `signOut`) and look correct, but that is not a
+  substitute for `tsc`/CI. Governance-gate CI (`gate.yml`, on a clean
+  Linux runner, unaffected by this sandbox's local install issues) is the
+  real verification for this batch — confirm it's green on the PR before
+  treating this pass as done.
+
+**Assessed, not touched: rest of the deferred-work register**
+- Reviewed every remaining entry below. Left everything that (a) requires
+  a business/product decision only Shayan can make (referral-link UID
+  migration, Trustpilot rating claim, A/B hero-variant infra
+  revive-or-delete, `admin`/`isAdmin` field-naming unification), (b) was
+  already explicitly logged as "too large/risky for a drive-by fix"
+  (raw-hex token purge, legacy Neon CSS removal), or (c) was already
+  resolved by a later entry in this same file (e.g. the `origin.test.ts`
+  correction below) untouched.
+
 ## 2026-08-08 — Claude Code — TASK-039 EAS Android build still failing (monorepo shared/ resolution)
 
 **Status: blocked, not fixed.** Two real bugs found and fixed this pass;

@@ -194,7 +194,7 @@ export default function DashboardPage() {
 
         const token = await currentUser.getIdToken();
         const [ledgerResponse, offersResponse, leaderboardResponse] = await Promise.allSettled([
-          fetch("/api/debug/ledger-summary", { headers: { Authorization: `Bearer ${token}` } }),
+          fetch("/api/ledger/summary", { headers: { Authorization: `Bearer ${token}` } }),
           fetch("/api/offers"),
           fetch("/api/leaderboard"),
         ]);

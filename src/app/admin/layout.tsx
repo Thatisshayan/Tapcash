@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
 import {
@@ -27,6 +27,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleExitAdmin() {
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+      await signOut(auth);
+    } catch {
+      // Best-effort: still navigate away even if a step failed, so the
+      // user isn't stuck on the admin panel.
+    } finally {
+      router.push('/');
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -118,13 +132,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Exit */}
         <div className="p-3 border-t border-white/5">
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all"
+          <button
+            type="button"
+            onClick={handleExitAdmin}
+            disabled={signingOut}
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all disabled:opacity-50"
           >
             <LogOut className="w-4 h-4" />
-            Exit Admin
-          </Link>
+            {signingOut ? 'Exiting…' : 'Exit Admin'}
+          </button>
         </div>
       </aside>
 
