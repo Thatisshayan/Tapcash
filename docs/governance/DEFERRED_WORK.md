@@ -34,6 +34,42 @@ prior sweep.
   verification (biometrics, push, deep links) still hasn't been done —
   see the 2026-08-07 entry below, unchanged.
 
+**New: enabling `workspaces` surfaces mobile's pre-existing Expo/RN toolchain vulnerabilities in root `npm audit` — `Security Scan` CI job now fails**
+- Confirmed by direct comparison: `mobile/`'s own isolated `npm audit
+  --audit-level=high` already reported 24 vulnerabilities (15 high, 9
+  moderate) before this session's changes — all in Expo/React Native
+  build tooling (`metro`, `@expo/config-plugins`, `xcode`,
+  `expo-splash-screen`, transitively via `uuid`), none of it shipped to
+  end users (build-time only, not part of the deployed app bundle or the
+  Next.js web app). Enabling `"workspaces": ["mobile"]` merges this into
+  a single root dependency graph, so root `npm audit --audit-level=high`
+  (`.github/workflows/deploy.yml`'s `Security Scan` job) now also reports
+  it — 29 vulnerabilities (15 high, 14 moderate) unscoped, or 14 (8 high,
+  6 moderate) even with `--workspaces=false` (npm doesn't cleanly exclude
+  hoisted workspace deps from audit once merged into one lockfile).
+- Not a regression in the sense of new risk — the vulnerable code was
+  already present and already vulnerable in `mobile/`'s own lockfile,
+  just not audited by any CI job before now. It IS a regression in the
+  sense that the `Security Scan` check itself flips from green to red on
+  this branch as a direct, unavoidable side effect of the EAS fix.
+- No safe automated fix exists: `npm audit fix` (non-force) fails outright
+  with a peer-dependency conflict (wants to downgrade `expo` from
+  `^56.0.0` to `46.0.21` to satisfy `expo-router`'s resolution, which
+  would break the mobile app); `npm audit fix --force` would apply that
+  same breaking downgrade. Not attempted — verified only, not applied.
+- Shayan's explicit decision (2026-08-11): accept as documented,
+  non-blocking, and merge. Per `AGENTS.md`, the actual required gate is
+  the named `governance-gate` workflow (`secret-scan, build, test,
+  doc-freshness, deploy-dry, directive-lint`), which is green on this
+  branch — `Security Scan` is a separate, non-required job in
+  `deploy.yml`, consistent with how Codacy/CodeFactor/Snyk soft-gate
+  findings have been treated elsewhere in this register.
+- Action needed (real, just not a merge blocker): whoever owns the
+  mobile dependency tree should track Expo/RN's own upstream fixes for
+  `metro`/`@expo/config-plugins`/`xcode` and bump when patched versions
+  land — these are genuine, if low-blast-radius (build-tooling, not
+  runtime), findings independent of this PR.
+
 **New, small: jest test-path scope leaks into other agents' worktree checkouts**
 - `jest.config.js`'s `testPathIgnorePatterns: ['<rootDir>/tests/e2e/']`
   only covers the root `tests/e2e/` directory. When other agents'
