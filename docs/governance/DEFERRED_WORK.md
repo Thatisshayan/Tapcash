@@ -2,6 +2,37 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-11 — Claude Code — EAS iOS build: blocked on revoked/invalid Apple Distribution Certificate (not a code issue)
+
+**Status: blocked, needs Shayan's Apple Developer account access.** The
+`workspaces` monorepo fix (see the entry immediately below) generalizes
+correctly to iOS — `eas build --platform ios --profile preview` uploaded
+and fingerprinted the project cleanly, same as the now-working Android
+build, so `shared/` resolution is not the blocker here.
+- EAS's remote iOS credentials show a Distribution Certificate (serial
+  `3E2B1219CE513E5B5814CFD3995ED4D9`, Apple Team `9Y6GYPM3K5` — Shayan
+  Salimi, Individual) and Provisioning Profile (Developer Portal ID
+  `39B9C79QTL`) both recorded as valid until Jun 2027. But the actual
+  Xcode build/codesign step on Apple's build servers rejected the
+  certificate: `Signing certificate ... is not valid for code signing.
+  It may have been revoked or expired.` EAS's cached record and Apple's
+  live server disagree — the cert has most likely been revoked on the
+  Apple Developer Portal itself (e.g. a new cert generated elsewhere,
+  hitting Apple's per-account distribution-cert limit) since EAS last
+  synced it "2 months ago" per the build log.
+  Build log: https://expo.dev/accounts/obsidianmedia/projects/tapcash-mobile/builds/a232498b-4c3b-451a-8bfc-422193af81fc
+- Not something an agent should resolve unilaterally: regenerating an
+  Apple Distribution Certificate requires Apple Developer Program account
+  access (Shayan's Apple ID), and revoking/replacing a cert can also
+  invalidate other apps signed with the same team identity if done
+  carelessly. Per Rule 24 (no infra/credential changes without approval).
+- Action needed: Shayan (or whoever holds the `9Y6GYPM3K5` Apple
+  Developer account) checks the Certificates section of the Apple
+  Developer Portal, confirms whether the Distribution Certificate was
+  actually revoked, and either restores/reissues it or runs `eas
+  credentials` interactively to generate a fresh one — then retry `eas
+  build --platform ios --profile preview` from `mobile/`.
+
 ## 2026-08-11 — Claude Code — EAS Android monorepo `shared/` resolution: RESOLVED
 
 **✅ RESOLVED** — closes the 2026-08-08 "TASK-039 EAS Android build still
