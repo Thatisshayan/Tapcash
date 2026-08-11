@@ -23,6 +23,21 @@ logged 2026-08-06 below.
   action@v42`'s schema) with `vercel-args: '--yes'`. Verified on PR #74
   by pushing and watching the check re-run, not just by reasoning about
   it.
+- That unmasked a third, genuinely-external layer that isn't fixable by
+  editing the workflow: `Error: The token provided via '--token' argument
+  is not valid.` -- the `VERCEL_TOKEN` GitHub Actions secret itself is
+  invalid or expired. Confirmed by inspecting the actual `npx vercel
+  --yes -t ***` invocation in the run log; not a guess. This needs
+  Shayan (or whoever owns the Vercel org/token) to generate a fresh
+  Vercel personal/team token and update the `VERCEL_TOKEN` repo secret --
+  no code or workflow change can fix an invalid credential, and rotating
+  it isn't something an agent should do unprompted (Rule 24).
+- Not a merge blocker in the meantime: `Vercel – tapcash` and `Vercel –
+  tapcash-zyd5` (Vercel's native GitHub integration, a separate mechanism
+  from this `amondnet/vercel-action` job) both pass independently and are
+  what actually produce the live preview URL. This `Deploy Preview` job
+  is redundant with that integration and, per the entry below, isn't part
+  of the named `gate` workflow required by `AGENTS.md` either.
 
 **Fixed: `/api/debug/ledger-summary` renamed to the properly-namespaced
 `/api/ledger/summary`** — resolves the "dashboard and cashout both depend
