@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "main": "src-electron/main.js",
+  "workspaces": [
+    "mobile"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
