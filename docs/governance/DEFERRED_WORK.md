@@ -4,14 +4,25 @@
 
 ## 2026-08-10 — Claude Code — Autonomous sweep of open issues + deferred-work register (branch `agent/codex/039-mobile-rebuild`)
 
-**Fixed: Deploy Preview CI failure (`--pre` flag)** — resolves the
-"Deploy Preview workflow is broken" entry logged 2026-08-06 below.
+**Fixed: Deploy Preview CI failure (`--pre` flag, then `--yes`
+confirmation)** — resolves the "Deploy Preview workflow is broken" entry
+logged 2026-08-06 below.
 - Root cause confirmed by running `vercel deploy --help` against the
   actually-resolved CLI (`vercel@50.44.0`): `--pre` is not a valid flag on
   any current Vercel CLI command. Removed `vercel-args: '--pre'` from
   `.github/workflows/deploy.yml`'s `Deploy Preview` job — the job already
   deploys as a preview by default (no `--prod` passed), so the arg was
   both invalid and redundant, not standing in for real behavior.
+- That fix alone wasn't sufficient: it had been masking a second,
+  previously-unreached failure. Once the CLI stopped erroring on `--pre`
+  immediately, the actual `vercel deploy` call failed with `Error:
+  Command 'vercel deploy' requires confirmation. Use option "--yes" to
+  confirm.` (this is a non-interactive CI run, so the CLI can't prompt).
+  Replaced the leftover invalid `working-dir` input (flagged by the
+  action itself as an unexpected input, not part of `amondnet/vercel-
+  action@v42`'s schema) with `vercel-args: '--yes'`. Verified on PR #74
+  by pushing and watching the check re-run, not just by reasoning about
+  it.
 
 **Fixed: `/api/debug/ledger-summary` renamed to the properly-namespaced
 `/api/ledger/summary`** — resolves the "dashboard and cashout both depend
