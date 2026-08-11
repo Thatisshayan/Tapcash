@@ -2,6 +2,53 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-11 — Claude Code — EAS Android monorepo `shared/` resolution: RESOLVED
+
+**✅ RESOLVED** — closes the 2026-08-08 "TASK-039 EAS Android build still
+failing" entry below and the 2026-08-10 "Attempted, reverted" entry in the
+prior sweep.
+
+- Re-applied `"workspaces": ["mobile"]` to root `package.json` (commit
+  `0660917`). This time the environment cooperated: root `npm install`
+  completed cleanly (39 min — slow, consistent with this machine's
+  documented I/O contention, but no `EPERM`/orphaned-process failures this
+  run) instead of hanging/erroring as in every prior attempt.
+- Full verification completed before committing, closing the previously
+  outstanding gap: root `npx tsc --noEmit` clean, `mobile/` `npx tsc
+  --noEmit` clean, root `npm run build` (Next.js/Vercel web app) succeeded
+  with the full expected route manifest, `npx jest` ran 2595 tests
+  (2512 passed) — the 67 failures are pre-existing and unrelated: jest's
+  `testPathIgnorePatterns` only excludes root `tests/e2e/`, so it also
+  tries (and fails) to run Playwright `.spec.ts` files living inside other
+  agents' `.claude/worktrees/*/tests/e2e/` checkouts. Not touched here;
+  flagging as its own small config gap below.
+- Ran the actual acceptance criterion: `eas build --platform android
+  --profile preview` from `mobile/`, authenticated via the pre-configured
+  `EXPO_TOKEN` (account `obsidianmedia`). Upload was 127 MB (confirms the
+  whole monorepo root is now archived, not just the `mobile/` subtree,
+  which is the mechanism this fix relies on). Build completed
+  successfully end-to-end, including the `EAGER_BUNDLE`/Metro phase that
+  previously failed on `@shared/currency` resolution.
+  Build: https://expo.dev/accounts/obsidianmedia/projects/tapcash-mobile/builds/e3d6a453-97af-41ca-9599-24c5277366b9
+- Remaining from the original TASK-039 scope: physical-device
+  verification (biometrics, push, deep links) still hasn't been done —
+  see the 2026-08-07 entry below, unchanged.
+
+**New, small: jest test-path scope leaks into other agents' worktree checkouts**
+- `jest.config.js`'s `testPathIgnorePatterns: ['<rootDir>/tests/e2e/']`
+  only covers the root `tests/e2e/` directory. When other agents'
+  `.claude/worktrees/*` checkouts are present on disk (as they are on this
+  machine — multiple parallel `agent/claude/038-*` worktrees), jest also
+  discovers and tries to run their `tests/e2e/*.spec.ts` Playwright files,
+  which fail immediately (`Class extends value undefined`) since jest
+  can't execute Playwright's test runner. Cosmetic (doesn't affect real
+  coverage of this branch's own files) but adds noise to every local
+  `npx jest` run on a machine with worktrees checked out.
+- Action needed: broaden the ignore pattern to
+  `testPathIgnorePatterns: ['<rootDir>/tests/e2e/', '<rootDir>/.claude/worktrees/']`
+  (or equivalent) — small, low-risk, unrelated to this session's task so
+  not applied here as a drive-by.
+
 ## 2026-08-10 — Claude Code — Autonomous sweep of open issues + deferred-work register (branch `agent/codex/039-mobile-rebuild`)
 
 **Fixed: Deploy Preview CI failure (`--pre` flag, then `--yes`
