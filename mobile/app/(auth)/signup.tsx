@@ -29,7 +29,11 @@ export default function SignUpScreen() {
         await updateProfile(auth.currentUser, { displayName: name.trim() });
       }
       await refreshSession();
-      await resendVerificationEmail();
+      try {
+        await resendVerificationEmail();
+      } catch (verificationError) {
+        console.warn("Verification email send failed:", verificationError);
+      }
       router.replace({ pathname: "/(auth)/verify-email", params: { email: email.trim() } });
     } catch {
       setError("Could not create the account right now.");

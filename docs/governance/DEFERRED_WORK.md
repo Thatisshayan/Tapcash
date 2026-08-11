@@ -2,6 +2,308 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-11 — Claude Code — EAS Android monorepo `shared/` resolution: RESOLVED
+
+**✅ RESOLVED** — closes the 2026-08-08 "TASK-039 EAS Android build still
+failing" entry below and the 2026-08-10 "Attempted, reverted" entry in the
+prior sweep.
+
+- Re-applied `"workspaces": ["mobile"]` to root `package.json` (commit
+  `0660917`). This time the environment cooperated: root `npm install`
+  completed cleanly (39 min — slow, consistent with this machine's
+  documented I/O contention, but no `EPERM`/orphaned-process failures this
+  run) instead of hanging/erroring as in every prior attempt.
+- Full verification completed before committing, closing the previously
+  outstanding gap: root `npx tsc --noEmit` clean, `mobile/` `npx tsc
+  --noEmit` clean, root `npm run build` (Next.js/Vercel web app) succeeded
+  with the full expected route manifest, `npx jest` ran 2595 tests
+  (2512 passed) — the 67 failures are pre-existing and unrelated: jest's
+  `testPathIgnorePatterns` only excludes root `tests/e2e/`, so it also
+  tries (and fails) to run Playwright `.spec.ts` files living inside other
+  agents' `.claude/worktrees/*/tests/e2e/` checkouts. Not touched here;
+  flagging as its own small config gap below.
+- Ran the actual acceptance criterion: `eas build --platform android
+  --profile preview` from `mobile/`, authenticated via the pre-configured
+  `EXPO_TOKEN` (account `obsidianmedia`). Upload was 127 MB (confirms the
+  whole monorepo root is now archived, not just the `mobile/` subtree,
+  which is the mechanism this fix relies on). Build completed
+  successfully end-to-end, including the `EAGER_BUNDLE`/Metro phase that
+  previously failed on `@shared/currency` resolution.
+  Build: https://expo.dev/accounts/obsidianmedia/projects/tapcash-mobile/builds/e3d6a453-97af-41ca-9599-24c5277366b9
+- Remaining from the original TASK-039 scope: physical-device
+  verification (biometrics, push, deep links) still hasn't been done —
+  see the 2026-08-07 entry below, unchanged.
+
+**New: enabling `workspaces` surfaces mobile's pre-existing Expo/RN toolchain vulnerabilities in root `npm audit` — `Security Scan` CI job now fails**
+- Confirmed by direct comparison: `mobile/`'s own isolated `npm audit
+  --audit-level=high` already reported 24 vulnerabilities (15 high, 9
+  moderate) before this session's changes — all in Expo/React Native
+  build tooling (`metro`, `@expo/config-plugins`, `xcode`,
+  `expo-splash-screen`, transitively via `uuid`), none of it shipped to
+  end users (build-time only, not part of the deployed app bundle or the
+  Next.js web app). Enabling `"workspaces": ["mobile"]` merges this into
+  a single root dependency graph, so root `npm audit --audit-level=high`
+  (`.github/workflows/deploy.yml`'s `Security Scan` job) now also reports
+  it — 29 vulnerabilities (15 high, 14 moderate) unscoped, or 14 (8 high,
+  6 moderate) even with `--workspaces=false` (npm doesn't cleanly exclude
+  hoisted workspace deps from audit once merged into one lockfile).
+- Not a regression in the sense of new risk — the vulnerable code was
+  already present and already vulnerable in `mobile/`'s own lockfile,
+  just not audited by any CI job before now. It IS a regression in the
+  sense that the `Security Scan` check itself flips from green to red on
+  this branch as a direct, unavoidable side effect of the EAS fix.
+- No safe automated fix exists: `npm audit fix` (non-force) fails outright
+  with a peer-dependency conflict (wants to downgrade `expo` from
+  `^56.0.0` to `46.0.21` to satisfy `expo-router`'s resolution, which
+  would break the mobile app); `npm audit fix --force` would apply that
+  same breaking downgrade. Not attempted — verified only, not applied.
+- Shayan's explicit decision (2026-08-11): accept as documented,
+  non-blocking, and merge. Per `AGENTS.md`, the actual required gate is
+  the named `governance-gate` workflow (`secret-scan, build, test,
+  doc-freshness, deploy-dry, directive-lint`), which is green on this
+  branch — `Security Scan` is a separate, non-required job in
+  `deploy.yml`, consistent with how Codacy/CodeFactor/Snyk soft-gate
+  findings have been treated elsewhere in this register.
+- Action needed (real, just not a merge blocker): whoever owns the
+  mobile dependency tree should track Expo/RN's own upstream fixes for
+  `metro`/`@expo/config-plugins`/`xcode` and bump when patched versions
+  land — these are genuine, if low-blast-radius (build-tooling, not
+  runtime), findings independent of this PR.
+
+**New, small: jest test-path scope leaks into other agents' worktree checkouts**
+- `jest.config.js`'s `testPathIgnorePatterns: ['<rootDir>/tests/e2e/']`
+  only covers the root `tests/e2e/` directory. When other agents'
+  `.claude/worktrees/*` checkouts are present on disk (as they are on this
+  machine — multiple parallel `agent/claude/038-*` worktrees), jest also
+  discovers and tries to run their `tests/e2e/*.spec.ts` Playwright files,
+  which fail immediately (`Class extends value undefined`) since jest
+  can't execute Playwright's test runner. Cosmetic (doesn't affect real
+  coverage of this branch's own files) but adds noise to every local
+  `npx jest` run on a machine with worktrees checked out.
+- Action needed: broaden the ignore pattern to
+  `testPathIgnorePatterns: ['<rootDir>/tests/e2e/', '<rootDir>/.claude/worktrees/']`
+  (or equivalent) — small, low-risk, unrelated to this session's task so
+  not applied here as a drive-by.
+
+## 2026-08-10 — Claude Code — Autonomous sweep of open issues + deferred-work register (branch `agent/codex/039-mobile-rebuild`)
+
+**Fixed: Deploy Preview CI failure (`--pre` flag, then `--yes`
+confirmation)** — resolves the "Deploy Preview workflow is broken" entry
+logged 2026-08-06 below.
+- Root cause confirmed by running `vercel deploy --help` against the
+  actually-resolved CLI (`vercel@50.44.0`): `--pre` is not a valid flag on
+  any current Vercel CLI command. Removed `vercel-args: '--pre'` from
+  `.github/workflows/deploy.yml`'s `Deploy Preview` job — the job already
+  deploys as a preview by default (no `--prod` passed), so the arg was
+  both invalid and redundant, not standing in for real behavior.
+- That fix alone wasn't sufficient: it had been masking a second,
+  previously-unreached failure. Once the CLI stopped erroring on `--pre`
+  immediately, the actual `vercel deploy` call failed with `Error:
+  Command 'vercel deploy' requires confirmation. Use option "--yes" to
+  confirm.` (this is a non-interactive CI run, so the CLI can't prompt).
+  Replaced the leftover invalid `working-dir` input (flagged by the
+  action itself as an unexpected input, not part of `amondnet/vercel-
+  action@v42`'s schema) with `vercel-args: '--yes'`. Verified on PR #74
+  by pushing and watching the check re-run, not just by reasoning about
+  it.
+- That unmasked a third, genuinely-external layer that isn't fixable by
+  editing the workflow: `Error: The token provided via '--token' argument
+  is not valid.` -- the `VERCEL_TOKEN` GitHub Actions secret itself is
+  invalid or expired. Confirmed by inspecting the actual `npx vercel
+  --yes -t ***` invocation in the run log; not a guess. This needs
+  Shayan (or whoever owns the Vercel org/token) to generate a fresh
+  Vercel personal/team token and update the `VERCEL_TOKEN` repo secret --
+  no code or workflow change can fix an invalid credential, and rotating
+  it isn't something an agent should do unprompted (Rule 24).
+- Not a merge blocker in the meantime: `Vercel – tapcash` and `Vercel –
+  tapcash-zyd5` (Vercel's native GitHub integration, a separate mechanism
+  from this `amondnet/vercel-action` job) both pass independently and are
+  what actually produce the live preview URL. This `Deploy Preview` job
+  is redundant with that integration and, per the entry below, isn't part
+  of the named `gate` workflow required by `AGENTS.md` either.
+
+**Fixed: `/api/debug/ledger-summary` renamed to the properly-namespaced
+`/api/ledger/summary`** — resolves the "dashboard and cashout both depend
+on a `/api/debug/*` route" entries (2026-08-07, cashout page and
+dashboard/cashout ledger endpoint audit, below). Both were originally
+deferred only because two parallel in-flight branches
+(`038-dashboard-page-aurora`, `038-cashout-page-aurora`) depended on the
+old path and would've broken; both have since merged to `main` (PRs `#66`
+and `#67`), so the blocker no longer applies.
+- Moved the real implementation to `src/app/api/ledger/summary/route.ts`.
+- `src/app/api/debug/ledger-summary/route.ts` now re-exports that `GET`
+  handler instead of duplicating it — kept, not deleted, per Rule 14.
+- Repointed `src/app/dashboard/page.tsx`, `src/app/cashout/page.tsx`, and
+  `mobile/src/lib/api.ts` (`loadUserBalance`) to the new path.
+- Bonus find: `src/app/cashout/status/page.tsx` was already calling
+  `/api/ledger/summary` (added in a later, independent pass) against a
+  route that didn't exist yet — that page's balance display has been
+  silently 404ing since it shipped. Fixed as a side effect of this rename.
+- Not fixed (pre-existing, inherited verbatim from the old route, not
+  introduced by this rename): CodeRabbit flagged that `balanceCoins`/
+  `pendingCoins`/`approvedCoins` are summed from a `.limit(100)` query, so
+  totals silently go wrong for any user with more than 100 ledger
+  transactions; and that the catch handler returns raw `error.message` to
+  the client instead of a generic message. Both are real, but changing
+  balance-aggregation or error-shape behavior is out of scope for a route
+  rename — needs its own reviewed pass given it's financial-calculation
+  code.
+
+**Fixed: no admin-session logout path** — resolves "no active
+admin-session revocation/logout path" (2026-08-06, TASK-037
+re-verification, below), the concrete "action needed" from that entry
+(a logout endpoint + `AdminLayout` wiring), not the broader
+revocation-denylist idea floated as optional in the same entry.
+- Added `DELETE /api/auth/session` (`src/app/api/auth/session/route.ts`)
+  that clears both `admin_session` and `csrf_token` cookies.
+- `src/app/admin/layout.tsx`'s "Exit Admin" control now calls that
+  endpoint and `firebase/auth`'s `signOut()` before navigating away,
+  instead of just linking to `/` and leaving both sessions live.
+- Still not done (unchanged from the original entry): no server-side
+  revocation list, so an already-issued `admin_session` JWT from a
+  *different*, still-open device is still valid until its own 24h expiry
+  even after this logout runs on the current device. That's the harder,
+  genuinely-new-infrastructure half of the original entry and remains
+  out of scope here.
+
+**Attempted, reverted: EAS Android monorepo `shared/` resolution fix**
+- Investigated the 2026-08-08 entry below. Confirmed via Expo's official
+  "Work with monorepos" guide (docs.expo.dev/guides/monorepos) that the
+  documented npm-specific fix is a root `package.json` `"workspaces"`
+  field (e.g. `"workspaces": ["mobile"]`) — this is what lets EAS Build's
+  monorepo-root detection walk up from `mobile/` to the repo root and
+  archive/upload the whole tree (including sibling `shared/`) instead of
+  just the `mobile/` subtree.
+- Applied the one-line `package.json` change and tried to verify it
+  wouldn't break the existing, working Next.js/Vercel root build (root
+  and `mobile/` currently have independent `package-lock.json` files and
+  slightly different React versions — 19.2.7 vs 19.2.3 — so enabling
+  workspaces changes root `npm install` resolution behavior for both
+  apps, not just an EAS-side setting).
+- Could not complete that verification in this environment: `npm
+  install`/`npm ci` at the repo root repeatedly failed to finish across
+  many attempts (background processes silently orphaned past their
+  reported "killed" status and kept running/colliding with later
+  retries; `rm -rf node_modules` itself hit `EPERM`/`fts_read` errors
+  consistent with Windows file-lock or antivirus contention; no attempt
+  finished with a working `tsc`/`next` binary). This looks like a
+  local-sandbox I/O/process-lifecycle issue, not a problem with the fix
+  itself.
+- Reverted the `package.json` change rather than commit an unverified
+  change to build tooling shared with the production web app. **Action
+  needed:** from a machine/CI runner that can complete `npm install`
+  reliably, add `"workspaces": ["mobile"]` to root `package.json`, run
+  `npm install` from the repo root, confirm `npm run build` (web) and
+  `mobile`'s typecheck both still pass, then retry `eas build --platform
+  android --profile preview` from `mobile/` per the existing action item
+  below.
+
+**Note: local build/typecheck verification not completed this session**
+- For the same reason as above, `tsc --noEmit` / `next build` could not
+  be run locally to verify the ledger-route-rename and admin-logout
+  changes in this entry. Both were reviewed by hand instead (diffs are
+  small: an import rename, a re-export, one new route handler using an
+  already-exported `clearCsrfCookie` helper, one new button handler using
+  already-imported `signOut`) and look correct, but that is not a
+  substitute for `tsc`/CI. Governance-gate CI (`gate.yml`, on a clean
+  Linux runner, unaffected by this sandbox's local install issues) is the
+  real verification for this batch — confirm it's green on the PR before
+  treating this pass as done.
+
+**Assessed, not touched: rest of the deferred-work register**
+- Reviewed every remaining entry below. Left everything that (a) requires
+  a business/product decision only Shayan can make (referral-link UID
+  migration, Trustpilot rating claim, A/B hero-variant infra
+  revive-or-delete, `admin`/`isAdmin` field-naming unification), (b) was
+  already explicitly logged as "too large/risky for a drive-by fix"
+  (raw-hex token purge, legacy Neon CSS removal), or (c) was already
+  resolved by a later entry in this same file (e.g. the `origin.test.ts`
+  correction below) untouched.
+
+## 2026-08-08 — Claude Code — TASK-039 EAS Android build still failing (monorepo shared/ resolution)
+
+**Status: blocked, not fixed.** Two real bugs found and fixed this pass;
+a third, structural one remains.
+
+1. **Fixed**: `mobile/android/` was committed to git (36 files, incl.
+   `gradlew`) despite the repo's own `.gitignore` marking `/mobile/android`
+   as CNG-generated. EAS's archiver drops gitignored paths regardless of
+   git-tracked status, so `gradlew` never reached the builder -> ENOENT on
+   `FIX_GRADLEW`. Untracked via `git rm -r --cached mobile/android`
+   (commit `30da82f`, Shayan's R14 approval given 2026-08-08).
+2. **Blocked**: retried build (`138bb53f-4b2b-4478-ae89-f2a6133561fd`)
+   got past gradlew but failed at the `EAGER_BUNDLE` phase: Metro cannot
+   resolve `@shared/currency` (aliased in `mobile/tsconfig.json` and
+   `mobile/babel.config.js` to `../shared`, i.e. the repo-root `shared/`
+   folder sibling to `mobile/`). `shared/currency.ts` and
+   `shared/tapcash-content.ts` ARE git-tracked and not gitignored, so the
+   most likely cause is that EAS Build doesn't know this is a monorepo
+   (no `workspaces` field in the root `package.json`, no
+   `EAS_BUILD_RUN_FROM_REPO_ROOT`-equivalent config found in
+   `mobile/eas.json`/`app.json`/`app.config.js`) and only packages the
+   `mobile/` subtree, silently dropping the sibling `shared/` folder.
+   Not fixed in this pass — the candidate fixes (declaring `mobile` as an
+   npm/yarn workspace at repo root, or an EAS monorepo-root setting)
+   both touch build tooling shared with the Next.js web app and need
+   verification against current Expo/EAS docs before changing, which
+   wasn't done here.
+   - Action needed: confirm the correct current Expo EAS monorepo
+     mechanism (check https://docs.expo.dev for "monorepo" — likely
+     either root `package.json` `workspaces`, or an EAS build profile
+     setting), apply it, and retry
+     `eas build --platform android --profile preview` from `mobile/`.
+   - Web (Next.js/Vercel) builds already work correctly with `shared/`
+     since Vercel builds from the repo root by default — this is
+     EAS-build-specific.
+
+## 2026-08-07 — Codex — TASK-039 Track 3 mobile rebuild
+
+**Completed in this pass**
+- Replaced the mobile 1x1 placeholder PNGs with real generated assets:
+  `mobile/assets/icon.png`, `mobile/assets/adaptive-icon.png`,
+  `mobile/assets/splash.png`, and `mobile/assets/offers/offer-*.png`.
+- Wired those assets into both Expo config surfaces:
+  `mobile/app.json` and `mobile/app.config.js`.
+- Fixed a real crash bug in `mobile/src/auth/AuthContext.tsx`: it called
+  `SplashScreen.hideAsync()` without importing `expo-splash-screen`.
+- Removed Interac from the mobile cashout UI
+  (`mobile/app/(tabs)/cashout.tsx`) to match the standing launch freeze.
+- Added code-level deep-link routing for `tapcash://activity`,
+  `tapcash://cashout`, and `tapcash://offer/<id>` via
+  `mobile/src/lib/deepLinks.ts` + `mobile/app/_layout.tsx`.
+- Added a regression guard at
+  `tests/mobile/mobile-track3-regression.test.ts`.
+
+**Deferred: Android EAS preview build still requires authenticated external execution**
+- `eas-cli` is installed locally (`eas-cli/20.5.1` reported on
+  2026-08-07), but the acceptance criterion
+  `eas build --platform android --profile preview` was not executed from
+  this session because it requires Expo account authentication, external
+  network access, and triggers a real remote build. Under this repo's
+  Rule 24 spend/cost guardrail, that needs Shayan-approved execution in a
+  logged-in environment rather than being implied from local config.
+- Action needed: from `mobile/`, run
+  `eas whoami`, confirm the `obsidianmedia` account/project link, then
+  run `eas build --platform android --profile preview` and record the
+  resulting build URL/artifact.
+
+**Deferred: physical-device verification still required for biometrics, push, and deep links**
+- Code paths now exist and mobile typecheck is clean, but no physical
+  Android or iPhone device was available in this session to verify:
+  Face ID / fingerprint auth, push receipt/open behavior, or
+  `tapcash://` deep-link opens from the OS / notifications.
+- Action needed: install the preview build on one Android device and one
+  iPhone, then verify:
+  1. Sign-in + biometric unlock
+  2. Push token registration + receipt + notification-open navigation
+  3. `tapcash://activity`, `tapcash://cashout`, `tapcash://offer/<id>`
+
+**Deferred: full mobile screen parity with Track 2 remains a follow-up**
+- This pass hardened the mobile codebase and assets, but it did not claim
+  full screen-by-screen redesign parity with the still-moving Track 2
+  web Aurora work. `LAUNCH_CHECKLIST.md` continues to treat
+  "All screens rebuilt to match web" as incomplete.
+
 ## 2026-08-07 — Claude Code — Payouts / referrals pages (Aurora rollout)
 
 **Note: Interac e-Transfer freeze — payouts page**

@@ -169,7 +169,7 @@ export default function CashoutPage() {
       try {
         setLoading(true);
         const token = await currentUser.getIdToken();
-        const response = await fetch("/api/debug/ledger-summary", {
+        const response = await fetch("/api/ledger/summary", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
