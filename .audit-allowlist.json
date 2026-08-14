@@ -1,0 +1,21 @@
+{
+  "_comment": "Dated waivers for `npm run audit:gate`. Every entry needs a reason and an expiry — expired entries fail CI on purpose. Do not waive anything that ships in the deployed web app.",
+  "allow": [
+    { "package": "expo", "severity": "high", "reason": "Mobile build toolchain, hoisted into the root lockfile by the mobile npm workspace. Fix is Expo SDK 53 (semver-major).", "expires": "2026-11-01" },
+    { "package": "@expo/cli", "severity": "high", "reason": "Transitive via expo; build-time only, not shipped in the web bundle.", "expires": "2026-11-01" },
+    { "package": "@expo/metro", "severity": "high", "reason": "Transitive via expo; Metro bundler, build-time only.", "expires": "2026-11-01" },
+    { "package": "@expo/metro-config", "severity": "high", "reason": "Transitive via expo; Metro bundler config, build-time only.", "expires": "2026-11-01" },
+    { "package": "metro", "severity": "high", "reason": "React Native bundler, build-time only. Fix is react-native 0.72+ (semver-major).", "expires": "2026-11-01" },
+    { "package": "metro-config", "severity": "high", "reason": "Transitive via metro; build-time only.", "expires": "2026-11-01" },
+    { "package": "metro-transform-worker", "severity": "high", "reason": "Transitive via metro; build-time only.", "expires": "2026-11-01" },
+    { "package": "image-size", "severity": "high", "reason": "Transitive via metro (asset pipeline); build-time only, never parses user input at runtime.", "expires": "2026-11-01" },
+    { "package": "react-native", "severity": "high", "reason": "Mobile runtime; fix is a semver-major RN upgrade tracked with the Expo SDK bump.", "expires": "2026-11-01" },
+    { "package": "@react-native/community-cli-plugin", "severity": "high", "reason": "Transitive via react-native; CLI/build-time only.", "expires": "2026-11-01" },
+    { "package": "@react-native/metro-config", "severity": "high", "reason": "Transitive via react-native; build-time only.", "expires": "2026-11-01" },
+    { "package": "@react-native/virtualized-lists", "severity": "high", "reason": "Transitive via react-native; fixed by the same RN major upgrade.", "expires": "2026-11-01" },
+    { "package": "react-native-reanimated", "severity": "high", "reason": "Transitive via react-native; fix requires reanimated 4 (semver-major).", "expires": "2026-11-01" },
+    { "package": "react-native-screens", "severity": "high", "reason": "Transitive via react-native; upgraded alongside the RN bump.", "expires": "2026-11-01" },
+    { "package": "react-native-worklets", "severity": "high", "reason": "Transitive via react-native/reanimated; build-time only.", "expires": "2026-11-01" },
+    { "package": "nanoid", "severity": "high", "reason": "Hoisted from the mobile workspace (Metro dependency chain). Patch tracked in Dependabot PR #75; remove this waiver once that merges.", "expires": "2026-09-15" }
+  ]
+}
