@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
+    "audit:gate": "node scripts/audit-gate.mjs",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -67,7 +68,7 @@
     "jest-environment-jsdom": "^30.4.1",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "zod": "^4.4.3"
   },
   "browserslist": {
