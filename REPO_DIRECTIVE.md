@@ -50,7 +50,7 @@ polished cross-web+mobile experience that feels trustworthy enough to hand real 
 - [ ] T2 — Add integration test for signed offerwall iframe + IP-whitelisted postback | traces-to: P1/S1/E1 | acceptance: test fails if postback from non-whitelisted IP accepted
 - [ ] T3 — Verify Firestore 5-min cache + seed-data fallback path under outage | traces-to: P1/S1/E2 | acceptance: seed fallback serves content when Firestore down
 - [ ] T4 — Close mobile/web cashout parity gap (push + balance animation) | traces-to: P2/S2/E3 | acceptance: mobile cashout matches web flow end-to-end
-- [ ] T5 — Add rate-limit e2e for /api/cashout (anti-fraud) | traces-to: P1/S1/E2 | acceptance: >N req/min from one user blocked + flagged
+- [ ] T5 — Add rate-limit e2e for /api/cashout (anti-fraud) | traces-to: P1/S1/E2 | acceptance: >10 req/min from one user blocked + flagged
 
 ## Sentinel Constraints
 

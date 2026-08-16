@@ -9,7 +9,8 @@
  *   - Firestore initialized in the project
  */
 
-import * as admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -20,15 +21,15 @@ if (!privateKey || !clientEmail || !projectId) {
   process.exit(1);
 }
 
-const app = admin.initializeApp({
-  credential: admin.credential.cert({
+const app = initializeApp({
+  credential: cert({
     projectId,
     clientEmail,
     privateKey: privateKey.replace(/\\n/g, "\n"),
   }),
 });
 
-const db = admin.firestore(app);
+const db = getFirestore(app);
 
 // --- Data from shared/tapcash-content.ts ---
 
@@ -61,7 +62,8 @@ const FAQS = [
 
 const PAYOUT_METHODS = [
   { id: "paypal", label: "PayPal Cash", subtitle: "Fastest mainstream cashout", minCoins: 5000, eta: "Usually under 24h", accent: "teal", audience: "Most users", order: 1 },
-  { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", accent: "blue", audience: "Canadian users", order: 2 },
+  // FROZEN 2026-08-06: Interac disabled for launch, do not seed. Re-enable when un-frozen.
+  // { id: "interac", label: "Interac e-Transfer", subtitle: "Canada-first withdrawal path", minCoins: 5000, eta: "Manual review window", accent: "blue", audience: "Canadian users", order: 2 },
   { id: "bitcoin", label: "Bitcoin", subtitle: "Direct crypto payout", minCoins: 10000, eta: "Queue based", accent: "gold", audience: "Crypto users", order: 3 },
   { id: "gift", label: "Gift cards", subtitle: "Steam, Tim Hortons, and more", minCoins: 5000, eta: "Processed manually", accent: "teal", audience: "Light redeemers", order: 4 },
 ];
@@ -84,7 +86,7 @@ async function seedCollection(name: string, docs: Record<string, unknown>[]) {
   for (const data of docs) {
     const id = data.id as string;
     const ref = id ? col.doc(id) : col.doc();
-    batch.set(ref, { ...data, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    batch.set(ref, { ...data, createdAt: FieldValue.serverTimestamp() });
   }
 
   await batch.commit();

@@ -21,9 +21,13 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
     ppr: false,
   },
-  modularizeImports: {
-    "lucide-react": { transform: "lucide-react/dist/esm/icons/{{ kebabCase member }}", skipDefaultConversion: true },
-  },
+  // Removed a stale `modularizeImports` entry for lucide-react here: it
+  // hardcoded a per-icon import path (lucide-react/dist/esm/icons/...)
+  // that no longer matches the installed lucide-react's package layout,
+  // and duplicated/conflicted with `optimizePackageImports` above (the
+  // modern, Turbopack-native tree-shaking mechanism for the same
+  // package). This was causing every file that imports any lucide-react
+  // icon to fail to resolve during `next build`.
 
   staticPageGenerationTimeout: 120,
   skipTrailingSlashRedirect: true,

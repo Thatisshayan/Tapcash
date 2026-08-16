@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { adminFetch } from '@/lib/adminApiClient';
 
 interface Transaction {
   id: string;
@@ -36,12 +37,7 @@ export default function TransactionManagement() {
 
   const loadTransactions = useCallback(async () => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/transactions', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await adminFetch('/api/admin/transactions');
 
       if (response.status === 403) {
         router.push('/dashboard');
@@ -76,13 +72,9 @@ export default function TransactionManagement() {
     if (!confirm('Are you sure you want to approve this transaction?')) return;
 
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/transactions', {
+      const response = await adminFetch('/api/admin/transactions', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionId, action: 'approve' })
       });
 
@@ -104,13 +96,9 @@ export default function TransactionManagement() {
     }
 
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/transactions', {
+      const response = await adminFetch('/api/admin/transactions', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionId, action: 'reject', reason })
       });
 
@@ -134,13 +122,9 @@ export default function TransactionManagement() {
     if (!confirm('Are you sure you want to refund this transaction?')) return;
 
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/transactions', {
+      const response = await adminFetch('/api/admin/transactions', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionId, action: 'refund', reason })
       });
 

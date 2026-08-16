@@ -55,6 +55,10 @@ export function ABTestProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // localStorage is only available client-side, so this can't be computed
+    // as a lazy useState initializer without an SSR/hydration mismatch --
+    // the effect has to run post-mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeroVariant(assignedVariant);
     setMounted(true);
   }, [sessionId]);

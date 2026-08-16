@@ -1,28 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdminSession } from '@/lib/admin-session';
 
 // GET - Fetch all transactions
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     // Log admin action
     await adminDb.collection('admin_logs').add({
-      adminId: decodedToken.uid,
-      adminEmail: decodedToken.email,
+      adminId: auth.uid,
+      adminEmail: auth.email,
       action: 'view_transactions',
       timestamp: new Date(),
       ip: request.headers.get('x-forwarded-for') || 'unknown'
@@ -70,20 +59,8 @@ export async function GET(request: NextRequest) {
 // POST - Approve, reject, or refund transactions
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
-    const userData = userDoc.data();
-    
-    if (!userData?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    }
+    const auth = await requireAdminSession(request);
+    if ("response" in auth) return auth.response;
 
     const { transactionId, action, reason } = await request.json();
 
@@ -107,7 +84,7 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('transactions').doc(transactionId).update({
         status: 'completed',
         completedAt: new Date(),
-        approvedBy: decodedToken.uid
+        approvedBy: auth.uid
       });
 
       // Process payout (in real implementation, this would trigger actual payment)
@@ -115,8 +92,8 @@ export async function POST(request: NextRequest) {
 
       // Log admin action
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'approve_transaction',
         targetTransactionId: transactionId,
         details: { userId: txData.userId, amount: txData.amount },
@@ -139,7 +116,7 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('transactions').doc(transactionId).update({
         status: 'failed',
         failureReason: reason,
-        rejectedBy: decodedToken.uid,
+        rejectedBy: auth.uid,
         rejectedAt: new Date()
       });
 
@@ -157,8 +134,8 @@ export async function POST(request: NextRequest) {
 
       // Log admin action
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'reject_transaction',
         targetTransactionId: transactionId,
         details: { userId: txData.userId, amount: txData.amount, reason },
@@ -185,7 +162,7 @@ export async function POST(request: NextRequest) {
         status: 'completed',
         originalTransactionId: transactionId,
         notes: reason,
-        refundedBy: decodedToken.uid,
+        refundedBy: auth.uid,
         timestamp: new Date()
       });
 
@@ -208,8 +185,8 @@ export async function POST(request: NextRequest) {
 
       // Log admin action
       await adminDb.collection('admin_logs').add({
-        adminId: decodedToken.uid,
-        adminEmail: decodedToken.email,
+        adminId: auth.uid,
+        adminEmail: auth.email,
         action: 'refund_transaction',
         targetTransactionId: transactionId,
         details: { userId: txData.userId, amount: txData.amount, reason },

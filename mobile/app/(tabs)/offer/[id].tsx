@@ -9,6 +9,7 @@ import { theme } from "../../../src/theme";
 import { GlassCard } from "../../../src/components/GlassCard";
 import { TapScoreRing } from "../../../src/components/TapScoreRing";
 import { loadOffers, recordClick, type ApiOfferDisplay } from "../../../src/lib/api";
+import { formatCadFromCoins } from "../../../src/lib/currency";
 import { useAuth } from "../../../src/auth/AuthContext";
 
 const IMG: Record<number, ReturnType<typeof require>> = {
@@ -58,7 +59,7 @@ export default function OfferDetailScreen() {
   const displayOffer = useMemo(() => offer, [offer]);
   const idx = displayOffer ? 0 : 0;
   const img = IMG[idx % 10];
-  const price = displayOffer ? (displayOffer.payoutCoins / 100).toFixed(2) : "0.00";
+  const price = displayOffer ? formatCadFromCoins(displayOffer.payoutCoins) : "0.00";
   const tags = displayOffer ? [displayOffer.category] : [];
   if (displayOffer && displayOffer.estimateMinutes <= 15) tags.push("Fast Payout");
   if (displayOffer) tags.push("Easy");
@@ -203,8 +204,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0, 255, 133, 0.15)",
-    borderColor: "rgba(0, 255, 133, 0.4)",
+    backgroundColor: "rgba(217, 182, 120, 0.15)",
+    borderColor: "rgba(217, 182, 120, 0.4)",
     borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -221,7 +222,10 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md, gap: theme.spacing.md },
   title: { color: theme.colors.text, fontSize: 28, fontWeight: "800", lineHeight: 34 },
   tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  tag: { backgroundColor: theme.colors.elevated, paddingHorizontal: 8, paddingVertical: 3, borderRadius: theme.radius.xs },
+  // theme.colors.elevated doesn't exist on the regenerated Aurora theme.ts
+  // (was rendering as transparent) -- swapped for a translucent ink tint,
+  // consistent with the no-bordered-box tag chips used elsewhere.
+  tag: { backgroundColor: "rgba(245,243,239,0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: theme.radius.xs },
   tagText: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "600" },
   priceRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md, marginVertical: theme.spacing.sm },
   price: { color: theme.colors.gold, fontSize: 36, fontWeight: "900", fontFamily: "JetBrainsMono-Regular" },
@@ -235,6 +239,8 @@ const styles = StyleSheet.create({
   successRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, marginTop: theme.spacing.sm },
   successText: { color: theme.colors.green, fontSize: theme.font.sm, fontWeight: "700" },
   footer: { position: "absolute", bottom: 0, left: 0, right: 0, paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm, backgroundColor: theme.colors.bg },
-  startBtn: { width: "100%", height: 54, borderRadius: 14, backgroundColor: theme.colors.purple, alignItems: "center", justifyContent: "center" },
-  startText: { color: theme.colors.text, fontSize: 16, fontWeight: "900" },
+  // Aligned to the gold Start-Offer CTA convention used on earn.tsx / web
+  // OfferCard rather than the old violet button.
+  startBtn: { width: "100%", height: 54, borderRadius: 14, backgroundColor: theme.colors.accent, alignItems: "center", justifyContent: "center" },
+  startText: { color: theme.colors.bg, fontSize: 16, fontWeight: "900" },
 });

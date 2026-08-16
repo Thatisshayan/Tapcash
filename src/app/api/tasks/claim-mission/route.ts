@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getClientIp, isBotAgent, isIpSuspicious } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     const txSnap = await adminDb.collection("transactions")
       .where("userId", "==", uid)
-      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(todayStart))
+      .where("createdAt", ">=", Timestamp.fromDate(todayStart))
       .get();
 
     const todayTxs = txSnap.docs.map(doc => doc.data());
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
       transaction.update(userRef, {
         [`claimedMissions.${todayStr}`]: updatedClaimsForDay,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       // Register completion ledger transaction
@@ -146,8 +146,8 @@ export async function POST(request: NextRequest) {
         source: "daily_mission",
         referenceId: missionId,
         metadata: { missionId, missionName },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       const auditRef = adminDb.collection("admin_actions").doc();
@@ -158,8 +158,8 @@ export async function POST(request: NextRequest) {
         targetType: "user",
         targetId: uid,
         metadata: { missionId, missionName, rewardCoins },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 

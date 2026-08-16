@@ -113,3 +113,6 @@ build/
 .vs/
 desktop.ini
 audits/private/
+
+# Local agent tooling state (Claude Code settings + nested worktrees)
+.claude/

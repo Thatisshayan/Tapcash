@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import * as admin from "firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp, logFraudAttempt } from "@/lib/antiFraud";
 import { logAdminAction } from "@/lib/audit";
@@ -107,8 +106,8 @@ export async function GET(request: NextRequest) {
         status,
         source: "lootably",
         signatureValid: true,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         metadata: {
           txId,
           sig,
@@ -125,8 +124,8 @@ export async function GET(request: NextRequest) {
         source: "lootably_postback",
         referenceId: txId,
         metadata: { offerId, provider: "lootably", clickVerified },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       if (shouldApprove) {
@@ -140,8 +139,8 @@ export async function GET(request: NextRequest) {
           source: "lootably_postback",
           referenceId: txId,
           metadata: { offerId, provider: "lootably", clickVerified },
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       }
 
@@ -153,8 +152,8 @@ export async function GET(request: NextRequest) {
         targetType: "offer",
         targetId: offerId,
         metadata: { txId, amountCoins, provider: "lootably", status },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       if (!shouldApprove) {
@@ -171,8 +170,8 @@ export async function GET(request: NextRequest) {
             offerId,
             provider: "lootably",
           },
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       }
     });
