@@ -6,6 +6,16 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // eslint-config-next sets settings.react.version = "detect", which makes
+    // eslint-plugin-react call context.getFilename() to locate the installed
+    // React package. ESLint 10 removed that legacy API outright, so any rule
+    // that needs the React version (display-name, no-direct-mutation-state,
+    // prop-types, etc.) crashes the whole lint run instead of just failing
+    // itself. Pinning an explicit version here skips the auto-detect path
+    // entirely — this is also just correct config regardless of the bug.
+    settings: {
+      react: { version: "19.2.8" },
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": [
@@ -19,12 +29,6 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "warn",
       "react/no-unescaped-entities": "warn",
       "react-hooks/exhaustive-deps": "warn",
-      // eslint-plugin-react@7.37.5 (latest published, pulled in transitively
-      // by eslint-config-next) calls the legacy `context.getFilename()` API
-      // that ESLint 10 removed outright, crashing lint on every file instead
-      // of just failing this one rule. No newer eslint-plugin-react exists
-      // yet with an ESLint-10-compatible fix. Disable until upstream ships one.
-      "react/display-name": "off",
     },
   },
   // Override default ignores of eslint-config-next.
