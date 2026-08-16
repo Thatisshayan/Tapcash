@@ -19,6 +19,12 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "warn",
       "react/no-unescaped-entities": "warn",
       "react-hooks/exhaustive-deps": "warn",
+      // eslint-plugin-react@7.37.5 (latest published, pulled in transitively
+      // by eslint-config-next) calls the legacy `context.getFilename()` API
+      // that ESLint 10 removed outright, crashing lint on every file instead
+      // of just failing this one rule. No newer eslint-plugin-react exists
+      // yet with an ESLint-10-compatible fix. Disable until upstream ships one.
+      "react/display-name": "off",
     },
   },
   // Override default ignores of eslint-config-next.
