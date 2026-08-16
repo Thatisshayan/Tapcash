@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return responseMiddleware(rawResponse, rateLimit);
     }
 
-    const { email, password, displayName } = validationResult.data;
+    const { email, password, displayName, dateOfBirth, tosAccepted, privacyAccepted, marketingAccepted } = validationResult.data;
     const deviceFingerprint = body.deviceFingerprint;
 
     const ip = getClientIp(request);
@@ -224,6 +224,7 @@ export async function POST(request: NextRequest) {
       uid: userRecord.uid,
       email: userRecord.email,
       displayName: displayName,
+      dateOfBirth,
       status: "active",
       isFlagged: fraudScore.score > 25,
       fraudScore: fraudScore.score,
@@ -235,6 +236,14 @@ export async function POST(request: NextRequest) {
       deviceFingerprint: deviceFingerprint || "",
       referredBy,
       createdAt: FieldValue.serverTimestamp(),
+      consent: {
+        tosAccepted: true,
+        tosAcceptedAt: FieldValue.serverTimestamp(),
+        privacyAccepted: true,
+        privacyAcceptedAt: FieldValue.serverTimestamp(),
+        marketingAccepted: marketingAccepted ?? false,
+        marketingAcceptedAt: marketingAccepted ? FieldValue.serverTimestamp() : null,
+      },
     });
 
     await sendWelcomeEmail(email, displayName || email);

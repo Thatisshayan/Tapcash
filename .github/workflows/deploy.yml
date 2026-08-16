@@ -131,8 +131,9 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
+      # Snyk requires SNYK_TOKEN to be configured as a repo secret before this
+      # can be a hard gate — left soft (continue-on-error) until that's confirmed.
       - name: Run Snyk security scan
         uses: snyk/actions/node@master
         continue-on-error: true
@@ -158,8 +159,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
-          vercel-args: '--pre'
-          working-dir: ./
+          vercel-args: '--yes'
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}

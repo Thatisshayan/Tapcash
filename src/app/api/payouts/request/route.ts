@@ -1,12 +1,16 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { withRateLimit } from "@/lib/rate-limit";
 import { logAdminAction } from "@/lib/audit";
 import { requireVerifiedUser } from "@/lib/verified-user";
 import { sendPayoutSubmittedEmail } from "@/lib/email";
+import { validateCsrf } from "@/lib/csrf";
+import { validateOrigin } from "@/lib/origin";
+import { checkIdempotency, storeIdempotencyResponse } from "@/lib/idempotency";
+import { applyBonus, getGiftCardBonus } from "@/lib/giftCardBonus";
 
 class RouteError extends Error {
   status: number;
@@ -27,9 +31,24 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await withRateLimit(request, { limit: 3, windowMs: 60000 });
     if (rateLimitResponse) return rateLimitResponse;
 
+    const originResult = validateOrigin(request);
+    if (!originResult.valid) {
+      return NextResponse.json({ error: `Origin validation failed: ${originResult.error}` }, { status: 403 });
+    }
+
+    const csrfResult = validateCsrf(request);
+    if (!csrfResult.valid) {
+      return NextResponse.json({ error: `CSRF validation failed: ${csrfResult.error}` }, { status: 403 });
+    }
+
     const verifiedUser = await requireVerifiedUser(request);
     if ("response" in verifiedUser) return verifiedUser.response;
     const { uid, email: verifiedEmail, userData } = verifiedUser;
+
+    const idempotency = await checkIdempotency(request, uid);
+    if (idempotency.isDuplicate && idempotency.existingResponse) {
+      return NextResponse.json(idempotency.existingResponse.body, { status: idempotency.existingResponse.status });
+    }
 
     const ip = getClientIp(request);
     const userAgent = request.headers.get("user-agent") || "unknown";
@@ -59,7 +78,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid amount. Minimum cashout is 2,000 coins ($2.00)." }, { status: 400 });
     }
 
-    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "interac", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
+    const MAX_PER_TRANSACTION = 50000;
+    if (coinsNum > MAX_PER_TRANSACTION) {
+      return NextResponse.json({ error: `Maximum cashout per transaction is ${MAX_PER_TRANSACTION.toLocaleString()} coins ($${MAX_PER_TRANSACTION / 1000}.00).` }, { status: 400 });
+    }
+
+    const userFraudScore = Number(userData.fraudScore || 0);
+    if (userFraudScore > 50) {
+      await logFraudAttempt({
+        ip,
+        userId: uid,
+        email: verifiedEmail || userData.email,
+        action: "PAYOUT_BLOCKED_FRAUD_SCORE",
+        reason: `Cashout blocked: fraud score ${userFraudScore} exceeds threshold (50)`,
+        userAgent,
+        createdAt: new Date(),
+        details: { fraudScore: userFraudScore, amountCoins: coinsNum },
+      });
+      return NextResponse.json({ error: "Withdrawal unavailable. Your account requires additional verification before withdrawals can be processed." }, { status: 403 });
+    }
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const createdAtRaw = userData.createdAt;
+    let accountCreatedAt: number | null = null;
+    if (createdAtRaw) {
+      if (typeof createdAtRaw === "object" && createdAtRaw !== null && "toDate" in createdAtRaw && typeof createdAtRaw.toDate === "function") {
+        accountCreatedAt = createdAtRaw.toDate().getTime();
+      } else if (createdAtRaw instanceof Date) {
+        accountCreatedAt = createdAtRaw.getTime();
+      } else if (typeof createdAtRaw === "string") {
+        accountCreatedAt = new Date(createdAtRaw).getTime();
+      }
+    }
+    if (accountCreatedAt && Date.now() - accountCreatedAt < SEVEN_DAYS_MS) {
+      const daysRemaining = Math.ceil((SEVEN_DAYS_MS - (Date.now() - accountCreatedAt)) / (24 * 60 * 60 * 1000));
+      return NextResponse.json({ error: `New accounts have a 7-day hold period before withdrawals. Please wait ${daysRemaining} more day(s).` }, { status: 400 });
+    }
+
+    const DAILY_LIMIT = 100000;
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const todayCashouts = await adminDb
+      .collection("cashout_requests")
+      .where("userId", "==", uid)
+      .where("createdAt", ">=", Timestamp.fromDate(todayStart))
+      .get();
+    let todayTotal = 0;
+    todayCashouts.forEach((doc) => {
+      const data = doc.data();
+      if (data.status !== "rejected" && data.status !== "cancelled") {
+        todayTotal += Number(data.amountCoins || 0);
+      }
+    });
+    if (todayTotal + coinsNum > DAILY_LIMIT) {
+      return NextResponse.json({ error: `Daily withdrawal limit is ${DAILY_LIMIT.toLocaleString()} coins ($${DAILY_LIMIT / 1000}.00). You have already requested ${todayTotal.toLocaleString()} coins today.` }, { status: 400 });
+    }
+
+    const allowedMethods = ["paypal", "litecoin", "bitcoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
     if (!allowedMethods.includes(method)) {
       return NextResponse.json({ error: `Invalid payout method: ${method}` }, { status: 400 });
     }
@@ -165,7 +240,7 @@ export async function POST(request: NextRequest) {
             status: "flagged",
             isFlagged: true,
             flaggedReason: "Attempted payout destination already linked to another account.",
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
 
           if (linkedUserSnap.exists) {
@@ -173,7 +248,7 @@ export async function POST(request: NextRequest) {
               status: "flagged",
               isFlagged: true,
               flaggedReason: "Payment address linked to another account was reused.",
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             });
           }
 
@@ -197,7 +272,7 @@ export async function POST(request: NextRequest) {
               status: "flagged",
               isFlagged: true,
               flaggedReason: "Attempted payout destination already linked to another account.",
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             });
 
             if (linkedUserSnap.exists) {
@@ -205,7 +280,7 @@ export async function POST(request: NextRequest) {
                 status: "flagged",
                 isFlagged: true,
                 flaggedReason: "Payment address linked to another account was reused.",
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
               });
             }
 
@@ -217,8 +292,8 @@ export async function POST(request: NextRequest) {
                 destinationKey: destinationLockId,
                 ownerUserId: duplicateUserId,
                 linkedCashoutRequestId: duplicateDoc.id,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+                createdAt: FieldValue.serverTimestamp(),
               },
               { merge: true }
             );
@@ -226,6 +301,9 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+
+      const bonusInfo = applyBonus(coinsNum, method);
+      const bonusConfig = getGiftCardBonus(method);
 
       transaction.set(cashoutRef, {
         id: cashoutRef.id,
@@ -235,8 +313,11 @@ export async function POST(request: NextRequest) {
         method,
         destination: cleanDest,
         status: "pending_review",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        bonusCoins: bonusInfo.bonus,
+        bonusPercent: bonusConfig?.bonusPercent ?? 0,
+        totalValueCoins: bonusInfo.total,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ip,
         deviceFingerprint: deviceFingerprint || null,
       });
@@ -248,8 +329,8 @@ export async function POST(request: NextRequest) {
           destinationKey: destinationLockId,
           ownerUserId: uid,
           linkedCashoutRequestId: cashoutRef.id,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -257,7 +338,7 @@ export async function POST(request: NextRequest) {
       transaction.update(userRef, {
         activeCashoutRequestId: cashoutRef.id,
         activeCashoutDestinationKey: cleanDest,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -270,8 +351,8 @@ export async function POST(request: NextRequest) {
         source: "cashout_request",
         referenceId: cashoutRef.id,
         metadata: { method, destination: cleanDest },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 
@@ -302,12 +383,19 @@ export async function POST(request: NextRequest) {
       sendPayoutSubmittedEmail(userData.email, coinsNum, method).catch(() => {});
     }
 
-    return NextResponse.json({
+    const responseBonus = applyBonus(coinsNum, method);
+    const successBody = {
       success: true,
       message: "Withdrawal request submitted successfully.",
       withdrawalId: cashoutRef.id,
       deducted: coinsNum,
-    });
+      bonusCoins: responseBonus.bonus,
+      totalValueCoins: responseBonus.total,
+    };
+
+    await storeIdempotencyResponse(uid, idempotency.key, 200, successBody);
+
+    return NextResponse.json(successBody);
   } catch (error: unknown) {
     console.error("Withdrawal API transaction error:", error);
     if (error instanceof RouteError) {

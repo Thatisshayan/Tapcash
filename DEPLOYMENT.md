@@ -52,34 +52,34 @@
 DATABASE_URL=postgresql://user:password@host:5432/tapcash
 
 # Authentication
-JWT_SECRET=your-secret-key-here
+JWT_SECRET=<set in Vercel dashboard>
 OAUTH_SERVER_URL=https://api.manus.im
 
 # API Configuration
-VITE_APP_ID=your-app-id
+VITE_APP_ID=<set in Vercel dashboard>
 VITE_OAUTH_PORTAL_URL=https://oauth.manus.im
 
 # Payment Processors
-PAYPAL_CLIENT_ID=your-paypal-id
-PAYPAL_CLIENT_SECRET=your-paypal-secret
-STRIPE_SECRET_KEY=your-stripe-key
-STRIPE_PUBLIC_KEY=your-stripe-public-key
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
+STRIPE_SECRET_KEY=<set in Vercel dashboard>
+STRIPE_PUBLIC_KEY=<set in Vercel dashboard>
 
 # Offerwall Providers
-ADGEM_API_KEY=your-adgem-key
-ADGATE_API_KEY=your-adgate-key
-LOOTABLY_API_KEY=your-lootably-key
-TOROX_API_KEY=your-torox-key
-BITLABS_API_KEY=your-bitlabs-key
-CPX_RESEARCH_API_KEY=your-cpx-key
+ADGEM_API_KEY=<set in Vercel dashboard>
+ADGATE_API_KEY=<set in Vercel dashboard>
+LOOTABLY_API_KEY=<set in Vercel dashboard>
+TOROX_API_KEY=<set in Vercel dashboard>
+BITLABS_API_KEY=<set in Vercel dashboard>
+CPX_RESEARCH_API_KEY=<set in Vercel dashboard>
 
 # Email Service
-SENDGRID_API_KEY=your-sendgrid-key
+SENDGRID_API_KEY=<set in Vercel dashboard>
 SENDGRID_FROM_EMAIL=noreply@tapcash.io
 
 # Monitoring
-SENTRY_DSN=your-sentry-dsn
-DATADOG_API_KEY=your-datadog-key
+SENTRY_DSN=<set in Vercel dashboard>
+DATADOG_API_KEY=<set in Vercel dashboard>
 
 # Feature Flags
 ENABLE_FRAUD_DETECTION=true

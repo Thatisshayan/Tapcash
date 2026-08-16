@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRateLimit } from "@/lib/rate-limit";
+import { validateCsrf } from "@/lib/csrf";
+import { validateOrigin } from "@/lib/origin";
 
 interface RateLimitInfo {
   remaining: number;
@@ -7,11 +9,31 @@ interface RateLimitInfo {
   limit: number;
 }
 
-/**
- * Security middleware for API routes
- * Uses Upstash Redis rate limiting with in-memory fallback
- */
+const CSRF_EXEMPT_ROUTES = [
+  "/api/auth/session",
+  "/api/auth/signup",
+  "/api/auth/csrf",
+  "/api/postback/",
+  "/api/postbacks/",
+  "/api/health",
+];
+
+function isCsrfExempt(pathname: string): boolean {
+  return CSRF_EXEMPT_ROUTES.some((route) => pathname.startsWith(route));
+}
+
 export async function securityMiddleware(request: NextRequest): Promise<{ response?: NextResponse; rateLimit?: RateLimitInfo }> {
+  const originResult = validateOrigin(request);
+  if (!originResult.valid) {
+    return {
+      response: NextResponse.json(
+        { error: `Origin validation failed: ${originResult.error}` },
+        { status: 403 }
+      ),
+      rateLimit: { remaining: 59, resetTime: Date.now() + 60000, limit: 60 },
+    };
+  }
+
   const rateLimitResponse = await withRateLimit(request, { limit: 60, windowMs: 60000 });
   if (rateLimitResponse) {
     const remaining = Number(rateLimitResponse.headers.get("X-RateLimit-Remaining") || "0");
@@ -31,6 +53,19 @@ export async function securityMiddleware(request: NextRequest): Promise<{ respon
       ),
       rateLimit: { remaining: 59, resetTime: Date.now() + 60000, limit: 60 },
     };
+  }
+
+  if (!isCsrfExempt(request.nextUrl.pathname)) {
+    const csrfResult = validateCsrf(request);
+    if (!csrfResult.valid) {
+      return {
+        response: NextResponse.json(
+          { error: `CSRF validation failed: ${csrfResult.error}` },
+          { status: 403 }
+        ),
+        rateLimit: { remaining: 59, resetTime: Date.now() + 60000, limit: 60 },
+      };
+    }
   }
 
   return { rateLimit: { remaining: 59, resetTime: Date.now() + 60000, limit: 60 } };

@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { validateEnv } from "@/lib/env";
+
+validateEnv();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -15,9 +18,16 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
     ppr: false,
   },
+  // Removed a stale `modularizeImports` entry for lucide-react here: it
+  // hardcoded a per-icon import path (lucide-react/dist/esm/icons/...)
+  // that no longer matches the installed lucide-react's package layout,
+  // and duplicated/conflicted with `optimizePackageImports` above (the
+  // modern, Turbopack-native tree-shaking mechanism for the same
+  // package). This was causing every file that imports any lucide-react
+  // icon to fail to resolve during `next build`.
 
   staticPageGenerationTimeout: 120,
   skipTrailingSlashRedirect: true,
@@ -39,6 +49,16 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
           },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
         ],
       },
     ];

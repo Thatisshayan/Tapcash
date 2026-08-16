@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebaseAdmin";
 import { SignJWT } from "jose";
+import { clearCsrfCookie, generateAndSetCsrfToken } from "@/lib/csrf";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -41,6 +42,8 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
+    generateAndSetCsrfToken(response);
+
     return response;
   } catch (error) {
     console.error("[SESSION_USER]", error);
@@ -59,5 +62,6 @@ export async function DELETE(_request: NextRequest) {
     path: "/",
     maxAge: 0,
   });
+  clearCsrfCookie(response);
   return response;
 }

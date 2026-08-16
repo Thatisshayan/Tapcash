@@ -19,9 +19,8 @@ import { requestPayout, type ApiOfferDisplay } from "../../src/lib/api";
 
 const methods = [
   { id: "paypal", icon: "P", label: "PayPal", sub: "Instant", keyboard: "email-address" as const, placeholder: "paypal@example.com" },
-  { id: "interac", icon: "B", label: "Interac e-Transfer", sub: "Canada 🌿 · 1-2 hours", keyboard: "email-address" as const, placeholder: "email@example.com" },
-  { id: "amazon", icon: "A", label: "Amazon Gift Card", sub: "Instant", keyboard: "email-address" as const, placeholder: "email@example.com" },
-  { id: "crypto", icon: "₿", label: "Crypto", sub: "~15 min", keyboard: "default" as const, placeholder: "Wallet address" },
+  { id: "gift", icon: "G", label: "Gift Card", sub: "Manual review", keyboard: "email-address" as const, placeholder: "email@example.com" },
+  { id: "bitcoin", icon: "B", label: "Bitcoin", sub: "~15 min", keyboard: "default" as const, placeholder: "Wallet address" },
   { id: "bank", icon: "🏦", label: "Bank Transfer", sub: "1-5 days", keyboard: "default" as const, placeholder: "Account number" },
 ];
 
@@ -30,11 +29,9 @@ const MIN_COINS = 2000;
 export default function CashoutScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [selected, setSelected] = useState("interac");
+  const [selected, setSelected] = useState("paypal");
   const [amount, setAmount] = useState("");
   const [destination, setDestination] = useState("");
-  const [securityQuestion, setSecurityQuestion] = useState("");
-  const [securityAnswer, setSecurityAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [optimisticDeduction, setOptimisticDeduction] = useState(0);
   const [balance, setBalance] = useState({ balanceCoins: 0, pendingCoins: 0 });
@@ -55,8 +52,6 @@ export default function CashoutScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelected(id);
     setDestination("");
-    setSecurityQuestion("");
-    setSecurityAnswer("");
   };
 
   const handleCashout = async () => {
@@ -87,14 +82,14 @@ export default function CashoutScreen() {
     setOptimisticDeduction(amountCoins);
 
     try {
-      const result = await requestPayout(amountCoins, selected, destination.trim().toLowerCase());
+      const trimmedDestination = destination.trim();
+      const normalizedDestination = selected === "bitcoin" ? trimmedDestination : trimmedDestination.toLowerCase();
+      const result = await requestPayout(amountCoins, selected, normalizedDestination);
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert("Request submitted!", "Your cashout is under review.");
         setAmount("");
         setDestination("");
-        setSecurityQuestion("");
-        setSecurityAnswer("");
       } else {
         setOptimisticDeduction(0);
         Alert.alert("Error", result.error || "Failed to submit cashout request.");
@@ -160,7 +155,7 @@ export default function CashoutScreen() {
             activeOpacity={0.8}
             disabled={isDisabled}
           >
-            <View style={[styles.methodIcon, { backgroundColor: theme.colors.elevated }]}>
+            <View style={[styles.methodIcon, { backgroundColor: "rgba(245,243,239,0.08)" }]}>
               <Text style={[styles.methodIconText, { color: theme.colors.text }]}>{m.icon}</Text>
             </View>
             <View style={styles.methodInfo}>
@@ -196,30 +191,6 @@ export default function CashoutScreen() {
         autoCapitalize="none"
         editable={canCashout}
       />
-
-      {selected === "interac" && (
-        <View style={styles.interacFields}>
-          <Text style={styles.interacLabel}>Security Question</Text>
-          <TextInput
-            style={[styles.interacInput, displayBalance < MIN_COINS && styles.inputDisabled]}
-            value={securityQuestion}
-            onChangeText={setSecurityQuestion}
-            placeholder="e.g., What is your pet's name?"
-            placeholderTextColor={theme.colors.dim}
-            editable={canCashout}
-          />
-          <Text style={styles.interacLabel}>Security Answer</Text>
-          <TextInput
-            style={[styles.interacInput, displayBalance < MIN_COINS && styles.inputDisabled]}
-            value={securityAnswer}
-            onChangeText={setSecurityAnswer}
-            placeholder="Your answer"
-            placeholderTextColor={theme.colors.dim}
-            autoCapitalize="none"
-            editable={canCashout}
-          />
-        </View>
-      )}
 
       <TouchableOpacity
         style={[styles.cashoutBtn, !canCashout && styles.cashoutBtnDisabled]}
@@ -264,7 +235,15 @@ const styles = StyleSheet.create({
   progressFill: { height: "100%", borderRadius: 2, backgroundColor: theme.colors.green },
   balanceMeta: { color: theme.colors.muted, fontSize: theme.font.xs },
   sectionTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "900", marginTop: theme.spacing.sm },
-  methodRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, backgroundColor: theme.colors.card, borderRadius: theme.radius.md, borderWidth: 1, padding: theme.spacing.md },
+  methodRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    backgroundColor: "rgba(245,243,239,0.04)",
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    padding: theme.spacing.md,
+  },
   methodRowDisabled: { opacity: 0.5 },
   methodIcon: { width: 36, height: 36, borderRadius: theme.radius.full, alignItems: "center", justifyContent: "center" },
   methodIconText: { fontWeight: "700", fontSize: theme.font.md },
@@ -277,19 +256,7 @@ const styles = StyleSheet.create({
   inputDisabled: { color: theme.colors.muted },
   minNotice: { color: theme.colors.muted, fontSize: theme.font.xs, textAlign: "center", marginTop: theme.spacing.xs },
   destinationInput: {
-    backgroundColor: theme.colors.card,
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.md,
-    color: theme.colors.text,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    fontSize: theme.font.md,
-  },
-  interacFields: { gap: theme.spacing.sm },
-  interacLabel: { color: theme.colors.muted, fontSize: theme.font.xs, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase", marginTop: theme.spacing.sm },
-  interacInput: {
-    backgroundColor: theme.colors.card,
+    backgroundColor: "rgba(245,243,239,0.04)",
     borderColor: theme.colors.border,
     borderWidth: 1,
     borderRadius: theme.radius.md,

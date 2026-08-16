@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { getClientIp, isBotAgent, isIpSuspicious, logFraudAttempt } from "@/lib/antiFraud";
 import { requireVerifiedUser } from "@/lib/verified-user";
 
@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
       // 2. Claim lock
       transaction.set(promoRef, {
         code,
-        claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        claimedAt: FieldValue.serverTimestamp(),
         rewardCoins: promo.coins,
       });
 
       // 3. Credit ledger only
       transaction.update(userRef, {
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       // 4. Log the transaction
@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
         source: "promo_code",
         referenceId: code,
         metadata: { code, promoName: promo.name },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       const auditRef = adminDb.collection("admin_actions").doc();
@@ -121,8 +121,8 @@ export async function POST(request: NextRequest) {
         targetType: "user",
         targetId: uid,
         metadata: { code, rewardCoins: promo.coins },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 

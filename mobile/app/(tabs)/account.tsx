@@ -14,7 +14,6 @@ import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/theme";
-import { GlassCard } from "../../src/components/GlassCard";
 import { TapScoreRing } from "../../src/components/TapScoreRing";
 import { useAuth } from "../../src/auth/AuthContext";
 import { doc, onSnapshot, query, where, collection } from "firebase/firestore";
@@ -111,7 +110,7 @@ export default function AccountScreen() {
 
   const handleSettingPress = useCallback(async (action: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     if (action === "notifications") {
       Alert.alert(
         "Notification Preferences",
@@ -132,7 +131,7 @@ export default function AccountScreen() {
         );
         return;
       }
-      
+
       Alert.alert(
         "Delete My Account",
         "This will permanently delete your account and all data. This cannot be undone.",
@@ -202,15 +201,17 @@ export default function AccountScreen() {
         </View>
       </View>
 
-      <GlassCard variant="elevated" style={styles.tapScoreCard}>
+      {/* Aurora "stat cluster" -- TapScore ring + checklist sit directly on
+          the screen, no card panel. */}
+      <View style={styles.section}>
         <View style={styles.tapScoreHeader}>
           <TapScoreRing score={94} size={80} showLabel={false} />
           <View style={styles.tapScoreInfo}>
-            <Text style={styles.tapScoreTitle}>Your TapScore™</Text>
+            <Text style={styles.tapScoreTitle}>Your TapScore&trade;</Text>
             <View style={styles.checkList}>
               {["Fast Payout", "High Tracking", "No Purchase", "Easy to Complete"].map((item) => (
                 <View key={item} style={styles.checkItem}>
-                  <Ionicons name="checkmark-circle" size={14} color={theme.colors.green} />
+                  <Ionicons name="checkmark-circle" size={14} color={theme.colors.accent} />
                   <Text style={styles.checkText}>{item}</Text>
                 </View>
               ))}
@@ -218,32 +219,30 @@ export default function AccountScreen() {
           </View>
         </View>
         <Text style={styles.tapScoreLabel}>Excellent</Text>
-      </GlassCard>
+      </View>
 
-      <GlassCard style={styles.statsCard}>
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>${(totalEarned / 1000).toFixed(2)}</Text>
-            <Text style={styles.statLabel}>Total Earned</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>${(totalCashedOut / 1000).toFixed(2)}</Text>
-            <Text style={styles.statLabel}>Total Cashed Out</Text>
-          </View>
+      <View style={[styles.section, styles.statsRow]}>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>${(totalEarned / 1000).toFixed(2)}</Text>
+          <Text style={styles.statLabel}>Total Earned</Text>
         </View>
-      </GlassCard>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>${(totalCashedOut / 1000).toFixed(2)}</Text>
+          <Text style={styles.statLabel}>Total Cashed Out</Text>
+        </View>
+      </View>
 
-      <GlassCard style={styles.referralCard}>
+      <View style={styles.section}>
         <Text style={styles.referralLabel}>Refer Friends</Text>
         <Text style={styles.referralText}>Share your link and earn when friends sign up</Text>
         <TouchableOpacity style={styles.shareBtn} onPress={handleShareReferral}>
-          <Ionicons name="share-outline" size={18} color={theme.colors.bg} />
+          <Ionicons name="share-outline" size={18} color="#1a1408" />
           <Text style={styles.shareBtnText}>Share Referral Link</Text>
         </TouchableOpacity>
-      </GlassCard>
+      </View>
 
-      <GlassCard style={styles.card}>
+      <View style={styles.section}>
         <Text style={styles.cardTitle}>{statusLabel}</Text>
         <Text style={styles.cardBody}>
           {user ? [user.displayName, user.email].filter(Boolean).join(" · ") || "No email on file" : "No signed-in user"}
@@ -253,30 +252,30 @@ export default function AccountScreen() {
         </Text>
         <Text style={styles.cardBody}>Member since {joinDate}</Text>
         {message ? <Text style={styles.messageText}>{message}</Text> : null}
-        <View style={styles.buttonStack}>
-          <TouchableOpacity onPress={handleRefresh} style={styles.secondaryButton} disabled={submitting} activeOpacity={0.8}>
-            {submitting ? <ActivityIndicator color={theme.colors.text} /> : <Text style={styles.secondaryButtonText}>Refresh status</Text>}
-          </TouchableOpacity>
-        </View>
-      </GlassCard>
+        <TouchableOpacity onPress={handleRefresh} style={styles.refreshBtn} disabled={submitting} activeOpacity={0.8}>
+          {submitting ? <ActivityIndicator color={theme.colors.text} /> : <Text style={styles.refreshBtnText}>Refresh status</Text>}
+        </TouchableOpacity>
+      </View>
 
+      {/* Settings list: icon + label + chevron, separated by a hairline --
+          no bordered card row per item. */}
       <View style={styles.settingsList}>
-        {SETTINGS.map((setting) => (
+        {SETTINGS.map((setting, i) => (
           <TouchableOpacity
             key={setting.label}
-            style={[styles.settingsRow, setting.danger && styles.settingsRowDanger]}
+            style={[styles.settingsRow, i === SETTINGS.length - 1 && styles.settingsRowLast]}
             onPress={() => handleSettingPress(setting.action)}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
-            <Ionicons name={setting.icon} size={22} color={setting.danger ? "#ff3b30" : theme.colors.text} />
+            <Ionicons name={setting.icon} size={20} color={setting.danger ? theme.colors.red : theme.colors.text} />
             <Text style={[styles.settingsLabel, setting.danger && styles.settingsLabelDanger]}>{setting.label}</Text>
-            {!setting.danger && <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />}
+            {!setting.danger && <Ionicons name="chevron-forward" size={16} color={theme.colors.dim} />}
           </TouchableOpacity>
         ))}
-        <TouchableOpacity style={[styles.settingsRow, styles.signOutRow]} onPress={handleSignOut} activeOpacity={0.8}>
-          <Ionicons name="log-out-outline" size={22} color="#ff3b30" />
+        <TouchableOpacity style={styles.settingsRow} onPress={handleSignOut} activeOpacity={0.7}>
+          <Ionicons name="log-out-outline" size={20} color={theme.colors.red} />
           <Text style={[styles.settingsLabel, styles.signOutText]}>Sign Out</Text>
-          <Ionicons name="chevron-forward" size={18} color="#ff3b30" />
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.red} />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -285,46 +284,41 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.bg },
-  content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
-  profileRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md, marginBottom: theme.spacing.sm },
-  avatar: { width: 64, height: 64, borderRadius: theme.radius.full, backgroundColor: theme.colors.green, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: theme.colors.bg, fontSize: theme.font.xl, fontWeight: "900" },
+  content: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.lg },
+  profileRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md },
+  avatar: { width: 64, height: 64, borderRadius: theme.radius.full, backgroundColor: theme.colors.accentDeep, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "800" },
   profileInfo: { flex: 1 },
-  profileName: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "900" },
+  profileName: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "800" },
   profileEmail: { color: theme.colors.muted, fontSize: theme.font.sm, marginTop: 2 },
-  tierBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.radius.full, borderWidth: 1, borderColor: theme.colors.gold, backgroundColor: "transparent" },
-  tierText: { color: theme.colors.gold, fontSize: theme.font.xs, fontWeight: "800" },
-  tapScoreCard: { padding: theme.spacing.md },
+  tierBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.radius.full, borderWidth: 1, borderColor: theme.colors.gold },
+  tierText: { color: theme.colors.gold, fontSize: theme.font.xs, fontWeight: "700" },
+  section: { paddingTop: theme.spacing.md, borderTopWidth: 1, borderTopColor: theme.colors.line },
   tapScoreHeader: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md },
   tapScoreInfo: { flex: 1 },
-  tapScoreTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "800" },
+  tapScoreTitle: { color: theme.colors.text, fontSize: theme.font.lg, fontWeight: "700" },
   checkList: { marginTop: theme.spacing.sm, gap: theme.spacing.xs },
   checkItem: { flexDirection: "row", alignItems: "center", gap: theme.spacing.xs },
   checkText: { color: theme.colors.muted, fontSize: theme.font.sm },
-  tapScoreLabel: { color: theme.colors.green, fontSize: theme.font.xs, fontWeight: "800", marginTop: theme.spacing.sm, textTransform: "uppercase", letterSpacing: 1 },
-  statsCard: { padding: theme.spacing.md },
+  tapScoreLabel: { color: theme.colors.accentBright, fontSize: theme.font.xs, fontWeight: "700", marginTop: theme.spacing.sm, textTransform: "uppercase", letterSpacing: 1 },
   statsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-around" },
   statItem: { alignItems: "center" },
-  statValue: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "900" },
+  statValue: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "800", fontVariant: ["tabular-nums"] },
   statLabel: { color: theme.colors.muted, fontSize: theme.font.xs, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 },
-  statDivider: { width: 1, height: 30, backgroundColor: theme.colors.border },
-  referralCard: { padding: theme.spacing.md, gap: theme.spacing.sm },
-  referralLabel: { color: theme.colors.text, fontSize: theme.font.md, fontWeight: "800" },
-  referralText: { color: theme.colors.muted, fontSize: theme.font.sm },
-  shareBtn: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, backgroundColor: theme.colors.green, borderRadius: theme.radius.md, padding: theme.spacing.sm, alignSelf: "flex-start" },
-  shareBtnText: { color: theme.colors.bg, fontSize: theme.font.sm, fontWeight: "700" },
-  card: { padding: theme.spacing.md },
-  cardTitle: { color: theme.colors.text, fontSize: 18, fontWeight: "900" },
+  statDivider: { width: 1, height: 30, backgroundColor: theme.colors.line },
+  referralLabel: { color: theme.colors.text, fontSize: theme.font.md, fontWeight: "700" },
+  referralText: { color: theme.colors.muted, fontSize: theme.font.sm, marginTop: 2 },
+  shareBtn: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, backgroundColor: theme.colors.accent, borderRadius: theme.radius.full, paddingHorizontal: 18, paddingVertical: 10, alignSelf: "flex-start", marginTop: theme.spacing.sm },
+  shareBtnText: { color: "#1a1408", fontSize: theme.font.sm, fontWeight: "700" },
+  cardTitle: { color: theme.colors.text, fontSize: 17, fontWeight: "800" },
   cardBody: { color: theme.colors.muted, fontSize: 14, lineHeight: 20, marginTop: theme.spacing.xs },
-  messageText: { color: theme.colors.green, fontSize: 13, lineHeight: 19, marginTop: theme.spacing.sm },
-  buttonStack: { gap: 10, marginTop: theme.spacing.md },
-  secondaryButton: { minHeight: 50, borderRadius: theme.radius.lg, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.card, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
-  secondaryButtonText: { color: theme.colors.text, fontSize: 14, fontWeight: "800" },
-  settingsList: { gap: theme.spacing.sm },
-  settingsRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md, backgroundColor: theme.colors.card, borderRadius: theme.radius.md, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md },
-  settingsRowDanger: { borderColor: "rgba(255,59,48,0.2)" },
+  messageText: { color: theme.colors.accentBright, fontSize: 13, lineHeight: 19, marginTop: theme.spacing.sm },
+  refreshBtn: { minHeight: 46, alignItems: "flex-start", justifyContent: "center", marginTop: theme.spacing.md },
+  refreshBtnText: { color: theme.colors.accentBright, fontSize: 14, fontWeight: "700" },
+  settingsList: { borderTopWidth: 1, borderTopColor: theme.colors.line },
+  settingsRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.line },
+  settingsRowLast: { borderBottomWidth: 0 },
   settingsLabel: { flex: 1, color: theme.colors.text, fontSize: theme.font.md, fontWeight: "600" },
-  settingsLabelDanger: { color: "#ff3b30" },
-  signOutRow: { borderColor: "rgba(255,59,48,0.2)" },
-  signOutText: { color: "#ff3b30" },
+  settingsLabelDanger: { color: theme.colors.red },
+  signOutText: { color: theme.colors.red },
 });

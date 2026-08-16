@@ -10,14 +10,26 @@ import { getErrorMessage } from "@/lib/error";
 interface Props {
   redirectTo?: string;
   label?: string;
+  /** When set, clicking checks this first and shows requireAgreementMessage instead of opening the popup. */
+  requireAgreement?: boolean;
+  requireAgreementMessage?: string;
 }
 
-export default function GoogleSignInButton({ redirectTo = "/dashboard", label = "Continue with Google" }: Props) {
+export default function GoogleSignInButton({
+  redirectTo = "/dashboard",
+  label = "Continue with Google",
+  requireAgreement = false,
+  requireAgreementMessage = "Please agree to the platform policies before continuing.",
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleGoogle = async () => {
+    if (requireAgreement) {
+      setError(requireAgreementMessage);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -33,7 +45,7 @@ export default function GoogleSignInButton({ redirectTo = "/dashboard", label = 
 
       const token = await user.getIdToken();
 
-      await Promise.all([
+      const [syncRes, sessionRes] = await Promise.all([
         fetch("/api/auth/google-sync", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -45,6 +57,11 @@ export default function GoogleSignInButton({ redirectTo = "/dashboard", label = 
           body: JSON.stringify({ idToken: token }),
         }),
       ]);
+
+      if (!syncRes.ok || !sessionRes.ok) {
+        setError("We couldn't finish setting up your account. Please try again.");
+        return;
+      }
 
       router.push(redirectTo);
     } catch (err: unknown) {

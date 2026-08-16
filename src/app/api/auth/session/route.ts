@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebaseAdmin';
 import { SignJWT } from 'jose';
+import { clearCsrfCookie, generateAndSetCsrfToken } from '@/lib/csrf';
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -17,26 +18,28 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Missing ID token', { status: 400 });
     }
 
-    // Verify the Firebase ID token
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Check if the user is an admin in Firestore
     const userDoc = await adminDb.collection('users').doc(uid).get();
-    
-    if (!userDoc.exists || userDoc.data()?.admin !== true) {
+    const userData = userDoc.data();
+
+    // Accept either `admin` or `isAdmin` -- the codebase has historically
+    // used both field names for the same concept (e.g. src/app/api/payout/
+    // route.ts checks isAdmin) and there's no single canonical source in
+    // this repo for which one production user docs actually carry. Checking
+    // both avoids locking out an admin whose doc uses the other convention.
+    if (!userDoc.exists || (userData?.admin !== true && userData?.isAdmin !== true)) {
       return new NextResponse('Unauthorized', { status: 403 });
     }
 
-    // User is an admin, generate a secure JWT
     const secret = new TextEncoder().encode(SESSION_SECRET);
-    const jwt = await new SignJWT({ uid, admin: true })
+    const jwt = await new SignJWT({ uid, email: decodedToken.email || userData?.email || '', admin: true })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('24h') // 24 hours
+      .setExpirationTime('24h')
       .sign(secret);
 
-    // Create the response and set the cookie
     const response = new NextResponse(JSON.stringify({ success: true }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -49,8 +52,10 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
     });
+
+    generateAndSetCsrfToken(response);
 
     return response;
 
@@ -58,4 +63,31 @@ export async function POST(request: NextRequest) {
     console.error('Session creation error:', error);
     return new NextResponse('Internal server error', { status: 500 });
   }
+}
+
+/**
+ * Logs out of the admin session: clears admin_session + csrf_token so a
+ * cleared/expired session can't keep being accepted from a device that's
+ * still open (see docs/governance/DEFERRED_WORK.md, "no active
+ * admin-session revocation/logout path"). Does not revoke the underlying
+ * Firebase ID token -- callers should also sign out of Firebase Auth.
+ */
+export async function DELETE() {
+  const response = new NextResponse(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  response.cookies.set({
+    name: 'admin_session',
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  clearCsrfCookie(response);
+
+  return response;
 }

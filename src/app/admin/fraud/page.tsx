@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { adminFetch } from '@/lib/adminApiClient';
 
 interface FraudAlert {
   id: string;
@@ -55,12 +56,7 @@ export default function FraudDetection() {
 
   const loadFraudData = useCallback(async () => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/fraud', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await adminFetch('/api/admin/fraud');
 
       if (response.status === 403) {
         router.push('/dashboard');
@@ -95,13 +91,9 @@ export default function FraudDetection() {
 
   const handleReviewAlert = async (alertId: string, status: string, notes: string, action?: 'ban' | 'suspend') => {
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/fraud', {
+      const response = await adminFetch('/api/admin/fraud', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertId, status, notes, action })
       });
 
@@ -119,13 +111,9 @@ export default function FraudDetection() {
   const handleUnflagUser = async (alertId: string) => {
     if (!window.confirm('Unflag this user? This will resolve the alert and reactivate the account if banned.')) return;
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/fraud', {
+      const response = await adminFetch('/api/admin/fraud', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertId, action: 'unflag_user', notes: 'Unflagged by admin', status: 'resolved' })
       });
       if (!response.ok) throw new Error('Failed to unflag user');
@@ -138,13 +126,9 @@ export default function FraudDetection() {
   const handleUnblockIP = async (ipId: string) => {
     if (!window.confirm('Unblock this IP address?')) return;
     try {
-      const token = await user?.getIdToken();
-      const response = await fetch('/api/admin/fraud', {
+      const response = await adminFetch('/api/admin/fraud', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ipId, action: 'unblock_ip' })
       });
       if (!response.ok) throw new Error('Failed to unblock IP');
@@ -276,7 +260,7 @@ export default function FraudDetection() {
           </button>
         </div>
 
-        {fraudTab === 'alerts' && (
+        {fraudTab === 'alerts' ? (
         <><div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Alert Filters</h2>
@@ -425,9 +409,7 @@ export default function FraudDetection() {
             </table>
           </div>
         </div>
-      </div>
-
-        </>) : (
+</>) : fraudTab === 'blocked_ips' ? (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-bold text-gray-900">Blocked IP Addresses</h2>
@@ -468,8 +450,8 @@ export default function FraudDetection() {
                 </table>
               </div>
             )}
-          </div>
-        )}
+           </div>
+        ) : null}
 
         {/* Alert Review Modal */}
       {showAlertModal && selectedAlert && (
@@ -480,6 +462,7 @@ export default function FraudDetection() {
           onUnflag={handleUnflagUser}
         />
       )}
+      </div>
     </div>
   );
 }

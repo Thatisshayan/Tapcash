@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { theme } from "../theme";
+import { formatCadFromCoins } from "../lib/currency";
 import type { ApiOfferDisplay } from "../lib/api";
 
 type OfferCardProps = {
@@ -8,8 +9,8 @@ type OfferCardProps = {
   onPress?: () => void;
 };
 
-export function OfferCard({ offer, index, onPress }: OfferCardProps) {
-  const price = (offer.payoutCoins / 100).toFixed(2);
+export function OfferCard({ offer, onPress }: OfferCardProps) {
+  const price = formatCadFromCoins(offer.payoutCoins);
 
   return (
     <TouchableOpacity
@@ -17,7 +18,7 @@ export function OfferCard({ offer, index, onPress }: OfferCardProps) {
       activeOpacity={0.85}
       style={styles.card}
     >
-      <View style={[styles.accentBar, { backgroundColor: theme.colors.green }]} />
+      <View style={styles.accentMark} />
       <Text style={styles.title} numberOfLines={1}>
         {offer.title}
       </Text>
@@ -35,47 +36,56 @@ export function OfferCard({ offer, index, onPress }: OfferCardProps) {
 }
 
 const styles = StyleSheet.create({
+  // Aurora layout language: no bordered/filled card panel -- offers are
+  // grouped with spacing, a soft drop shadow, and typography hierarchy only
+  // (packages/tokens/tokens.json meta.antiPatterns: "no bounded card/box
+  // chrome as the default layout language"). Previously this relied on
+  // theme.colors.card / theme.colors.elevated, which don't exist on the
+  // regenerated Aurora theme.ts and were rendering as transparent -- fixed
+  // as part of this reskin rather than left as a silent pre-existing bug.
   card: {
     width: 220,
-    backgroundColor: theme.colors.card,
     borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    overflow: "hidden",
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     marginRight: theme.spacing.md,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  accentBar: {
+  accentMark: {
+    width: 28,
     height: 3,
-    width: "100%",
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.accent,
+    marginBottom: theme.spacing.sm,
   },
   title: {
     color: theme.colors.text,
     fontSize: theme.font.md,
     fontWeight: "800",
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
   },
   provider: {
     color: theme.colors.muted,
     fontSize: theme.font.xs,
-    paddingHorizontal: theme.spacing.md,
     marginTop: 2,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    marginTop: theme.spacing.md,
   },
   price: {
-    color: theme.colors.green,
+    color: theme.colors.accent,
     fontSize: theme.font.lg,
     fontWeight: "900",
     fontFamily: "JetBrainsMono-Regular",
   },
   tag: {
-    backgroundColor: theme.colors.elevated,
+    backgroundColor: "rgba(245,243,239,0.06)",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: theme.radius.xs,

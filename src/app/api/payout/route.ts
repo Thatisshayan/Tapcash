@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
+import type { DecodedIdToken } from "firebase-admin/auth";
 import { createPayPalPayout } from "@/lib/paypal";
 import { createInteracTransfer } from "@/lib/interac";
 import { createTremendousOrder } from "@/lib/tremendous";
 import { logAdminAction } from "@/lib/audit";
-import * as admin from "firebase-admin";
 
 const automatedProviders = ["paypal", "tremendous"];
 const manualProviders = ["interac", "bitcoin", "litecoin", "visa", "steam", "roblox", "tim_hortons", "canadian_tire", "cineplex", "shoppers"];
+const FROZEN_PROVIDERS = ["interac"];
 
 interface ProcessRequest {
   cashoutRequestId: string;
   adminNote?: string;
   interacSecurityQuestion?: string;
   interacSecurityAnswer?: string;
+}
+
+class ClaimError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ClaimError";
+    this.status = status;
+  }
 }
 
 function coinsToDollars(coins: number): number {
@@ -79,9 +90,9 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let decodedToken: admin.auth.DecodedIdToken;
+    let decodedToken: DecodedIdToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
     }
@@ -99,37 +110,56 @@ export async function POST(req: NextRequest) {
     }
 
     const cashoutRef = adminDb.collection("cashout_requests").doc(cashoutRequestId);
-    const cashoutSnap = await cashoutRef.get();
 
-    if (!cashoutSnap.exists) {
-      return NextResponse.json({ error: "Cashout request not found" }, { status: 404 });
-    }
+    // Atomically read-check-claim: without a transaction, two concurrent
+    // requests for the same cashoutRequestId could both pass the
+    // status === "approved" check before either writes "processing",
+    // resulting in duplicate payouts. The transaction below makes the
+    // read + validation + claim a single atomic operation.
+    let cashoutData: FirebaseFirestore.DocumentData;
+    let provider: string;
+    try {
+      const result = await adminDb.runTransaction(async (transaction) => {
+        const snap = await transaction.get(cashoutRef);
+        if (!snap.exists) {
+          throw new ClaimError("Cashout request not found", 404);
+        }
 
-    const cashoutData = cashoutSnap.data()!;
-    if (cashoutData.status !== "approved") {
-      return NextResponse.json({ error: `Cashout request is ${cashoutData.status}, expected "approved"` }, { status: 400 });
-    }
+        const data = snap.data()!;
+        if (data.status !== "approved") {
+          throw new ClaimError(`Cashout request is ${data.status}, expected "approved"`, 400);
+        }
 
-    const provider = cashoutData.method as string;
+        const providerId = data.method as string;
+        if (![...automatedProviders, ...manualProviders].includes(providerId)) {
+          throw new ClaimError(`Provider "${providerId}" is not supported.`, 400);
+        }
 
-    if (![...automatedProviders, ...manualProviders].includes(provider)) {
-      return NextResponse.json({
-        error: `Provider "${provider}" is not supported.`,
-      }, { status: 400 });
-    }
+        if (FROZEN_PROVIDERS.includes(providerId)) {
+          throw new ClaimError("This payout method is temporarily unavailable.", 400);
+        }
 
-    if (provider === "interac") {
-      if (!body.interacSecurityQuestion?.trim() || !body.interacSecurityAnswer?.trim()) {
-        return NextResponse.json({
-          error: "Interac payouts require securityQuestion and securityAnswer",
-        }, { status: 400 });
+        if (providerId === "interac") {
+          if (!body.interacSecurityQuestion?.trim() || !body.interacSecurityAnswer?.trim()) {
+            throw new ClaimError("Interac payouts require securityQuestion and securityAnswer", 400);
+          }
+        }
+
+        transaction.update(cashoutRef, {
+          status: "processing",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return { data, providerId };
+      });
+      cashoutData = result.data;
+      provider = result.providerId;
+    } catch (error) {
+      if (error instanceof ClaimError) {
+        return NextResponse.json({ error: error.message }, { status: error.status });
       }
+      throw error;
     }
-
-    await cashoutRef.update({
-      status: "processing",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
 
     let payoutResult: { success: boolean; transactionId: string };
     try {
@@ -145,7 +175,7 @@ export async function POST(req: NextRequest) {
       await cashoutRef.update({
         status: "approved",
         processingError: (error as Error).message,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       await logAdminAction({
@@ -175,9 +205,9 @@ export async function POST(req: NextRequest) {
         status: "manual_required",
         transactionId: payoutResult.transactionId,
         processedBy: decodedToken.uid,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
         adminNote: adminNote || null,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       };
 
       if (provider === "interac") {
@@ -211,9 +241,9 @@ export async function POST(req: NextRequest) {
       status: "sent",
       transactionId: payoutResult.transactionId,
       processedBy: decodedToken.uid,
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
       adminNote: adminNote || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     const ledgerRef = adminDb.collection("ledger_transactions").doc();
@@ -232,7 +262,7 @@ export async function POST(req: NextRequest) {
         destination: cashoutData.destination,
         adminNote: adminNote || null,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     await logAdminAction({
@@ -269,9 +299,9 @@ export async function GET(req: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let decodedToken: admin.auth.DecodedIdToken;
+    let decodedToken: DecodedIdToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 });
     }
