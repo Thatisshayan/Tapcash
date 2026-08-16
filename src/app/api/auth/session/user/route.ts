@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebaseAdmin";
 import { SignJWT } from "jose";
-import { generateCsrfToken, setCsrfCookie, clearCsrfCookie, generateAndSetCsrfToken } from "@/lib/csrf";
+import { clearCsrfCookie, generateAndSetCsrfToken } from "@/lib/csrf";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
