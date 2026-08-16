@@ -117,28 +117,28 @@ Create `.env.local` with:
 
 ```bash
 # Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=your_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_API_KEY=<set in Vercel dashboard>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<set in Vercel dashboard>
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<set in Vercel dashboard>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<set in Vercel dashboard>
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<set in Vercel dashboard>
+NEXT_PUBLIC_FIREBASE_APP_ID=<set in Vercel dashboard>
 
 # Firebase Admin
-FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+FIREBASE_SERVICE_ACCOUNT_KEY=<set in Vercel dashboard>
 
 # Payment Providers
-PAYPAL_CLIENT_ID=your_paypal_id
-PAYPAL_CLIENT_SECRET=your_paypal_secret
-TREMENDOUS_API_KEY=your_tremendous_key
-INTERAC_API_KEY=your_interac_key
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
+INTERAC_API_KEY=<set in Vercel dashboard>
 
 # Security
-JWT_SECRET=your_jwt_secret
-ENCRYPTION_KEY=your_encryption_key
+JWT_SECRET=<set in Vercel dashboard>
+ENCRYPTION_KEY=<set in Vercel dashboard>
 
 # Email
-SENDGRID_API_KEY=your_sendgrid_key
+SENDGRID_API_KEY=<set in Vercel dashboard>
 ```
 
 ---

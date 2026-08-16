@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { tapCashTheme } from "../../src/theme";
-import { GlassCard } from "../../src/components/GlassCard";
 import { subscribeToTransactions, type Transaction } from "../../src/lib/firestore";
 import { useAuth } from "../../src/auth/AuthContext";
 
@@ -35,9 +34,9 @@ function getStatusColor(status: ActivityStatus) {
     case "paid":
       return tapCashTheme.colors.accent;
     case "pending":
-      return tapCashTheme.colors.muted;
+      return tapCashTheme.colors.accentViolet;
     case "failed":
-      return "#ff3b30";
+      return tapCashTheme.colors.red;
   }
 }
 
@@ -128,44 +127,42 @@ export default function ActivityScreen() {
     >
       <Text style={styles.headerTitle}>Activity</Text>
 
+      {/* Text tabs with a gold underline on the active one -- not a row of
+          bordered pill buttons. */}
       <View style={styles.tabsRow}>
         {TABS.map((tab) => {
           const isActive = tab === activeTab;
           return (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, isActive && styles.tabActive]}
-              onPress={() => handleTabPress(tab)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity key={tab} onPress={() => handleTabPress(tab)} activeOpacity={0.8} style={styles.tab}>
               <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{tab}</Text>
+              {isActive && <View style={styles.tabUnderline} />}
             </TouchableOpacity>
           );
         })}
       </View>
 
+      {/* Ledger rows: status dot + name/meta, right-aligned tabular amount.
+          No card box, no left-border accent bar, no colored badge pill. */}
       <View style={styles.list}>
-        {activities.map((item) => {
+        {activities.map((item, i) => {
           const color = getStatusColor(item.status);
           const isCredit = item.amountCoins.includes("+");
           return (
-            <GlassCard key={item.id} style={[styles.itemCard, { borderLeftWidth: 3, borderLeftColor: color }]}>
-              <View style={styles.itemRow}>
-                <View style={[styles.statusDot, { backgroundColor: color }]} />
-                <Text style={styles.itemName}>{item.name}</Text>
-                <View style={styles.itemAmountCol}>
-                  <Text style={[styles.itemAmount, { color }]}>{item.amount}</Text>
-                  <Text style={[styles.itemAmountCoins, { color: isCredit ? tapCashTheme.colors.green : tapCashTheme.colors.gold }]}>{item.amountCoins}</Text>
-                </View>
+            <View key={item.id} style={[styles.row, i === activities.length - 1 && styles.rowLast]}>
+              <View style={[styles.statusDot, { backgroundColor: color }]} />
+              <View style={styles.rowInfo}>
+                <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.itemMeta} numberOfLines={1}>
+                  {item.status} · {item.provider} · {item.timestamp}
+                </Text>
               </View>
-              <View style={styles.itemMetaRow}>
-                <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
-                  <Text style={[styles.statusBadgeText, { color }]}>{item.status.toUpperCase()}</Text>
-                </View>
-                <Text style={styles.itemTimestamp}>{item.timestamp}</Text>
+              <View style={styles.itemAmountCol}>
+                <Text style={[styles.itemAmount, { color: isCredit ? tapCashTheme.colors.accentBright : tapCashTheme.colors.text }]}>
+                  {item.amount}
+                </Text>
+                <Text style={styles.itemAmountCoins}>{item.amountCoins}</Text>
               </View>
-              <Text style={styles.itemProvider}>{item.provider}</Text>
-            </GlassCard>
+            </View>
           );
         })}
       </View>
@@ -177,24 +174,21 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tapCashTheme.colors.background },
   content: { paddingHorizontal: tapCashTheme.spacing.md, paddingBottom: tapCashTheme.spacing.xl, gap: tapCashTheme.spacing.md },
   headerTitle: { color: tapCashTheme.colors.text, fontSize: tapCashTheme.font.xl, fontWeight: "900" },
-  tabsRow: { flexDirection: "row", gap: tapCashTheme.spacing.sm, marginBottom: tapCashTheme.spacing.sm },
-  tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: tapCashTheme.radius.full, backgroundColor: tapCashTheme.colors.surface, borderWidth: 1, borderColor: tapCashTheme.colors.border },
-  tabActive: { backgroundColor: tapCashTheme.colors.accent, borderColor: tapCashTheme.colors.accent },
-  tabText: { color: tapCashTheme.colors.muted, fontSize: tapCashTheme.font.sm, fontWeight: "700" },
-  tabTextActive: { color: tapCashTheme.colors.background },
-  list: { gap: tapCashTheme.spacing.md },
-  itemCard: { padding: tapCashTheme.spacing.md, borderLeftWidth: 3 },
-  itemRow: { flexDirection: "row", alignItems: "center", gap: tapCashTheme.spacing.sm, marginBottom: tapCashTheme.spacing.xs },
+  tabsRow: { flexDirection: "row", gap: tapCashTheme.spacing.lg, marginBottom: tapCashTheme.spacing.sm, borderBottomWidth: 1, borderBottomColor: tapCashTheme.colors.line },
+  tab: { paddingBottom: 10, position: "relative" },
+  tabText: { color: tapCashTheme.colors.dim, fontSize: tapCashTheme.font.xs, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1 },
+  tabTextActive: { color: tapCashTheme.colors.text },
+  tabUnderline: { position: "absolute", left: 0, right: 0, bottom: -1, height: 2, borderRadius: 1, backgroundColor: tapCashTheme.colors.accent },
+  list: {},
+  row: { flexDirection: "row", alignItems: "center", gap: tapCashTheme.spacing.sm, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: tapCashTheme.colors.line },
+  rowLast: { borderBottomWidth: 0 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
-  itemName: { flex: 1, color: tapCashTheme.colors.text, fontSize: 15, fontWeight: "600" },
+  rowInfo: { flex: 1, minWidth: 0 },
+  itemName: { color: tapCashTheme.colors.text, fontSize: 15, fontWeight: "700", textTransform: "capitalize" },
+  itemMeta: { color: tapCashTheme.colors.dim, fontSize: tapCashTheme.font.xs, marginTop: 2, textTransform: "capitalize" },
   itemAmountCol: { alignItems: "flex-end" },
-  itemAmount: { fontSize: 14, fontWeight: "900" },
-  itemAmountCoins: { fontSize: 11, fontWeight: "700" },
-  itemMetaRow: { flexDirection: "row", alignItems: "center", gap: tapCashTheme.spacing.sm, marginBottom: tapCashTheme.spacing.xs },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: tapCashTheme.radius.xs },
-  statusBadgeText: { fontSize: tapCashTheme.font.xs, fontWeight: "800", textTransform: "uppercase" },
-  itemTimestamp: { color: tapCashTheme.colors.muted, fontSize: tapCashTheme.font.xs },
-  itemProvider: { color: tapCashTheme.colors.muted, fontSize: 12 },
+  itemAmount: { fontSize: 15, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  itemAmountCoins: { fontSize: 11, fontWeight: "600", color: tapCashTheme.colors.dim, marginTop: 2, fontVariant: ["tabular-nums"] },
   emptyState: { alignItems: "center", justifyContent: "center", marginTop: tapCashTheme.spacing.xl, paddingHorizontal: tapCashTheme.spacing.md },
   emptyText: { color: tapCashTheme.colors.muted, fontSize: tapCashTheme.font.md, textAlign: "center", marginTop: tapCashTheme.spacing.md, marginBottom: tapCashTheme.spacing.md },
   browseBtn: {

@@ -6,15 +6,21 @@
   --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 
-  /* ── Premium Color System ── */
-  --color-bg-base: #050813;
-  --color-bg-card: rgba(9, 16, 31, 0.74);
-  --color-bg-elevated: #1a1a35;
-  --color-bg-input: #0f0f23;
-  --color-brand-green: #31F06F;
-  --color-brand-purple: #7C3DFF;
-  --color-brand-cyan: #18D9FF;
-  --color-brand-yellow: #FFC442;
+  /* ── TapCash Aurora Color System (packages/tokens/tokens.json v3.0.0) ──
+     Root primitives updated 2026-08-06 to the final Aurora palette (the
+     Neon palette this replaced was retracted the same day it landed — see
+     tokens.json meta.decisionLog for the full history before touching this
+     again). Component-level hex purge (the ~1,150 raw literals still on
+     retired palettes) is separate Track 2 scope, not done in this pass —
+     see packages/tokens/tokens.test.ts and DEFERRED_WORK.md. ── */
+  --color-bg-base: #0A0A0D;
+  --color-bg-card: rgba(20, 20, 24, 0.85);
+  --color-bg-elevated: #17171B;
+  --color-bg-input: #111114;
+  --color-brand-green: #D9B678;
+  --color-brand-green-hover: #F0CE97;
+  --color-brand-purple: #6C5CE0;
+  --color-brand-cyan: #3E6FD9;
   --color-brand-purple-dark: #5b3fd4;
   --color-text-primary: #F6F8FF;
   --color-text-muted: #9AA8C6;
@@ -22,9 +28,16 @@
   --color-border: rgba(150, 190, 255, 0.14);
   --color-border-purple: rgba(124, 61, 255, 0.22);
   --color-hot-red: #FF2F42;
-  --color-gold: #FFC442;
 
-  /* ── Legacy aliases ── */
+  /* ── Legacy aliases ──
+     #FFC442 is the retired TapCash Neon gold (packages/tokens/tokens.json
+     legacy.bannedHex). --color-brand-yellow and --color-gold used to sit in
+     the "current" block above despite carrying that banned hex; repointed
+     to the real Aurora gold so any surviving reference to these var names
+     (via Tailwind's text-gold/bg-brand-yellow utilities) can't silently
+     reintroduce the old palette. ── */
+  --color-brand-yellow: #D9B678;
+  --color-gold: #D9B678;
   --color-brand-300: #31F06F;
   --color-brand-400: #00CC6A;
   --color-brand-600: #009E62;
@@ -38,7 +51,7 @@
   --color-green: #31F06F;
   --color-emerald: #00CC6A;
   --color-emerald-light: #31F06F;
-  --color-gold-300: #FFC442;
+  --color-gold-300: #D9B678;
   --color-gold-400: #F5A623;
   --color-warning-yellow: #FFC442;
 
@@ -123,6 +136,22 @@ html, body {
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-8px) scale(1.015); }
+}
+
+@keyframes pigIntactCycle {
+  0%, 70%   { opacity: 1; }
+  78%, 100% { opacity: 0; }
+}
+
+@keyframes pigBrokenCycle {
+  0%, 70%   { opacity: 0; transform: scale(0.94); }
+  78%       { opacity: 1; transform: scale(1); }
+  100%      { opacity: 1; transform: scale(1); }
 }
 
 /* ===== ANIMATION UTILITIES ===== */

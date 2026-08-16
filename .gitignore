@@ -94,3 +94,25 @@ desktop/
 
 desktop.ini
 NEEDSHAYANINPUT.md
+
+# Local Netlify folder
+.netlify
+# --- Repo Governance additions (merged into .gitignore by apply script) ---
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*_credential*
+*credential*
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+.vs/
+desktop.ini
+audits/private/
+
+# Local agent tooling state (Claude Code settings + nested worktrees)
+.claude/

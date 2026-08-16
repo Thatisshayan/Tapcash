@@ -18,13 +18,15 @@ export async function GET(request: NextRequest) {
     if ("response" in verifiedUser) return verifiedUser.response;
     const { uid, userData } = verifiedUser;
 
-    const streakCount = userData.streakCount ?? 0;
-    const lastCheckIn = userData.lastStreakCheckIn;
-    const bestStreak = userData.bestStreak ?? 0;
+    const streakCount = typeof userData.streakCount === "number" ? userData.streakCount : 0;
+    const lastCheckIn = userData.lastStreakCheckIn as { toDate?: () => Date } | string | undefined;
+    const bestStreak = typeof userData.bestStreak === "number" ? userData.bestStreak : 0;
 
     let lastCheckInDate: string | null = null;
     if (lastCheckIn) {
-      const d = lastCheckIn.toDate ? lastCheckIn.toDate() : new Date(lastCheckIn);
+      const d = typeof lastCheckIn === "object" && lastCheckIn.toDate
+        ? lastCheckIn.toDate()
+        : new Date(lastCheckIn as string);
       lastCheckInDate = d.toISOString().split("T")[0];
     }
 

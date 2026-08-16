@@ -2,8 +2,7 @@ import { Link, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { ScreenFrame } from "../../src/components/ScreenFrame";
-import { tapCashTheme } from "../../src/theme";
+import { theme } from "../../src/theme";
 
 const steps = [
   "Create your account or sign in.",
@@ -17,118 +16,111 @@ export default function WelcomeScreen() {
 
   return (
     <ScrollView style={[styles.screen, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
-      <ScreenFrame
-        eyebrow="TapCash access"
-        title="A cleaner rewards app starts here."
-        description="This native flow mirrors the web rules: verified inbox, server-backed session, and no fake unlocks."
-      >
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Mobile onboarding</Text>
-          <Text style={styles.heroValue}>Fast sign in. Real verification. Clean access.</Text>
-        </View>
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>TapCash access</Text>
+        <Text style={styles.title}>A cleaner rewards app starts here.</Text>
+        <Text style={styles.description}>
+          This native flow mirrors the web rules: verified inbox, server-backed session, and no fake unlocks.
+        </Text>
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>How it works</Text>
-          <View style={styles.stepList}>
-            {steps.map((step, index) => (
-              <View key={step} style={styles.stepRow}>
-                <Text style={styles.stepIndex}>{index + 1}</Text>
-                <Text style={styles.stepText}>{step}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+      <View style={styles.section}>
+        <Text style={styles.heroLabel}>Mobile onboarding</Text>
+        <Text style={styles.heroValue}>Fast sign in. Real verification. Clean access.</Text>
+      </View>
 
-        <View style={styles.buttonRow}>
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(auth)/signup"); }} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Create account</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>How it works</Text>
+        <View style={styles.stepList}>
+          {steps.map((step, index) => (
+            <View key={step} style={styles.stepRow}>
+              <Text style={styles.stepIndex}>{index + 1}</Text>
+              <Text style={styles.stepText}>{step}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.buttonRow}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push("/(auth)/signup");
+          }}
+          style={styles.primaryButton}
+        >
+          <Text style={styles.primaryButtonText}>Create account</Text>
+        </Pressable>
+        <Link href="/(auth)/signin" asChild>
+          <Pressable style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Sign in</Text>
           </Pressable>
-          <Link href="/(auth)/signin" asChild>
-            <Pressable style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Sign in</Text>
-            </Pressable>
-          </Link>
-        </View>
+        </Link>
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Trust signals</Text>
-          <Text style={styles.cardBody}>Verified inbox gate</Text>
-          <Text style={styles.cardBody}>Ledger-backed balance model</Text>
-          <Text style={styles.cardBody}>Same backend as the web app</Text>
-        </View>
-      </ScreenFrame>
+      <View style={[styles.section, styles.sectionDivider]}>
+        <Text style={styles.sectionTitle}>Trust signals</Text>
+        <Text style={styles.cardBody}>Verified inbox gate</Text>
+        <Text style={styles.cardBody}>Ledger-backed balance model</Text>
+        <Text style={styles.cardBody}>Same backend as the web app</Text>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tapCashTheme.colors.background },
-  content: { paddingBottom: 28 },
-  heroCard: {
-    borderRadius: 20,
-    backgroundColor: tapCashTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 18,
-    gap: 8,
+  screen: { flex: 1, backgroundColor: theme.colors.bg },
+  content: { paddingHorizontal: 20, paddingBottom: 28, gap: 28 },
+  header: { paddingTop: 24, gap: 10 },
+  eyebrow: {
+    color: theme.colors.accent,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
+  title: { color: theme.colors.text, fontSize: 34, fontWeight: "900", lineHeight: 38 },
+  description: { color: theme.colors.muted, fontSize: 14, lineHeight: 20 },
+  section: { gap: 10 },
+  sectionDivider: { borderTopWidth: 1, borderTopColor: theme.colors.line, paddingTop: 18 },
   heroLabel: {
-    color: tapCashTheme.colors.accent,
+    color: theme.colors.accent,
     fontSize: 11,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 1.8,
   },
-  heroValue: { color: tapCashTheme.colors.text, fontSize: 20, lineHeight: 28, fontWeight: "900" },
-  card: {
-    borderRadius: 20,
-    backgroundColor: tapCashTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    padding: 18,
-    gap: 12,
-  },
-  cardTitle: { color: tapCashTheme.colors.text, fontSize: 18, fontWeight: "900" },
-  cardBody: { color: tapCashTheme.colors.muted, fontSize: 14, lineHeight: 20 },
+  heroValue: { color: theme.colors.text, fontSize: 20, lineHeight: 28, fontWeight: "900" },
+  sectionTitle: { color: theme.colors.text, fontSize: 18, fontWeight: "900" },
+  cardBody: { color: theme.colors.muted, fontSize: 14, lineHeight: 20 },
   stepList: { gap: 10 },
   stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   stepIndex: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: tapCashTheme.colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    color: tapCashTheme.colors.accent,
-    textAlign: "center",
-    textAlignVertical: "center",
-    fontSize: 12,
+    color: theme.colors.accent,
+    fontSize: 13,
     fontWeight: "900",
+    width: 20,
   },
-  stepText: { flex: 1, color: tapCashTheme.colors.text, fontSize: 14, lineHeight: 20 },
+  stepText: { flex: 1, color: theme.colors.text, fontSize: 14, lineHeight: 20 },
   buttonRow: { gap: 10 },
   primaryButton: {
     minHeight: 50,
-    borderRadius: 12,
-    backgroundColor: tapCashTheme.colors.accent,
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.accent,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
   primaryButtonText: {
-    color: tapCashTheme.colors.background,
+    color: theme.colors.bg,
     fontSize: 15,
     fontWeight: "900",
   },
   secondaryButton: {
     minHeight: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: tapCashTheme.colors.border,
-    backgroundColor: tapCashTheme.colors.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  secondaryButtonText: { color: tapCashTheme.colors.text, fontSize: 15, fontWeight: "900" },
+  secondaryButtonText: { color: theme.colors.text, fontSize: 15, fontWeight: "900" },
 });

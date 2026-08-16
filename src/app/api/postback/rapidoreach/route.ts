@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Timestamp } from "firebase-admin/firestore";
-import * as admin from "firebase-admin";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getClientIp } from "@/lib/antiFraud";
 import { logAdminAction } from "@/lib/audit";
@@ -137,8 +136,8 @@ async function handlePostback(
       callbackStatus,
       status,
       source: "rapidoreach",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       metadata: { txId, expectedProviderUserId: expectedProviderUserId || null },
     });
 
@@ -152,8 +151,8 @@ async function handlePostback(
       source: "rapidoreach_postback",
       referenceId: txId,
       metadata: { offerId, provider: "rapidoreach", providerUserId },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     if (approved) {
@@ -167,8 +166,8 @@ async function handlePostback(
         source: "rapidoreach_postback",
         referenceId: txId,
         metadata: { offerId, provider: "rapidoreach", providerUserId },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     }
   });
@@ -259,7 +258,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       ip,
       body,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
     });
 
     return new NextResponse("1", { status: 200 });
