@@ -1,4 +1,6 @@
-import * as admin from "firebase-admin";
+import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 type FirebaseAdminMode = "real" | "fallback";
 
@@ -31,6 +33,8 @@ export let firebaseAdminReady = false;
 export let firebaseAdminMode: FirebaseAdminMode = "fallback";
 export let firebaseAdminError: string | null = null;
 
+let app: App | null = null;
+
 function log(level: "error" | "warn", message: string) {
   const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "test";
   if (!isBuildPhase) {
@@ -38,7 +42,7 @@ function log(level: "error" | "warn", message: string) {
   }
 }
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   const isProduction = process.env.NODE_ENV === "production";
   const privateKey = process.env.FIREBASE_PRIVATE_KEY ? formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY) : null;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -46,8 +50,8 @@ if (!admin.apps.length) {
 
   if (privateKey && clientEmail && projectId) {
     try {
-      admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+      app = initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
       });
       firebaseAdminReady = true;
       firebaseAdminMode = "real";
@@ -60,18 +64,31 @@ if (!admin.apps.length) {
     log(isProduction ? "error" : "warn", firebaseAdminError);
   }
 
-  // In production, never fall back — fail loudly if Firebase Admin isn't configured.
-  // In dev/test, initialize a minimal app so the module is importable.
-  if (!admin.apps.length) {
+  // "Never fall back in production" must NOT mean "leave the module
+  // uninitializable" — adminDb/adminAuth below call getFirestore()/getAuth()
+  // unconditionally at module-evaluation time, so if no app exists here,
+  // importing this module anywhere (even pages that don't touch Firebase)
+  // throws and takes the whole route/page down. Always initialize a
+  // (possibly placeholder) app so the module loads; the loud error log
+  // is how production misconfiguration surfaces, not a crash on import.
+  // firebaseAdminReady stays false so callers that check it before relying
+  // on real data still gate correctly.
+  if (!getApps().length) {
+    app = initializeApp({ projectId: projectId || "tapcash-dev" });
+    firebaseAdminMode = "fallback";
     if (isProduction) {
-      log("error", "Firebase Admin unavailable in production — credentials are required.");
+      log("error", "Firebase Admin unavailable in production — credentials are required. Using placeholder app so the module still loads; firebaseAdminReady is false.");
     } else {
-      admin.initializeApp({ projectId: projectId || "tapcash-dev" });
-      firebaseAdminMode = "fallback";
       log("warn", "Using fallback Firebase app. Real credentials required for production.");
     }
   }
+} else {
+  app = getApps()[0] ?? null;
 }
 
-export const adminDb = admin.firestore();
-export const adminAuth = admin.auth();
+export function getFirebaseApp(): App | null {
+  return app;
+}
+
+export const adminDb = getFirestore();
+export const adminAuth = getAuth();

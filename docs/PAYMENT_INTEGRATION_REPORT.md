@@ -4,18 +4,27 @@
 **Phase:** 5 - Payment Integrations & Testing  
 **Status:** ✅ Complete
 
+> **UPDATE 2026-08-06:** Interac e-Transfer is **frozen for launch** (Shayan's
+> explicit instruction) — the payout API rejects it and it's no longer
+> selectable in the UI. The code below is accurate as a historical record of
+> the integration work, but "Complete"/"Integrated" for Interac in this
+> document describes the code that exists, not what's currently live. See
+> `src/lib/interac.ts` (marked `INTERAC_FROZEN`) and
+> `docs/superpowers/plans/2026-08-06-track1-regressions-security-phase1.md`
+> Task 9 for the freeze.
+
 ---
 
 ## 📊 Executive Summary
 
-All three payment providers (PayPal, Interac, Tremendous) have been fully integrated with comprehensive error handling, retry logic, transaction logging, and validation. A unified payout API has been created to route requests to the appropriate provider.
+All three payment providers (PayPal, Interac, Tremendous) have been fully integrated with comprehensive error handling, retry logic, transaction logging, and validation. A unified payout API has been created to route requests to the appropriate provider. **Interac is frozen for launch as of 2026-08-06 — see the notice above.**
 
 ### Integration Status
 
 | Provider | Status | Features | Test Coverage |
 |----------|--------|----------|---------------|
 | **PayPal** | ✅ Complete | Full API integration with retry logic | 95%+ |
-| **Interac** | ✅ Complete | API + Manual fallback | 95%+ |
+| **Interac** | ⛔ Frozen for launch (code complete) | API + Manual fallback | 95%+ |
 | **Tremendous** | ✅ Complete | Gift card catalog & tracking | 95%+ |
 | **Unified API** | ✅ Complete | Multi-provider routing | 90%+ |
 
@@ -50,8 +59,8 @@ All three payment providers (PayPal, Interac, Tremendous) have been fully integr
 #### Configuration Required
 ```env
 PAYPAL_MODE=sandbox              # or 'live'
-PAYPAL_CLIENT_ID=your_client_id
-PAYPAL_CLIENT_SECRET=your_secret
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
 ```
 
 #### Limits & Constraints
@@ -96,8 +105,8 @@ PAYPAL_CLIENT_SECRET=your_secret
 
 #### Configuration Required
 ```env
-INTERAC_API_KEY=your_api_key
-INTERAC_API_SECRET=your_api_secret
+INTERAC_API_KEY=<set in Vercel dashboard>
+INTERAC_API_SECRET=<set in Vercel dashboard>
 INTERAC_ENVIRONMENT=sandbox      # or 'production'
 ```
 
@@ -149,8 +158,8 @@ If API credentials are not configured, the system falls back to manual processin
 
 #### Configuration Required
 ```env
-TREMENDOUS_API_KEY=your_api_key
-TREMENDOUS_CAMPAIGN_ID=your_campaign_id
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
+TREMENDOUS_CAMPAIGN_ID=<set in Vercel dashboard>
 TREMENDOUS_ENVIRONMENT=sandbox   # or 'production'
 ```
 
@@ -379,17 +388,17 @@ User → /api/payouts/request → pending_review
 ```env
 # PayPal Production
 PAYPAL_MODE=live
-PAYPAL_CLIENT_ID=<production_client_id>
-PAYPAL_CLIENT_SECRET=<production_secret>
+PAYPAL_CLIENT_ID=<set in Vercel dashboard>
+PAYPAL_CLIENT_SECRET=<set in Vercel dashboard>
 
 # Interac Production
-INTERAC_API_KEY=<production_api_key>
-INTERAC_API_SECRET=<production_secret>
+INTERAC_API_KEY=<set in Vercel dashboard>
+INTERAC_API_SECRET=<set in Vercel dashboard>
 INTERAC_ENVIRONMENT=production
 
 # Tremendous Production
-TREMENDOUS_API_KEY=<production_api_key>
-TREMENDOUS_CAMPAIGN_ID=<production_campaign_id>
+TREMENDOUS_API_KEY=<set in Vercel dashboard>
+TREMENDOUS_CAMPAIGN_ID=<set in Vercel dashboard>
 TREMENDOUS_ENVIRONMENT=production
 ```
 

@@ -1,5 +1,6 @@
 import { validateOrigin } from "../origin";
 import type { NextRequest } from "next/server";
+import { setNodeEnv } from "../testHelpers/testEnv";
 
 function mockRequest(method: string, headers: Record<string, string> = {}, pathname = "/api/test"): NextRequest {
   return {
@@ -56,25 +57,25 @@ describe("Origin Validation", () => {
 
   it("should reject unknown origins in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
 
     const req = mockRequest("POST", { origin: "https://evil.com" });
     const result = validateOrigin(req);
     expect(result.valid).toBe(false);
     expect(result.error).toContain("not allowed");
 
-    process.env.NODE_ENV = originalEnv;
+    setNodeEnv(originalEnv as string);
   });
 
   it("should reject missing origin in production mode", () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
 
     const req = mockRequest("POST", {}, "/api/payouts/request");
     const result = validateOrigin(req);
     expect(result.valid).toBe(false);
     expect(result.error).toContain("Missing Origin");
 
-    process.env.NODE_ENV = originalEnv;
+    setNodeEnv(originalEnv as string);
   });
 });

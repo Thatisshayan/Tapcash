@@ -1,4 +1,6 @@
 
+"use client";
+
 import Link from "next/link";
 import { PropsWithChildren, ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";

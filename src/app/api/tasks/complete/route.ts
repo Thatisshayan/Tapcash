@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { withRateLimit } from "@/lib/rate-limit";
 import { requireVerifiedUser } from "@/lib/verified-user";
 import { validateCsrf } from "@/lib/csrf";
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         offerId,
         rewardCents,
         status: "completed",
-        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        completedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(ledgerRef, {
@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
         source: "task_completion",
         referenceId: taskId,
         metadata: { taskId, offerId, rewardCents },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
 
       transaction.set(auditRef, {
@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
         targetType: "task",
         targetId: taskId,
         metadata: { offerId, rewardCents },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 

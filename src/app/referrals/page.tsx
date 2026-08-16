@@ -1,15 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ConversionStrip from "@/components/ConversionStrip";
-import { Copy, Check, Users, ArrowUpRight, Loader2, AlertTriangle, Coins, Sparkles, ArrowRight, BadgeCheck } from "lucide-react";
-import Link from "next/link";
-import { CTAButton, MotionWrap, PageShell, StatCard } from "@/components/PremiumUi";
+import { Copy, Check, ArrowUpRight, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { MotionWrap } from "@/components/PremiumUi";
+
+// Aurora palette (packages/tokens/tokens.json v3.0.0). No bounded card/box
+// chrome as the default layout language -- grouped with spacing, hairline
+// dividers, and typography, matching /cashout and /rewards in this rollout.
+const GOLD = "#D9B678";
+const GOLD_BRIGHT = "#F0CE97";
+const INK = "#F5F3EF";
 
 export default function ReferralsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -66,15 +73,15 @@ export default function ReferralsPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#040913] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#00e6c3] animate-spin" />
+      <div className="min-h-screen bg-[#0A0A0D] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: GOLD }} />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#040913] text-white flex flex-col">
+      <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
         <Navbar />
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
           <ConversionStrip
@@ -90,26 +97,33 @@ export default function ReferralsPage() {
           />
         </div>
         <main className="flex-grow flex items-center justify-center p-4">
-          <MotionWrap>
-            <PageShell
-              eyebrow="Access required"
-              title="Access Restricted"
-              description="Please log in to your account to view the Affiliate Program."
-            >
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <CTAButton href="/auth/signin" label="Sign In Now" />
-                <CTAButton href="/dashboard" label="Go to dashboard" variant="secondary" />
-              </div>
-            </PageShell>
+          <MotionWrap className="w-full max-w-xl text-center space-y-6">
+            <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: GOLD }}>Access required</p>
+            <h1 className="text-3xl font-black tracking-tight md:text-4xl" style={{ color: INK }}>Access Restricted</h1>
+            <p className="mx-auto max-w-md text-sm leading-relaxed md:text-base" style={{ color: "rgba(245,243,239,0.68)" }}>
+              Please log in to your account to view the Affiliate Program.
+            </p>
+            <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
+              <Link
+                href="/auth/signin"
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-black transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#0A0A0D", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
+              >
+                Sign In Now <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/dashboard" className="text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
+                Go to dashboard
+              </Link>
+            </div>
           </MotionWrap>
         </main>
-      <Footer />
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#040913] text-white flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col relative overflow-x-hidden">
       <Navbar />
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
@@ -126,80 +140,87 @@ export default function ReferralsPage() {
         />
       </div>
 
-      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 space-y-12 relative z-10">
+      <main className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 space-y-14 relative z-10">
         <MotionWrap>
-          <PageShell
-            eyebrow="Referral growth"
-            title="Invite friends and turn traffic into recurring TapCash earnings."
-            description="Share one clean link, keep the invite flow simple, and earn a recurring commission when your referrals complete offers and cash out."
-            kicker={
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#00e6c3]/20 bg-[#00e6c3]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-[#8cf8e9]">
-                <Sparkles className="w-3.5 h-3.5" />
-                Lifetime commission
-              </div>
-            }
+          <div
+            className="relative pb-2"
+            style={{ backgroundImage: "radial-gradient(circle at 20% 0%, rgba(217,182,120,0.07), transparent 45%)" }}
           >
-            <div className="grid gap-4 md:grid-cols-2">
-              <StatCard label="Invite link" value="Ready" detail={inviteLink || "Loading invite link..."} />
+            <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]" style={{ color: GOLD_BRIGHT }}>
+              <Sparkles className="w-3.5 h-3.5" />
+              Lifetime commission
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <h1 className="mt-4 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl" style={{ color: INK }}>
+              Invite friends and turn traffic into recurring TapCash earnings.
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed sm:text-base" style={{ color: "rgba(245,243,239,0.68)" }}>
+              Share one clean link, keep the invite flow simple, and earn a recurring commission when your referrals complete offers and cash out.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleCopy}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)] hover:shadow-[0_18px_40px_rgba(58,123,255,0.22)] transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#0A0A0D", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copied" : "Copy referral link"}
               </button>
-              <CTAButton href="/dashboard" label="Open dashboard" variant="secondary" />
+              <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors" style={{ color: "rgba(245,243,239,0.68)" }}>
+                Open dashboard
+              </Link>
             </div>
-          </PageShell>
+          </div>
         </MotionWrap>
 
         <MotionWrap delay={0.05}>
-          <PageShell
-            eyebrow="Invite link"
-            title="Share this link"
-            description="Paste this anywhere—social, friends, communities—and we will tie signups to your account."
-          >
-            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: "rgba(245,243,239,0.45)" }}>Invite link</p>
+          <h2 className="mt-2 text-2xl font-black" style={{ color: INK }}>Share this link</h2>
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(245,243,239,0.68)" }}>
+            Paste this anywhere -- social, friends, communities -- and we will tie signups to your account.
+          </p>
+          <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="flex-grow w-full flex items-center gap-3 border-b py-3" style={{ borderColor: "rgba(245,243,239,0.14)" }}>
               <input
                 type="text"
                 readOnly
+                aria-label="Your referral link"
                 value={inviteLink}
-                className="flex-grow w-full bg-black/40 border border-white/6 text-white font-mono text-sm md:text-base px-6 py-5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-emerald-500/50 pr-12"
+                className="flex-grow w-full bg-transparent font-mono text-sm md:text-base focus:outline-none"
+                style={{ color: INK }}
               />
-              <div className="text-zinc-500">
-                <ArrowUpRight className="w-5 h-5" />
-              </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00e6c3] to-[#3a7bff] px-6 py-3.5 text-sm font-black text-[#050816] shadow-[0_12px_30px_rgba(58,123,255,0.18)] hover:shadow-[0_18px_40px_rgba(58,123,255,0.22)] transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copied" : "Copy Link"}
-              </button>
+              <ArrowUpRight className="w-5 h-5 shrink-0" style={{ color: "rgba(245,243,239,0.45)" }} />
             </div>
-          </PageShell>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition-all duration-200 hover:-translate-y-0.5 shrink-0"
+              style={{ background: `linear-gradient(135deg, ${GOLD_BRIGHT}, ${GOLD})`, color: "#0A0A0D", boxShadow: "0 10px 30px rgba(217,182,120,0.28)" }}
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied" : "Copy Link"}
+            </button>
+          </div>
         </MotionWrap>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
           <MotionWrap>
-            <StatCard
-              label="Friends Invited"
-              value={loading ? "..." : String(stats.invited)}
-              detail="Total referrals"
-              
-            />
+            <div className="border-t pt-6" style={{ borderColor: "rgba(245,243,239,0.09)" }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: "rgba(245,243,239,0.45)" }}>Friends Invited</p>
+              <p className="mt-3 font-mono text-3xl font-black tabular-nums" style={{ color: INK }}>
+                {loading ? "..." : String(stats.invited)}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: "rgba(245,243,239,0.45)" }}>Total referrals</p>
+            </div>
           </MotionWrap>
           <MotionWrap delay={0.04}>
-            <StatCard
-              label="Passive Coins Earned"
-              value={loading ? "..." : `+${stats.earned.toLocaleString()}`}
-              detail="Referral commissions"
-              
-            />
+            <div className="border-t pt-6" style={{ borderColor: "rgba(245,243,239,0.09)" }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: "rgba(245,243,239,0.45)" }}>Passive Coins Earned</p>
+              <p className="mt-3 font-mono text-3xl font-black tabular-nums" style={{ color: GOLD }}>
+                {loading ? "..." : `+${stats.earned.toLocaleString()}`}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: "rgba(245,243,239,0.45)" }}>Referral commissions</p>
+            </div>
           </MotionWrap>
         </div>
       </main>

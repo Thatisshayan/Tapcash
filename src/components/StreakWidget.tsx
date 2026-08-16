@@ -21,10 +21,6 @@ export default function StreakWidget() {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStreak();
-  }, []);
-
   async function fetchStreak() {
     try {
       const res = await fetch("/api/streak");
@@ -36,6 +32,10 @@ export default function StreakWidget() {
       setError("Could not load streak data");
     }
   }
+
+  useEffect(() => {
+    fetchStreak();
+  }, []);
 
   async function handleCheckIn() {
     setChecking(true);
@@ -62,8 +62,8 @@ export default function StreakWidget() {
 
   if (error && !data) {
     return (
-      <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
-        <p className="text-sm text-zinc-400">{error}</p>
+      <div className="py-4">
+        <p className="text-sm text-[rgba(245,243,239,0.45)]">{error}</p>
       </div>
     );
   }
@@ -75,15 +75,13 @@ export default function StreakWidget() {
   const nextReward = data?.nextReward ?? 10;
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] to-orange-500/[0.04] p-5">
+    <div className="py-2" style={{ borderTop: "1px solid rgba(245,243,239,0.09)", borderBottom: "1px solid rgba(245,243,239,0.09)", paddingTop: "1.5rem", paddingBottom: "1.5rem" }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-amber-400" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-amber-300">Daily Streak</h3>
+          <Flame className="h-5 w-5 text-[#D9B678]" />
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#F0CE97]">Daily Streak</h3>
         </div>
-        <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-300">
-          Best: {best}
-        </span>
+        <span className="text-xs font-bold text-[rgba(245,243,239,0.45)]">Best: {best}</span>
       </div>
 
       <div className="mt-4 flex items-center gap-1.5">
@@ -99,23 +97,22 @@ export default function StreakWidget() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: i * 0.05 }}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-xl border p-2 transition-all ${
-                completed || isToday
-                  ? "border-amber-500/40 bg-amber-500/20"
-                  : isCurrent
-                    ? "border-amber-400/60 bg-amber-400/10 shadow-[0_0_12px_rgba(251,191,36,0.15)]"
-                    : "border-white/6 bg-white/[0.02]"
-              }`}
+              className="flex flex-1 flex-col items-center gap-1 rounded-xl p-2 transition-all"
+              style={{
+                backgroundColor: completed || isToday ? "rgba(217,182,120,0.14)" : isCurrent ? "rgba(240,206,151,0.08)" : "rgba(245,243,239,0.02)",
+                boxShadow: isCurrent ? "0 0 12px rgba(240,206,151,0.18)" : undefined,
+              }}
             >
-              <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[rgba(245,243,239,0.45)]">{label}</span>
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${
+                className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-black"
+                style={
                   completed || isToday
-                    ? "bg-amber-400 text-[#0a0a0a]"
+                    ? { backgroundColor: "#F0CE97", color: "#0A0A0D" }
                     : isCurrent
-                      ? "border-2 border-amber-400 text-amber-400"
-                      : "border border-white/10 text-zinc-600"
-                }`}
+                      ? { border: "2px solid #F0CE97", color: "#F0CE97" }
+                      : { border: "1px solid rgba(245,243,239,0.09)", color: "rgba(245,243,239,0.28)" }
+                }
               >
                 {completed || isToday ? (
                   <Check className="h-3.5 w-3.5" />
@@ -123,7 +120,7 @@ export default function StreakWidget() {
                   DAY_REWARDS[i]
                 )}
               </div>
-              <span className="text-[8px] font-semibold text-zinc-500">
+              <span className="text-[8px] font-semibold text-[rgba(245,243,239,0.45)]">
                 {DAY_REWARDS[i]}c
               </span>
             </motion.div>
@@ -133,10 +130,10 @@ export default function StreakWidget() {
 
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-lg font-black text-white">
+          <p className="text-lg font-black text-[#F5F3EF]">
             {streak} day streak{streak !== 1 ? "" : ""}
           </p>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[rgba(245,243,239,0.45)]">
             {checkedIn
               ? "Checked in today. Come back tomorrow!"
               : `Check in now for +${nextReward} coins`}
@@ -145,11 +142,12 @@ export default function StreakWidget() {
         <button
           onClick={handleCheckIn}
           disabled={checkedIn || checking}
-          className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black transition-all ${
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black transition-all"
+          style={
             checkedIn
-              ? "cursor-default border border-amber-500/20 bg-amber-500/10 text-amber-400"
-              : "bg-amber-400 text-[#0a0a0a] shadow-[0_8px_24px_rgba(251,191,36,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(251,191,36,0.35)]"
-          }`}
+              ? { cursor: "default", color: "#F0CE97", backgroundColor: "rgba(217,182,120,0.1)" }
+              : { background: "linear-gradient(135deg, #F0CE97, #D9B678)", color: "#0A0A0D", boxShadow: "0 8px 24px rgba(217,182,120,0.28)" }
+          }
         >
           {checking ? (
             <Loader2 className="h-4 w-4 animate-spin" />

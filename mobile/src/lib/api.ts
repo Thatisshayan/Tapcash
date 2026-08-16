@@ -1,7 +1,9 @@
 import { auth } from "./firebase";
+import Constants from "expo-constants";
 
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ||
+  Constants.expoConfig?.extra?.apiBaseUrl ||
   (__DEV__ ? "http://localhost:3000" : "https://tapcash.online");
 
 export type ApiOffer = {
@@ -88,7 +90,7 @@ export async function apiFetch<T = unknown>(path: string, options?: RequestInit)
 }
 
 export async function loadUserBalance(): Promise<{ balanceCoins: number; pendingCoins: number }> {
-  const data = await apiFetch<{ balanceCoins: number; pendingCoins: number }>("/api/debug/ledger-summary");
+  const data = await apiFetch<{ balanceCoins: number; pendingCoins: number }>("/api/ledger/summary");
   return { balanceCoins: data.balanceCoins ?? 0, pendingCoins: data.pendingCoins ?? 0 };
 }
 
