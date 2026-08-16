@@ -2,6 +2,37 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-16 — Claude Code — CI-unblock pass merged PRs #39/#42/#55/#81/#82; one Codacy finding left open
+
+Landed a batch of stuck PRs by chasing real CI failures rather than
+force-merging past them (fixed: a typescript/ts-jest peer conflict and an
+ESLint-10-incompatible `eslint-plugin-react` crash on `main` itself, plus
+branch-specific fixes — a Zod v4 API break, a stray mid-function `import`
+syntax error, a jest-mock typing gap, an `exec()` → `execFile()` hardening,
+hardcoded Sentry DSNs, a cron import-time side effect, and an `npm audit`
+exit-code handling bug). All five PRs are merged.
+
+- [ ] **`scripts/verify.ps1` uses `Invoke-Expression`** (lines ~112, 114) to
+  run the build/test commands it assembles from a switch over
+  `npm`/`pnpm`/`yarn`. Flagged HIGH RISK by Codacy's review on PR #81.
+  Not exploitable today — `$c` is built entirely from hardcoded literal
+  strings, never from user/branch input — but it's the shell-string
+  execution pattern this repo already avoids elsewhere (see the `exec()`
+  → `execFile()` fix landed in PR #55 for the same class of finding).
+  Resume: replace the two `Invoke-Expression $c` calls with a direct
+  `& $exe $args` invocation (PowerShell call operator, argument array, no
+  shell parsing) — same fix shape as `scripts/verify.sh`'s existing
+  `run_with_timeout` helper.
+
+Checked but did **not** need action: Codacy's PR #81 review also flagged a
+push-notification logic bug in `functions/lib/index.js` (`onCashoutSent`
+firing "Payout on the way!" on a rejection). Traced it to
+`functions/src/index.ts` — already fixed there (commit `588eca3`, predates
+this session), with an explanatory comment at the fix site. The compiled
+`functions/lib/index.js` snapshot Codacy reviewed was stale; regenerating
+it from source during PR #81's merge (`npx tsc`) already carried the fix
+forward. No entry needed for this one.
+
 ## 2026-08-11 — Claude Code — EAS Android monorepo `shared/` resolution: RESOLVED
 
 **✅ RESOLVED** — closes the 2026-08-08 "TASK-039 EAS Android build still
