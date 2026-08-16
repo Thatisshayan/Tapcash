@@ -1,7 +1,7 @@
 import { exec } from "child_process";
-import { Logger } from "./logger";
+import { logger as baseLogger } from "./logger";
 
-const logger = new Logger("SecurityAudit");
+const logger = baseLogger.child({ service: "SecurityAudit" });
 
 /**
  * Executes `npm audit --json` and logs a summary of the findings.
