@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { logger as baseLogger } from "./logger";
 
 const logger = baseLogger.child({ service: "SecurityAudit" });
@@ -10,7 +10,10 @@ const logger = baseLogger.child({ service: "SecurityAudit" });
  */
 export async function runSecurityAudit(): Promise<void> {
   return new Promise((resolve) => {
-    exec("npm audit --json", { cwd: process.cwd() }, (error, stdout, stderr) => {
+    // execFile (argument array, no shell) instead of exec (shell string) —
+    // the command here is a fixed literal today, but exec's shell parsing
+    // is a standing injection risk if this ever grows a dynamic argument.
+    execFile("npm", ["audit", "--json"], { cwd: process.cwd() }, (error, stdout, stderr) => {
       if (error) {
         logger.error("Security audit failed to execute", error);
         resolve();
