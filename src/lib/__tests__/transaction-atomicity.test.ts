@@ -40,7 +40,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       const doc = await transaction.get({ id: "user1" } as any);
       const balance = doc.data()?.balance || 0;
       transaction.update({ id: "user1" } as any, { balance: balance - 100 });
@@ -62,7 +62,7 @@ describe("Transaction Atomicity Patterns", () => {
     });
 
     await expect(
-      adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+      (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
         await transaction.get({ id: "user1" } as any);
         transaction.update({ id: "user1" } as any, { balance: 500 });
       })
@@ -89,7 +89,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       const doc = await transaction.get({ id: "user1" } as any);
       const data = doc.data();
       if (data && !data.pending) {
@@ -117,7 +117,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       const doc = await transaction.get({ id: "user1" } as any);
       const data = doc.data();
       if (data?.lastProcessed !== "tx-001") {
@@ -145,7 +145,7 @@ describe("Transaction Atomicity Patterns", () => {
     });
 
     let caughtError: string | null = null;
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       const doc = await transaction.get({ id: "nonexistent" } as any);
       if (!doc.exists) {
         caughtError = "Document not found";
@@ -173,7 +173,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       await transaction.get({ id: "doc1" } as any);
       await transaction.get({ id: "doc2" } as any);
       await transaction.get({ id: "doc3" } as any);
@@ -196,7 +196,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       for (let i = 0; i < 5; i++) {
         transaction.update({ id: `item-${i}` } as any, { processed: true });
       }
@@ -223,7 +223,7 @@ describe("Transaction Atomicity Patterns", () => {
       return cb(mockTransaction);
     });
 
-    await adminDb.runTransaction(async (transaction: typeof mockTransaction) => {
+    await (adminDb.runTransaction as jest.Mock)(async (transaction: typeof mockTransaction) => {
       const account = await transaction.get({ id: "account" } as any);
       const withdrawal = await transaction.get({ id: "withdrawal" } as any);
 
