@@ -20,7 +20,11 @@ const dailySecurityAuditJob = new CronJob(
   "UTC"
 );
 
-// Start the job as soon as this module is imported.
-dailySecurityAuditJob.start();
+// Not started on import — call startDailySecurityAudit() from the server
+// bootstrap path. Starting at module scope would schedule the job as a
+// side effect of any import (tests, dev hot-reload, unrelated bundles).
+export function startDailySecurityAudit(): void {
+  dailySecurityAuditJob.start();
+}
 
 export default dailySecurityAuditJob;

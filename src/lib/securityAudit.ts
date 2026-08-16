@@ -13,8 +13,11 @@ export async function runSecurityAudit(): Promise<void> {
     // execFile (argument array, no shell) instead of exec (shell string) —
     // the command here is a fixed literal today, but exec's shell parsing
     // is a standing injection risk if this ever grows a dynamic argument.
-    execFile("npm", ["audit", "--json"], { cwd: process.cwd() }, (error, stdout, stderr) => {
-      if (error) {
+    execFile("npm", ["audit", "--json"], { cwd: process.cwd() }, (error, stdout) => {
+      // `npm audit` exits non-zero when it *finds* vulnerabilities — that's
+      // not an execution failure, and stdout still holds the real report.
+      // Only bail out if there's genuinely no output to parse.
+      if (error && !stdout) {
         logger.error("Security audit failed to execute", error);
         resolve();
         return;
