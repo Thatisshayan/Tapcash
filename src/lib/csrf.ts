@@ -34,6 +34,11 @@ export function clearCsrfCookie(response: NextResponse): void {
   });
 }
 
+export function generateAndSetCsrfToken(response: NextResponse) {
+  const { token: csrfToken } = generateCsrfToken();
+  setCsrfCookie(response, csrfToken);
+}
+
 const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 export function validateCsrf(request: NextRequest, sessionCsrfHash?: string): { valid: boolean; error?: string } {

@@ -309,32 +309,40 @@ const styles = StyleSheet.create({
   skeletonList: {
     gap: theme.spacing.md,
   },
+  // No bordered/filled panel here either -- same Aurora no-box rule as
+  // OfferCard. Previously relied on theme.colors.card / .border, which are
+  // undefined on the regenerated theme, so this was rendering unstyled;
+  // switched to the same spacing + soft-shadow grouping as the real card.
   skeletonCard: {
     width: "100%",
-    backgroundColor: theme.colors.card,
     borderRadius: theme.radius.lg,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 4,
   },
   skeletonAccent: {
+    width: 28,
     height: 3,
-    backgroundColor: theme.colors.green,
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.accent,
     opacity: 0.3,
   },
   skeletonContent: {
-    padding: theme.spacing.md,
     gap: theme.spacing.sm,
   },
   skeletonTitle: {
     height: 18,
-    backgroundColor: theme.colors.elevated,
+    backgroundColor: "rgba(245,243,239,0.06)",
     borderRadius: 4,
     width: "80%",
   },
   skeletonProvider: {
     height: 12,
-    backgroundColor: theme.colors.elevated,
+    backgroundColor: "rgba(245,243,239,0.06)",
     borderRadius: 4,
     width: "60%",
   },
@@ -346,13 +354,13 @@ const styles = StyleSheet.create({
   },
   skeletonPrice: {
     height: 16,
-    backgroundColor: theme.colors.elevated,
+    backgroundColor: "rgba(245,243,239,0.06)",
     borderRadius: 4,
     width: 60,
   },
   skeletonTag: {
     height: 20,
-    backgroundColor: theme.colors.elevated,
+    backgroundColor: "rgba(245,243,239,0.06)",
     borderRadius: theme.radius.xs,
     width: 80,
   },
