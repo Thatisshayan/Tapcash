@@ -6,7 +6,7 @@ test.describe('TapCash Core User Flows', () => {
     
     await expect(page).toHaveTitle(/TapCash/i);
     
-    const signUpBtn = page.getByRole('button', { name: /Sign Up Free/i }).first();
+    const signUpBtn = page.getByRole('link', { name: /Sign Up Free/i }).first();
     await expect(signUpBtn).toBeVisible();
   });
 

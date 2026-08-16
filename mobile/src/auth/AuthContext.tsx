@@ -1,8 +1,8 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { AppState } from "react-native";
 import { isDevice } from "expo-device";
-import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -12,6 +12,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { API_BASE_URL } from "../lib/api";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { registerPushToken, setupNotificationHandlers } from "../lib/notifications";
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setupNotificationHandlers(async (newToken) => {
       const idToken = await auth.currentUser?.getIdToken();
       if (idToken) {
-        await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/api/user/push-token`, {
+        await fetch(`${API_BASE_URL}/api/user/push-token`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

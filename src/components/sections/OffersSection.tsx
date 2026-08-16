@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Flame, Zap, X, Star, ChevronRight } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { fadeUp, stagger } from '@/lib/motion';
+import { motion, useMotionValue, useSpring, useTransform, useReducedMotion } from 'framer-motion';
+import { fadeUp, stagger, tiltSpring } from '@/lib/motion';
 
 interface Offer {
   name: string;
@@ -17,6 +17,10 @@ interface Offer {
   subtitle?: string;
 }
 
+// NOTE: this list is static demo/placeholder content, not fetched from a live
+// offers feed. Pre-existing before this Aurora reskin pass -- flagged in
+// docs/governance/DEFERRED_WORK.md rather than "fixed" as a scope-creep side
+// quest (visual-only pass per task scope).
 const OFFERS: Offer[] = [
   { name: 'Mythic Heroes Quest', image: '/images/offers/offer-1.png', tags: ['High Paying', 'Popular'], platform: 'Android', price: 120, hot: true },
   { name: 'Coin Master', image: '/images/offers/offer-2.png', tags: ['Easy', 'Fast Payout'], platform: 'Both', price: 35, subtitle: 'Village level 15' },
@@ -36,21 +40,22 @@ const FILTER_TABS = [
   { label: 'Easy Tasks', key: 'Easy Tasks', icon: Star },
 ];
 
+// Aurora semantic accents only -- no green/no neon (packages/tokens/tokens.json semantic block).
 const TAG_COLORS: Record<string, string> = {
-  'High Paying': '#F5A623',
-  'Fast Payout': '#00FF85',
-  'Easy': '#7B5CF0',
-  'Easy Tasks': '#7B5CF0',
-  'No Purchase': '#00D4FF',
-  'Popular': '#FF4444',
+  'High Paying': 'var(--color-brand-green)', // Aurora gold D9B678
+  'Fast Payout': 'var(--color-brand-cyan)', // Aurora blue 3E6FD9
+  'Easy': 'var(--color-brand-purple)', // Aurora violet 6C5CE0
+  'Easy Tasks': 'var(--color-brand-purple)',
+  'No Purchase': 'var(--color-brand-cyan)',
+  'Popular': 'var(--color-hot-red)',
 };
 
 function TagPill({ label }: { label: string }) {
-  const color = TAG_COLORS[label] ?? '#ffffff';
+  const color = TAG_COLORS[label] ?? 'var(--color-text-primary)';
   return (
     <span
-      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}
+      className="text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm"
+      style={{ background: 'rgba(10,10,13,0.55)', color }}
     >
       {label}
     </span>
@@ -58,55 +63,79 @@ function TagPill({ label }: { label: string }) {
 }
 
 function OfferCard({ offer }: { offer: Offer }) {
+  const prefersReduced = useReducedMotion();
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [7, -7]), tiltSpring);
+  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-7, 7]), tiltSpring);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (prefersReduced) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    px.set((e.clientX - rect.left) / rect.width - 0.5);
+    py.set((e.clientY - rect.top) / rect.height - 0.5);
+  }
+
+  function handleMouseLeave() {
+    px.set(0);
+    py.set(0);
+  }
+
   return (
-    <div
-      className="rounded-2xl overflow-hidden flex flex-col"
-      style={{ background: '#13132b', border: '1px solid rgba(255,255,255,0.07)' }}
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX: prefersReduced ? 0 : rotateX,
+        rotateY: prefersReduced ? 0 : rotateY,
+        transformPerspective: 900,
+        boxShadow: 'var(--shadow-card-elevated)',
+      }}
+      className="group relative aspect-[3/4] rounded-2xl overflow-hidden will-change-transform"
     >
-      {/* Artwork image */}
-      <div className="relative w-full h-40 overflow-hidden">
-        <Image
-          src={offer.image}
-          alt={offer.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-        />
-        {offer.hot && (
-          <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
-            <span
-              className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
-              style={{ background: '#FF4444' }}
-            >
-              HOT
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Image-led tile: no card fill, no border box -- the photo IS the card */}
+      <Image
+        src={offer.image}
+        alt={offer.name}
+        fill
+        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/92 via-black/35 to-black/5" />
 
-      {/* Card body */}
-      <div className="p-4 flex flex-col gap-3 flex-1">
-        <div>
-          <p className="text-[15px] font-semibold text-white leading-snug">{offer.name}</p>
-          {offer.subtitle && (
-            <p className="text-[11px] text-white/40 mt-0.5">{offer.subtitle}</p>
-          )}
+      {offer.hot && (
+        <div className="absolute top-3 left-3 flex items-center gap-1">
+          <span
+            className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--color-hot-red)' }}
+          >
+            HOT
+          </span>
         </div>
+      )}
 
+      <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-2">
         <div className="flex flex-wrap gap-1.5">
           {offer.tags.map((tag) => (
             <TagPill key={tag} label={tag} />
           ))}
         </div>
 
-        <p className="text-[11px] text-white/35">{offer.platform}</p>
+        <div>
+          <p className="text-[15px] font-semibold text-white leading-snug drop-shadow-sm">{offer.name}</p>
+          {offer.subtitle && (
+            <p className="text-[11px] text-white/50 mt-0.5">{offer.subtitle}</p>
+          )}
+        </div>
 
-        <div className="flex items-center justify-between mt-auto pt-2">
+        <p className="text-[11px] text-white/40">{offer.platform}</p>
+
+        <div className="flex items-center justify-between pt-1">
           <span
-            className="text-[22px] font-semibold"
+            className="text-[22px] font-semibold bg-clip-text text-transparent"
             style={{
               fontFamily: 'var(--font-jetbrains-mono), monospace',
-              color: '#00FF85',
+              backgroundImage: 'linear-gradient(100deg, #F0CE97, #D9B678 60%, #B98F4C)',
             }}
           >
             ${offer.price.toFixed(2)}
@@ -115,12 +144,16 @@ function OfferCard({ offer }: { offer: Offer }) {
 
         <Link
           href="/auth/signup"
-          className="w-full text-center py-2.5 rounded-xl text-[13px] font-semibold text-white transition-colors btn-purple"
+          className="w-full text-center py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+          style={{
+            background: 'linear-gradient(135deg, #F0CE97, #D9B678)',
+            color: 'var(--color-bg-base)',
+          }}
         >
           Start Offer
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -134,7 +167,7 @@ export function OffersSection() {
       : OFFERS.filter((o) => o.tags.some((t) => t === activeTab));
 
   return (
-    <section className="py-20 lg:py-28" style={{ backgroundColor: '#0d0d1a' }}>
+    <section className="py-20 lg:py-28" style={{ backgroundColor: 'var(--color-bg-base)' }}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -148,7 +181,7 @@ export function OffersSection() {
             <motion.p
               variants={prefersReduced ? undefined : fadeUp}
               className="text-[11px] font-semibold tracking-[0.15em] uppercase"
-              style={{ color: '#00FF85' }}
+              style={{ color: 'var(--color-brand-green)' }}
             >
               Top Offers
             </motion.p>
@@ -182,10 +215,10 @@ export function OffersSection() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className="shrink-0 flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-[#00FF85]"
+                className="shrink-0 flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-green)]"
                 style={{
                   background: isActive ? '#ffffff' : 'rgba(255,255,255,0.05)',
-                  color: isActive ? '#0d0d1a' : 'rgba(255,255,255,0.55)',
+                  color: isActive ? 'var(--color-bg-base)' : 'rgba(255,255,255,0.55)',
                   border: `1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
                 }}
               >

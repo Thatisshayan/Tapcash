@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
+const GOLD = "#D9B678";
+
 const POSTS: Record<string, { title: string; date: string; content: string }> = {
   "welcome-to-tapcash": {
     title: "Welcome to TapCash — Canada's Rewards Platform",
@@ -19,7 +21,7 @@ Our goal is simple: create a rewards loop that users can trust. Unlike tradition
 
 - **Server-verified actions** — Every offer completion is validated before coins hit your ledger
 - **Transparent payouts** — The cashout queue shows you exactly where your request stands
-- **Canadian-first** — Interac e-Transfer support, CAD-based rewards, and local gift card options
+- **Canadian-first** — Bank transfer support, CAD-based rewards, and local gift card options
 
 Start by completing offers on the RapidoReach offerwall, build your coin balance, and request a payout when you're ready.
     `,
@@ -77,12 +79,12 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#050813] text-white flex flex-col">
+      <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
         <Navbar />
         <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-24 text-center">
-          <h1 className="text-3xl font-black text-white">Post not found</h1>
-          <p className="mt-4 text-zinc-400">The blog post you are looking for does not exist.</p>
-          <Link href="/blog" className="mt-6 inline-flex items-center gap-2 text-[#00e6c3] hover:underline">
+          <h1 className="text-3xl font-extrabold">Post not found</h1>
+          <p className="mt-4 text-[rgba(245,243,239,0.5)]">The blog post you are looking for does not exist.</p>
+          <Link href="/blog" className="mt-6 inline-flex items-center gap-2 hover:underline" style={{ color: GOLD }}>
             <ArrowLeft className="w-4 h-4" /> Back to blog
           </Link>
         </main>
@@ -92,15 +94,15 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0A0A0D] text-[#F5F3EF] flex flex-col">
       <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white mb-8 transition-colors">
+      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-16">
+        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-[rgba(245,243,239,0.5)] hover:text-white mb-8 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to blog
         </Link>
-        <p className="text-[11px] font-black uppercase tracking-[0.26em] text-zinc-500">{post.date}</p>
-        <h1 className="mt-3 text-3xl sm:text-4xl font-black text-white leading-tight">{post.title}</h1>
-        <div className="mt-8 prose prose-invert max-w-none text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[rgba(245,243,239,0.4)]">{post.date}</p>
+        <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold leading-tight">{post.title}</h1>
+        <div className="mt-8 prose prose-invert max-w-none text-[rgba(245,243,239,0.68)] text-sm leading-relaxed whitespace-pre-line">
           {post.content}
         </div>
       </main>

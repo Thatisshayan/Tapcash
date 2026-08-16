@@ -3,6 +3,13 @@
  * Enhanced with API integration, validation, and error handling
  */
 
+/**
+ * FROZEN 2026-08-06: Interac e-Transfer payouts are disabled for launch.
+ * Do not remove this file — kept intact for a future re-enable, per
+ * boardroom Rule 14 (no deletion without Shayan's sign-off).
+ */
+export const INTERAC_FROZEN = true;
+
 const INTERAC_API_BASE = process.env.INTERAC_ENVIRONMENT === "production"
   ? "https://api.interac.ca/v1"
   : "https://sandbox.interac.ca/v1";

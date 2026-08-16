@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
-import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -51,7 +51,7 @@ export async function checkIdempotency(request: NextRequest, userId: string): Pr
   await ref.set({
     userId,
     key,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return { isDuplicate: false, key };
@@ -64,7 +64,7 @@ export async function storeIdempotencyResponse(userId: string, key: string | und
     await adminDb.collection("idempotency_keys").doc(docId).update({
       responseStatus: status,
       responseBody: body,
-      completedAt: admin.firestore.FieldValue.serverTimestamp(),
+      completedAt: FieldValue.serverTimestamp(),
     });
   } catch {
     // non-critical

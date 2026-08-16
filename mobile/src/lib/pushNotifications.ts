@@ -1,3 +1,4 @@
+import { Alert } from "react-native";
 import * as Notifications from "expo-notifications";
 import { isDevice } from "expo-device";
 import Constants from "expo-constants";
@@ -15,7 +16,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     finalStatus = status;
   }
   if (finalStatus !== "granted") {
-    alert("Failed to get push token for push notification!");
+    Alert.alert("Push notifications unavailable", "TapCash could not get permission to send notifications on this device.");
     return null;
   }
 

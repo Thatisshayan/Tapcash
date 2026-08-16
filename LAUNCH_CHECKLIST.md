@@ -71,18 +71,19 @@
 
 ### Mobile (Sprint 4)
 
+- Note: Track 3 (2026-08-07) completed the code/assets/config hardening pass. App Store / Play submission remains intentionally blocked until Track 2 UI approval, and Android EAS / biometric / push / deep-link verification still require Expo account access plus physical devices.
 - [x] ✅ PremiumUi imports fixed — No PremiumUi references in mobile code
 - [x] ✅ EAS configuration created — `mobile/eas.json` with 3 build profiles
 - [x] ✅ Expo account linked — EAS project linked to `obsidianmedia`, credentials configured
-- [ ] ❌ Mobile .env file — `mobile/.env.example` created with all `EXPO_PUBLIC_*` vars, `api.ts` updated
+- [x] ✅ Mobile env/config wiring — `mobile/.env.example` carries the `EXPO_PUBLIC_*` Firebase/API values, `mobile/src/lib/api.ts` reads them, and `mobile/app.config.js` now mirrors them into Expo `extra`
 - [x] ✅ iOS build passing — EAS build finished successfully (build ID: `6f27903f`), IPA ready
-- [ ] ⚠️ Android build passing — Needs EAS build verification (documented in `MOBILE_BUILD_GUIDE.md`)
+- [ ] ⚠️ Android build passing — EAS CLI is installed locally, but `eas build --platform android --profile preview` was not executed in this session because it requires Expo auth/external network and may incur project-side build activity
 - [x] ✅ iOS TestFlight build working — Build submitted to EAS, awaiting Apple ID auth for TestFlight upload
-- [ ] ❌ Android APK build working — Needs build + submission (documented in `MOBILE_BUILD_GUIDE.md`)
-- [ ] ❌ Biometric auth working on both platforms — Code exists, needs real device testing
-- [ ] ❌ Push notifications working on both platforms — Code exists, needs real device testing
+- [ ] ❌ Android APK build working — Same external EAS execution blocker as above
+- [ ] ❌ Biometric auth working on both platforms — Code path verified and crash bug fixed, but still needs physical device confirmation
+- [ ] ❌ Push notifications working on both platforms — Token/permission wiring verified in code, but still needs physical device confirmation
 - [ ] ❌ Offline Firestore persistence enabled — Needs verification
-- [ ] ❌ Deep linking working — Needs verification
+- [ ] ❌ Deep linking working — `tapcash://` routing is now wired in app code, but still needs physical device verification
 - [x] ✅ Dark theme applied to all screens — `mobile/src/theme.ts` with dark colors
 - [ ] ❌ All screens rebuilt to match web — Needs redesign to match web overhaul
 

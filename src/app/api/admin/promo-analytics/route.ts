@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-
-const ADMIN_UIDS = (process.env.ADMIN_UIDS || "").split(",").map((u) => u.trim()).filter(Boolean);
-
-async function isAdmin(request: NextRequest) {
-  const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return false;
-  try {
-    const decoded = await adminAuth.verifyIdToken(auth.slice(7));
-    return ADMIN_UIDS.includes(decoded.uid);
-  } catch {
-    return false;
-  }
-}
+import { adminDb } from "@/lib/firebaseAdmin";
+import { requireAdminSession } from "@/lib/admin-session";
 
 export async function GET(request: NextRequest) {
-  if (!(await isAdmin(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdminSession(request);
+  if ("response" in auth) return auth.response;
 
   // Aggregate all promo redemptions from ledger_transactions
   const snap = await adminDb

@@ -1,5 +1,5 @@
-import * as admin from "firebase-admin";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export type LedgerTransactionType =
   | "pending_credit"
@@ -81,8 +81,8 @@ export async function appendLedgerTransaction(input: LedgerTransactionInput) {
     referenceId: input.referenceId || null,
     createdBy: input.createdBy || null,
     metadata: input.metadata || {},
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   return docRef.id;

@@ -21,20 +21,20 @@ const TAPSCORE_OFFSET = TAPSCORE_CIRC * (1 - TAPSCORE_VALUE / 100);
 
 export function TruthModeSection() {
   return (
-    <section className="py-20 lg:py-28" style={{ backgroundColor: '#0d0d1a' }}>
+    <section className="py-20 lg:py-28" style={{ backgroundColor: '#0A0A0D' }}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* LEFT — Truth Mode */}
           <div
-            className="rounded-2xl p-7 space-y-5"
-            style={{ background: '#13132b', border: '1px solid rgba(255,255,255,0.07)' }}
+            className="p-7 space-y-5"
+            style={{ borderTop: '1px solid rgba(245,243,239,0.09)' }}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p
                   className="text-[11px] font-semibold tracking-[0.15em] uppercase mb-1"
-                  style={{ color: '#7B5CF0' }}
+                  style={{ color: '#6C5CE0' }}
                 >
                   Truth Mode
                 </p>
@@ -45,10 +45,10 @@ export function TruthModeSection() {
               {/* Toggle */}
               <div
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(0,255,133,0.12)', border: '1px solid rgba(0,255,133,0.3)' }}
+                style={{ background: 'rgba(217,182,120,0.12)', border: '1px solid rgba(217,182,120,0.3)' }}
               >
-                <span className="w-2 h-2 rounded-full bg-[#00FF85]" />
-                <span className="text-[11px] font-bold text-[#00FF85]">ON</span>
+                <span className="w-2 h-2 rounded-full bg-[#D9B678]" />
+                <span className="text-[11px] font-bold text-[#D9B678]">ON</span>
               </div>
             </div>
 
@@ -61,9 +61,9 @@ export function TruthModeSection() {
                 <li key={text} className="flex items-center gap-3">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(123,92,240,0.15)' }}
+                    style={{ background: 'rgba(108,92,224,0.15)' }}
                   >
-                    <Icon size={15} style={{ color: '#7B5CF0' }} />
+                    <Icon size={15} style={{ color: '#6C5CE0' }} />
                   </div>
                   <span className="text-[13px] text-white/70">{text}</span>
                 </li>
@@ -73,13 +73,13 @@ export function TruthModeSection() {
 
           {/* CENTER — TapScore gauge */}
           <div
-            className="rounded-2xl p-7 flex flex-col items-center justify-center gap-6"
-            style={{ background: '#13132b', border: '1px solid rgba(255,255,255,0.07)' }}
+            className="p-7 flex flex-col items-center justify-center gap-6"
+            style={{ borderTop: '1px solid rgba(245,243,239,0.09)' }}
           >
             <div>
               <p
                 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-center mb-1"
-                style={{ color: '#00FF85' }}
+                style={{ color: '#D9B678' }}
               >
                 TapScore
               </p>
@@ -102,12 +102,12 @@ export function TruthModeSection() {
                   cy="100"
                   r={TAPSCORE_RADIUS}
                   fill="none"
-                  stroke="#00FF85"
+                  stroke="#D9B678"
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeDasharray={TAPSCORE_CIRC}
                   strokeDashoffset={TAPSCORE_OFFSET}
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(0,255,133,0.5))' }}
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(217,182,120,0.5))' }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -124,7 +124,7 @@ export function TruthModeSection() {
             <ul className="w-full space-y-2.5">
               {CHECK_BULLETS.map((item) => (
                 <li key={item} className="flex items-center gap-2.5">
-                  <CheckCircle2 size={15} style={{ color: '#00FF85', flexShrink: 0 }} />
+                  <CheckCircle2 size={15} style={{ color: '#D9B678', flexShrink: 0 }} />
                   <span className="text-[13px] text-white/70">{item}</span>
                 </li>
               ))}
@@ -133,17 +133,13 @@ export function TruthModeSection() {
 
           {/* RIGHT — Why TapCash */}
           <div
-            className="rounded-2xl p-7 space-y-5"
-            style={{
-              background: '#13132b',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderLeft: '3px solid #7B5CF0',
-            }}
+            className="p-7 space-y-5"
+            style={{ borderTop: '1px solid #6C5CE0' }}
           >
             <div>
               <p
                 className="text-[11px] font-semibold tracking-[0.15em] uppercase mb-1"
-                style={{ color: '#7B5CF0' }}
+                style={{ color: '#6C5CE0' }}
               >
                 Why TapCash?
               </p>
@@ -164,7 +160,7 @@ export function TruthModeSection() {
                 { label: 'Zero Subscriptions', sub: 'Free forever, no upsells' },
               ].map(({ label, sub }) => (
                 <li key={label} className="flex items-start gap-3">
-                  <CheckCircle2 size={16} style={{ color: '#00FF85', flexShrink: 0, marginTop: '2px' }} />
+                  <CheckCircle2 size={16} style={{ color: '#D9B678', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <p className="text-[13px] font-semibold text-white">{label}</p>
                     <p className="text-[12px] text-white/40">{sub}</p>
