@@ -129,8 +129,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Run scoped audit gate
+        run: npm run audit:gate
 
       # Snyk requires SNYK_TOKEN to be configured as a repo secret before this
       # can be a hard gate — left soft (continue-on-error) until that's confirmed.

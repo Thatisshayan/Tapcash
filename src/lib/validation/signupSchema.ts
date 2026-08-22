@@ -27,12 +27,8 @@ export const signupSchema = z.object({
     .refine((val) => isValidAge(val), {
       message: `You must be at least ${MIN_AGE} years old to register`,
     }),
-  tosAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the Terms of Service" }),
-  }),
-  privacyAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the Privacy Policy" }),
-  }),
+  tosAccepted: z.literal(true, "You must accept the Terms of Service"),
+  privacyAccepted: z.literal(true, "You must accept the Privacy Policy"),
   marketingAccepted: z.boolean().optional().default(false),
 });
 

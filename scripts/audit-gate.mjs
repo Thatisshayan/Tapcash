@@ -25,6 +25,13 @@ const ALLOWLIST_PATH = new URL('../.audit-allowlist.json', import.meta.url);
 
 function runAudit() {
   try {
+    if (process.platform === 'win32') {
+      return execFileSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', 'npm audit --json'], {
+        encoding: 'utf8',
+        maxBuffer: 64 * 1024 * 1024,
+      });
+    }
+
     return execFileSync('npm', ['audit', '--json'], {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
