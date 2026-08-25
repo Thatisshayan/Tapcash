@@ -27,6 +27,7 @@ const eslintConfig = defineConfig([
         },
       ],
       "react-hooks/set-state-in-effect": "warn",
+      "react/display-name": "off",
       "react/no-unescaped-entities": "warn",
       "react-hooks/exhaustive-deps": "warn",
     },
