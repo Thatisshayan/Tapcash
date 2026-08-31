@@ -2,6 +2,64 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-08-31 — Claude Code — `tapcash.online` custom domain does not resolve (DNS/registration issue, blocks Shayan action)
+
+**Status: blocked, needs Shayan's domain registrar / DNS access. Not a code issue.**
+
+- Every recent `Deploy to Production` run on `main` (e.g. run `33435762053`,
+  triggered by the PR #77 merge) shows red, but the underlying Vercel
+  deployment itself succeeds every time: `vercel --prod` builds, deploys,
+  and reports `▲ Aliased https://tapcash.online` / `✓ Ready in 24m`. The
+  `*.vercel.app` preview URL for that same deployment
+  (`https://tapcash-jermb8ii3-shayans-projects-d00acc44.vercel.app`)
+  responds live (`HTTP 302`).
+- Root cause of the actual outage: `tapcash.online` does not resolve at
+  all. Verified against three independent resolvers, not just this
+  session's network: the local ISP resolver, Google DNS (`8.8.8.8`), and
+  Cloudflare (`1.1.1.1`) — all three return `Non-existent domain`/`NXDOMAIN`.
+  This means either the domain registration lapsed/was never completed, or
+  its nameservers were never pointed at anything (including Vercel's).
+  Renewing or reconfiguring domain DNS is infra/spend outside an agent's
+  authority (Rule 24).
+- Action needed: Shayan (or whoever holds the `tapcash.online` registrar
+  account) checks the domain's registration status and nameserver
+  configuration, and either renews it or points its DNS at Vercel per
+  https://vercel.com/docs/projects/domains/add-a-domain. Until then, the
+  live app is only reachable at its `*.vercel.app` URL(s), not
+  `tapcash.online`.
+- Separately fixed in this same pass (see below): the CI workflow bug that
+  turned this DNS outage into a hard failure instead of the warning it was
+  designed to be.
+
+## 2026-08-31 — Claude Code — Fixed: `Deploy to Production` smoke-test step failed hard instead of warning on unreachable host
+
+**Fixed.** `.github/workflows/deploy.yml`'s `Run smoke tests` step (in the
+`deploy-production` job) ran `HTTP_STATUS=$(curl ... https://tapcash.online)`
+under the step's default `bash -e` shell. When `curl` itself fails outright
+(exit code 6 = could not resolve host, as it currently does — see the
+`tapcash.online` DNS entry above), `-e` aborts the whole step immediately,
+before ever reaching the script's own `if [ "$HTTP_STATUS" != "200" ]`
+warning-only branch. The comment right next to that branch ("but deployment
+may still be propagating") makes clear the intent was always to warn, not
+fail — this was a bug in the guard, not a deliberate hard gate.
+
+Fixed by defaulting `HTTP_STATUS` to `"000"` when `curl` fails
+(`|| echo "000"`) so the step can't abort before reaching its own warning
+logic, and upgraded that branch to a `::warning::` annotation (visible in
+the GitHub Actions UI) that explains a `000` status means curl couldn't
+reach the host at all (e.g. DNS not resolving) and points at the real
+`deploy_url` output. This does not fix the underlying DNS problem — it
+makes CI accurately report "deployment succeeded, this domain-specific
+smoke check could not run" instead of a misleading hard failure that looks
+like the deploy itself broke. Branch: `fix/smoke-test-dns-tolerant`. Not
+yet merged — needs a PR per Rule 26/27.
+
+Note: this `deploy-production` job is not part of the required `gate`
+workflow (`secret-scan`/`build`/`test`/`doc-freshness`/`deploy-dry`) per
+`REPO_RULES.md` Appendix B, so this failure was never actually blocking
+merges to `main` — but it was still red CI on `main`'s own workflow runs
+and worth fixing since it was actively misreporting deploy status.
+
 ## 2026-08-16 — Claude Code — CI-unblock pass merged PRs #39/#42/#55/#81/#82; one Codacy finding left open
 
 Landed a batch of stuck PRs by chasing real CI failures rather than
