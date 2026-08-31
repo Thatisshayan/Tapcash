@@ -229,10 +229,10 @@ jobs:
       - name: Run smoke tests
         run: |
           sleep 15
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tapcash.online)
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tapcash.online || echo "000")
           echo "HTTP Status: $HTTP_STATUS"
           if [ "$HTTP_STATUS" != "200" ]; then
-            echo "Warning: Site returned $HTTP_STATUS instead of 200, but deployment may still be propagating"
+            echo "::warning::Site returned $HTTP_STATUS instead of 200 (000 = curl could not reach the host, e.g. DNS not resolving). Deployment to Vercel itself succeeded; this only affects the tapcash.online smoke check. See deploy_url output above for the live *.vercel.app URL."
           fi
 
       - name: Create deployment notification
