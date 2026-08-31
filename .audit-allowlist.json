@@ -1,5 +1,5 @@
 {
-  "_comment": "Dated waivers for `npm run audit:gate`. Every entry needs a reason and an expiry \u2014 expired entries fail CI on purpose. Do not waive anything that ships in the deployed web app.",
+  "_comment": "Dated waivers for `npm run audit:gate`. Every entry needs a reason and an expiry — expired entries fail CI on purpose. Do not waive anything that ships in the deployed web app.",
   "allow": [
     {
       "package": "expo",
@@ -88,7 +88,7 @@
     {
       "package": "nanoid",
       "severity": "high",
-      "reason": "Hoisted transitive (Metro chain) still pinned at 3.3.17 in the root lockfile \u2014 Dependabot PR #75 bumped the mobile workspace only, and `npm audit fix --package-lock-only` currently ERESOLVEs. Needs a deliberate root lockfile bump.",
+      "reason": "Hoisted transitive (Metro chain) still pinned at 3.3.17 in the root lockfile — Dependabot PR #75 bumped the mobile workspace only, and `npm audit fix --package-lock-only` currently ERESOLVEs. Needs a deliberate root lockfile bump.",
       "expires": "2026-09-15"
     }
   ]
