@@ -129,8 +129,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Run scoped audit gate
+        run: npm run audit:gate
 
       # Snyk requires SNYK_TOKEN to be configured as a repo secret before this
       # can be a hard gate — left soft (continue-on-error) until that's confirmed.
@@ -146,6 +152,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, security, e2e]
     if: github.event_name == 'pull_request'
+    # Native Vercel GitHub integration already produces preview deployments and
+    # status checks. Keep this legacy CLI-based preview path informational so an
+    # invalid legacy VERCEL_TOKEN does not block unrelated PRs.
+    continue-on-error: true
     
     steps:
       - name: Checkout code
@@ -176,9 +186,7 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const { getOctokit } = require('@actions/github-script');
-            const octokit = getOctokit();
-            await octokit.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

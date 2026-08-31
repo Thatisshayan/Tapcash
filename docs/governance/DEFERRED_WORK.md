@@ -1022,3 +1022,29 @@ except `GET/HEAD/OPTIONS` (i.e. `PUT` too) — updated both lists to
 6. ✅ **RESOLVED** — Fabricated stats: wire to `/api/stats/platform` (already live). See Track 2 Task 2.
 7. **NEW 2026-08-06, per Shayan explicitly:** every payment/brand logo (PayPal, Amazon, Tim Hortons, Steam, Visa, Bitcoin, Litecoin) must be that company's real official logo, sourced from their own brand/press kit — never AI-generated, never a lucide-icon/emoji stand-in. See Track 2 Task 6.
 8. **NEW 2026-08-06:** contrast audit (WCAG AA, 4.5:1 text / 3:1 UI) was missing from Track 2's Batches A-C despite being REDESIGN_SPEC's own Phase 1 gate criterion paired with the hex purge — added as Track 2 Task 7.
+
+## 2026-08-14 — CI: `npm audit` gate rescoped (Viktor)
+
+**Problem:** every `Deploy to Production` run — including on `main` — had been
+failing since 2026-08-11. Root cause was *not* the invalid `VERCEL_TOKEN` (the
+`deploy-production` job is already guarded on `validate-secrets`): the
+`Security Scan` job's `npm audit --audit-level=high` was failing, and
+`deploy-production` / `deploy-preview` list `security` in `needs`, so the deploy
+was being **skipped**, not attempted.
+
+The 16 high advisories all come from the Expo / React Native / Metro build
+toolchain, hoisted into the root lockfile by the `"workspaces": ["mobile"]`
+declaration added on 2026-08-11 to fix EAS Build's `shared/` resolution. None of
+that code is in the deployed web bundle, and every fix is semver-major
+(Expo SDK 53, RN 0.72, reanimated 4).
+
+**Decision:** keep a hard audit gate, but scope it. `npm run audit:gate`
+(`scripts/audit-gate.mjs`) fails on any high/critical advisory that is not
+listed in `.audit-allowlist.json`, and every waiver carries a reason and an
+expiry date — an expired waiver fails CI on purpose so the debt resurfaces.
+
+**Deferred work this creates:**
+- Expo SDK 53 + React Native 0.72 upgrade for the mobile app. Clears 14 of the
+  16 waivers. Waivers expire **2026-11-01**.
+- `nanoid` 3.3.18 — patch already open as Dependabot PR #75; drop that waiver
+  once it merges. Expires **2026-09-15**.
