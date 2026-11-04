@@ -2,6 +2,26 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-11-04 — Claude Code — `main` has no branch protection; three Vercel projects deploy this repo
+
+**Status: open, needs Shayan (repo settings and Vercel dashboard).**
+
+- `gh api repos/Thatisshayan/Tapcash/branches/main/protection` returns
+  `404 Branch not protected`. `REPO_RULES.md` Appendix A requires protection
+  (PR required, required checks, up to date, no force push or deletion). Today
+  nothing enforces the `gate` on GitHub; agents have to check it by hand.
+  Fix: Settings → Branches → add a rule for `main` per
+  `docs/governance/BRANCH_POLICY.md`.
+- GitHub deployment records show three Vercel projects, each producing a
+  **production** deploy on every push to `main`: `tapcash`, `tapcash-8z9f`,
+  `tapcash-zyd5` (all deployed `1544e01` on 2026-11-04, each responding
+  `HTTP 302`). Most likely only one is intended. Pick the canonical project,
+  attach `tapcash.online` to it, and disconnect the other two from the repo,
+  which also cuts preview-build usage to a third.
+- Also note: the GitHub Actions `Deploy to Production` job is skipped on
+  `main` because it depends on the failing `Security Scan` job, but Vercel's
+  Git integration deploys anyway. Production is updated on every merge.
+
 ## 2026-11-04 — Claude Code — Dependabot group PR #136 bundles 7 major upgrades and cannot install
 
 **Status: open. Each major upgrade needs its own evaluated PR.**

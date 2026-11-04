@@ -1,7 +1,9 @@
 # Ground Truth — TapCash Project Handoff
 
+> **Snapshot notice (2026-11-04):** this file describes the project as of June 22, 2026 and is no longer the source of truth. For the current state, start with [../START_HERE.md](../START_HERE.md) and [../governance/DEFERRED_WORK.md](../governance/DEFERRED_WORK.md).
+
 **Last verified:** June 22, 2026
-**This document is the single source of truth.** If any other doc contradicts it, this one wins.
+**This document was the single source of truth as of that date.**
 
 ---
 

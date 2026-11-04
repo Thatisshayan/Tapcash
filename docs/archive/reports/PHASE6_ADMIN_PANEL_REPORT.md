@@ -510,12 +510,12 @@ Phase 6 represents the culmination of a comprehensive development effort to crea
 ## 📞 Support & Resources
 
 ### Documentation
-- [API Documentation](./API_DOCUMENTATION.md)
-- [User Guide](./USER_GUIDE.md)
-- [Developer Guide](./DEVELOPER_GUIDE.md)
-- [Security Documentation](./SECURITY_DOCUMENTATION.md)
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
-- [Production Checklist](./PRODUCTION_CHECKLIST.md)
+- [API Documentation](../../guides/API_DOCUMENTATION.md)
+- [User Guide](../../guides/USER_GUIDE.md)
+- [Developer Guide](../../guides/DEVELOPER_GUIDE.md)
+- [Security Documentation](../../operations/SECURITY_DOCUMENTATION.md)
+- [Deployment Guide](../../guides/DEPLOYMENT_GUIDE.md)
+- [Production Checklist](../../operations/PRODUCTION_READINESS_CHECKLIST.md)
 
 ### Contact
 - **Email**: dev@tapcash.com
