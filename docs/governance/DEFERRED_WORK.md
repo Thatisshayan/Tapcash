@@ -2,6 +2,14 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-11-04 — Claude Code — Service worker broke every refresh of signed-in pages: fixed
+
+**Fixed in `fix/service-worker-navigation`.** `public/sw.js` (v1) pre-cached `/` and `/dashboard` at install and answered all same-origin GETs cache-first. `/dashboard` was cached while logged out, so the stored response was the redirect to `/auth/signin`. Serving a redirected response to a navigation fails with `net::ERR_FAILED`, so any full load, refresh or bookmark of `/dashboard`, `/rewards`, `/cashout` and the other signed-in pages failed for anyone with the worker installed. Reproduced with Playwright on production: with the worker allowed every navigation failed; with it blocked, all returned 200. It also cached user-specific HTML, which is unsafe on shared devices. v2 never handles navigations or documents, caches only same-origin static assets (`/_next/static`, `/images`, `/fonts`, image/font/style/script), never stores redirects, and uses a new cache name so `activate` wipes the old cache. Push and notification handlers are unchanged. Guarded by `src/__tests__/serviceWorker.test.ts`, which fails on v1 (6/8) and passes on v2.
+
+Related findings from the same probe (not changed):
+- `next.config.ts` sets `Cache-Control: public, s-maxage=60, stale-while-revalidate=300` on **all** `/api/*` responses. Production checks showed no cross-user leak today: user endpoints authenticate with a bearer token or admin session and return 401 uncached for anonymous callers. But it's an unsafe default for a financial app. Make the default `private, no-store` and opt specific public endpoints (stats, steps, trust-points, payout-methods, faq) into CDN caching.
+- `/api/stats` (e.g. "3.9M+ verified completions") and `/api/activities` ("User_***92 completed a RapidoReach survey +500 coins") return **hard-coded** numbers and activity rows. That's where the fabricated stats in the UI-gaps entry come from; replace them with real data (`/api/stats/platform` exists) or remove them.
+
 ## 2026-11-04 — Claude Code — Sign-up/login rejected on the live URL ("Origin not allowed"): fixed
 
 **Fixed in `fix/origin-allow-vercel-domain`.** `src/lib/origin.ts` allowed POSTs in production only from `https://tapcash.online` and `https://www.tapcash.online`, and that domain doesn't resolve. Every state-changing request from the only working public URL (`https://tapcash-rose.vercel.app`) got `403 Origin validation failed: Origin not allowed`: sign-up, login session creation, payouts. Shayan hit it while trying to sign up. The fix adds `https://tapcash-rose.vercel.app` to the production list, adds an optional `ALLOWED_ORIGINS` env var (comma-separated exact origins), and reads the list per request. New tests cover look-alike origins, other `*.vercel.app` projects and `http://`.
