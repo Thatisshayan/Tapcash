@@ -37,11 +37,25 @@ Each branch was checked three ways: is the tip an ancestor of `main`; `git cherr
 4. Added `.serena/` (Serena MCP local project config) to `.gitignore`, matching the convention in Shayan's other repos (Parle, LWA-*, LearnWithAlphonso, etc.).
 5. Committed the previously untracked `audits/2026-08-31_Claude_FullSystem_Audit.md` (reviewed: no secrets). Note that its finding 5 / next action 1 (merge `fix/smoke-test-dns-tolerant`) has since been done via PR #90.
 
+6. **Removed two orphaned worktree folders** under `.claude/worktrees/` (gitignored): `agent-a618b85576b08d2b2` and `agent-abe219eca94463f91`, both from 2026-08-31. Neither had a `.git` link and `git worktree list` didn't show them; they were half-deleted checkouts, probably from an interrupted worktree removal. They also caused false `doc-freshness` broken-link errors when `scripts/verify.sh` ran locally. Inspection before removal:
+   - Every non-`node_modules` file (449 and 372) was hashed and compared, ignoring line endings, against every historical version of the same path across all refs. Raw hashes showed most as "missing", but only because the copies use CRLF and git stores LF (`core.autocrlf=false`).
+   - Files no longer on `main` (`OBS-6_PHASE1_PROGRESS.md`, `REDESIGN_SPEC.md`, `UI_UX_DEEP_AUDIT_2026.md`, `_cleanup-2026-08-06/`) are all in history; they were intentionally removed by `93f4495` ("remove superseded pre-Aurora design artifacts").
+   - Exactly one file differed from all history: `src/lib/__tests__/transaction-atomicity.test.ts`, identical in both folders. It is an abandoned 2026-08-06 attempt at the `Function`-type lint fix using `any`. `main` solved the same problem with stricter types in `f58e3c9` / `730a987`, so `main` is the better version. The diff is kept anyway at `audits/private/2026-11-04_orphan-worktree_transaction-atomicity-test.patch`.
+
 Shayan approved the deletions in-session on 2026-11-04 ("yes please do all 3 of them ... make sure you are not deleting something that has not been merged").
 
 ## Finding: every PR fails the required gate on audit age
 
 The `gate` job's `doc-freshness` step failed on Dependabot PR #136 (run `40414978403`) with `newest audit is 56 days old (>30)`. The newest dated audit was 2026-08-31, so every open PR currently fails the required gate for that reason alone. This audit (dated 2026-11-04) resets the clock. That same run also failed `build / test` with an npm `ERESOLVE` peer-dependency error, which is specific to that PR's dependency changes and is covered in the Dependabot triage pass.
+
+## Dependabot backlog findings (for the next pass)
+
+- 40 open PRs. Every PR opened since 2026-10-05 fails the `gate` on audit age only, except #136 and #143. PRs opened in September passed the gate when CI last ran.
+- #136 (52-update group) fails with `ERESOLVE`: TypeScript 7 is incompatible with `ts-jest@29`. It also bundles 7 major upgrades. Logged in `docs/governance/DEFERRED_WORK.md`.
+- #143 fails `npm ci`: it updates `mobile/package-lock.json` but not the root lockfile, which owns `mobile` as a workspace.
+- #94 (sentinel) adds an unused `@trpc/server` without a lockfile update and targets a failure on `6bb7aed` (2026-08-31) that `main` has moved past. Closed with Shayan's approval.
+- The `Security Scan` (`npm audit`) job fails on every PR; this predates this work and is also logged in `DEFERRED_WORK.md`.
+- Shayan's decision: merge the minor and patch PRs one at a time, rebasing after each.
 
 ## End state
 
