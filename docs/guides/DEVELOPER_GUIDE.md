@@ -646,7 +646,7 @@ vercel --prod          # Deploy production
 ### Internal Docs
 - [API Documentation](./API_DOCUMENTATION.md)
 - [Deployment Guide](./DEPLOYMENT_GUIDE.md)
-- [Security Documentation](./SECURITY_DOCUMENTATION.md)
+- [Security Documentation](../operations/SECURITY_DOCUMENTATION.md)
 
 ### Tools
 - [Vercel Dashboard](https://vercel.com/dashboard)
@@ -714,4 +714,4 @@ npm test
 
 ---
 
-> **Updated for Sprint 1–10:** Route protection via root middleware.ts, 93 tests across 7 suites, real-time polling via usePolling hook, admin panel with 8 sections. See [GROUNDTRUTH.md](../GROUNDTRUTH.md) for source of truth.
+> **Updated for Sprint 1–10:** Route protection via root middleware.ts, 93 tests across 7 suites, real-time polling via usePolling hook, admin panel with 8 sections. See [GROUNDTRUTH.md](../status/GROUNDTRUTH.md) for source of truth.
