@@ -114,11 +114,11 @@ See [docs/guides/DEPLOYMENT_GUIDE.md](./docs/guides/DEPLOYMENT_GUIDE.md) for ful
 
 ## Documentation
 
-All documentation is in the [`docs/`](./docs/) directory. **Start with [docs/START_HERE.md](./docs/START_HERE.md)**: current state, launch blockers and next steps. The full index is [docs/README.md](./docs/README.md). [GROUNDTRUTH.md](./docs/status/GROUNDTRUTH.md) describes the architecture as of June 2026.
+All documentation is in the [`docs/`](./docs/) directory. **Start with [docs/START_HERE.md](./docs/START_HERE.md)**: current state, launch blockers and next steps. The full index is [docs/README.md](./docs/README.md). GROUNDTRUTH.md (internal, local only: `docs/status/GROUNDTRUTH.md`) describes the architecture as of June 2026.
 
 - [API Reference](./docs/guides/API_DOCUMENTATION.md)
 - [Deployment Guide](./docs/guides/DEPLOYMENT_GUIDE.md)
 - [Developer Guide](./docs/guides/DEVELOPER_GUIDE.md)
-- [Payout Status](./docs/operations/PAYOUT_STATUS.md)
-- [Test Coverage Report](./docs/status/TEST_COVERAGE_REPORT.md)
-- [Production Checklist](./docs/operations/PRODUCTION_READINESS_CHECKLIST.md)
+- Payout Status (internal, local only: `docs/operations/PAYOUT_STATUS.md`)
+- Test Coverage Report (internal, local only: `docs/status/TEST_COVERAGE_REPORT.md`)
+- Production Checklist (internal, local only: `docs/operations/PRODUCTION_READINESS_CHECKLIST.md`)

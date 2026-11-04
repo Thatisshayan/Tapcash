@@ -119,3 +119,30 @@ audits/private/
 
 # Serena MCP local project config
 .serena/
+
+# ---------------------------------------------------------------------------
+# Internal docs: kept locally, never published (repo is public).
+# Added 2026-11-04 at Shayan's request. Older copies remain in git history.
+docs/operations/
+docs/status/
+docs/plans/
+docs/archive/
+docs/internal/
+audits/legacy/
+*.private.md
+*_PRIVATE.md
+*INTERNAL*.md
+*CREDENTIALS*.md
+*SECRETS*.md
+
+# Signing / store credentials (mobile + web)
+*.key
+*.mobileprovision
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+*-service-account*.json
+firebase-adminsdk*.json
+AuthKey_*.p8

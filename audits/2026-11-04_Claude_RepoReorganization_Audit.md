@@ -37,3 +37,15 @@ The repo root held 39 tracked markdown/status files (phase summaries, proposals,
 - `git status` shows 63 renames, no deletions.
 - Ran the `doc-freshness` relative-link check from `scripts/verify.sh` against this branch (results in the PR).
 - CI `gate` on the PR is authoritative.
+
+## Follow-up (same day): internal docs made local-only
+
+The repo is public, and Shayan chose to stay public (on the Free plan, making it private would switch off branch protection) and to gitignore the docs that don't need to be public.
+
+- Untracked (`git rm --cached`, files kept on disk) and gitignored: `docs/operations/`, `docs/status/`, `docs/plans/`, `docs/archive/`, `audits/legacy/` (55 files). These hold security procedures, launch blockers, business plans and old internal reports.
+- Added ignore patterns for future internal docs (`docs/internal/`, `*.private.md`, `*INTERNAL*.md`, `*CREDENTIALS*.md`, `*SECRETS*.md`) and signing/store credentials (`*.key`, `*.mobileprovision`, `*.keystore`, `*.jks`, `google-services.json`, `GoogleService-Info.plist`, service-account JSON, `AuthKey_*.p8`).
+- 34 links in public docs that pointed into those folders were turned into plain-text "internal, local only" references so the CI link check stays green.
+- `docs/_baseline.json` lowered from 26 to 13 (the tracked count after untracking). Shayan approved this in-session; it's the Rule 14 approval for removing those files from the published tree.
+- Backup of the untracked folders: `audits/private/2026-11-04_internal-docs-backup.tar.gz` (gitignored).
+- **Not done:** older versions of these files are still readable in public git history. Removing them needs a history rewrite (`git filter-repo` plus a force push to `main`), which is destructive and needs Shayan's explicit go-ahead. Logged in DEFERRED_WORK.
+- Kept public on purpose: `docs/governance/DEFERRED_WORK.md`, because agents need it. It does describe some open security weaknesses, so moving it to an internal folder is an option for Shayan.

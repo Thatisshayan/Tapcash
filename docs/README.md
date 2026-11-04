@@ -2,6 +2,8 @@
 
 Index of project documentation. Every important doc must have an inbound link here (Rule 1). New here? Read **[START_HERE.md](START_HERE.md)** first.
 
+> The repo is public, so the **Operations, Status, Plans and Archive** sections below (and `audits/legacy/`) are gitignored and exist only on Shayan's machine. They are listed so agents working locally can find them.
+
 ## Governance (root)
 - [../REPO_RULES.md](../REPO_RULES.md): repository rules
 - [../REPO_DIRECTIVE.md](../REPO_DIRECTIVE.md): goal-layer directive (read by CI `directive-lint`)
@@ -15,20 +17,20 @@ Index of project documentation. Every important doc must have an inbound link he
 - [guides/USER_GUIDE.md](guides/USER_GUIDE.md)
 
 ## Operations
-- [operations/LAUNCH_CHECKLIST.md](operations/LAUNCH_CHECKLIST.md): launch readiness (Aug 2026)
-- [operations/PRODUCTION_CHECKLIST.md](operations/PRODUCTION_CHECKLIST.md): infrastructure / config tasks
-- [operations/PRODUCTION_READINESS_CHECKLIST.md](operations/PRODUCTION_READINESS_CHECKLIST.md): full readiness checklist (June 2026)
-- [operations/SECURITY_OPS.md](operations/SECURITY_OPS.md): manual security operations (key rotation etc.)
-- [operations/SECURITY_DOCUMENTATION.md](operations/SECURITY_DOCUMENTATION.md)
-- [operations/PAYOUT_STATUS.md](operations/PAYOUT_STATUS.md)
+- LAUNCH_CHECKLIST.md (internal, local only: `docs/operations/LAUNCH_CHECKLIST.md`): launch readiness (Aug 2026)
+- PRODUCTION_CHECKLIST.md (internal, local only: `docs/operations/PRODUCTION_CHECKLIST.md`): infrastructure / config tasks
+- PRODUCTION_READINESS_CHECKLIST.md (internal, local only: `docs/operations/PRODUCTION_READINESS_CHECKLIST.md`): full readiness checklist (June 2026)
+- SECURITY_OPS.md (internal, local only: `docs/operations/SECURITY_OPS.md`): manual security operations (key rotation etc.)
+- SECURITY_DOCUMENTATION.md (internal, local only: `docs/operations/SECURITY_DOCUMENTATION.md`)
+- PAYOUT_STATUS.md (internal, local only: `docs/operations/PAYOUT_STATUS.md`)
 
 ## Status snapshots (June 2026, not current; see START_HERE)
-- [status/GROUNDTRUTH.md](status/GROUNDTRUTH.md)
-- [status/TODO.md](status/TODO.md)
-- [status/TAPCASH_STATUS.json](status/TAPCASH_STATUS.json)
-- [status/TAPCASH_HANDOFF.md](status/TAPCASH_HANDOFF.md)
-- [status/TEST_COVERAGE_REPORT.md](status/TEST_COVERAGE_REPORT.md)
-- [status/SECURITY_STATUS.md](status/SECURITY_STATUS.md)
+- GROUNDTRUTH.md (internal, local only: `docs/status/GROUNDTRUTH.md`)
+- TODO.md (internal, local only: `docs/status/TODO.md`)
+- TAPCASH_STATUS.json (internal, local only: `docs/status/TAPCASH_STATUS.json`)
+- TAPCASH_HANDOFF.md (internal, local only: `docs/status/TAPCASH_HANDOFF.md`)
+- TEST_COVERAGE_REPORT.md (internal, local only: `docs/status/TEST_COVERAGE_REPORT.md`)
+- SECURITY_STATUS.md (internal, local only: `docs/status/SECURITY_STATUS.md`)
 
 ## Governance
 - [governance/BRANCH_POLICY.md](governance/BRANCH_POLICY.md): branch and CI policy
@@ -36,11 +38,11 @@ Index of project documentation. Every important doc must have an inbound link he
 - [governance/BRANCH_STRATEGY.md](governance/BRANCH_STRATEGY.md): doc branch strategy
 
 ## Plans
-- [plans/ALLINREPORT.md](plans/ALLINREPORT.md): comprehensive synthesis report
-- Web: [plans/WEBPROPOSEDPLAN.md](plans/WEBPROPOSEDPLAN.md), [plans/WEBPROPOSEDPLAN2.md](plans/WEBPROPOSEDPLAN2.md)
-- Mobile: [plans/MOBILEPROPOSEPLAN.md](plans/MOBILEPROPOSEPLAN.md), [plans/MOBILEPROPOSEPLAN2.md](plans/MOBILEPROPOSEPLAN2.md), [plans/PROPOSALALLINREPORTMOBILE.md](plans/PROPOSALALLINREPORTMOBILE.md), [plans/PROPOSALALLINREPORTMOBILEANDROIDE.md](plans/PROPOSALALLINREPORTMOBILEANDROIDE.md), [plans/PROPOSALALLINREPORTMOBILEIOS.md](plans/PROPOSALALLINREPORTMOBILEIOS.md)
-- Launch: [plans/PROPOSALFORALLINREPORT.md](plans/PROPOSALFORALLINREPORT.md), [plans/PROPOSALFORALLINREPORTACTION.md](plans/PROPOSALFORALLINREPORTACTION.md)
-- UI/UX: [plans/UIUX_PROPOSAL.md](plans/UIUX_PROPOSAL.md), [plans/UIUX_GENERATION_PREP.md](plans/UIUX_GENERATION_PREP.md)
+- ALLINREPORT.md (internal, local only: `docs/plans/ALLINREPORT.md`): comprehensive synthesis report
+- Web: WEBPROPOSEDPLAN.md (internal, local only: `docs/plans/WEBPROPOSEDPLAN.md`), WEBPROPOSEDPLAN2.md (internal, local only: `docs/plans/WEBPROPOSEDPLAN2.md`)
+- Mobile: MOBILEPROPOSEPLAN.md (internal, local only: `docs/plans/MOBILEPROPOSEPLAN.md`), MOBILEPROPOSEPLAN2.md (internal, local only: `docs/plans/MOBILEPROPOSEPLAN2.md`), PROPOSALALLINREPORTMOBILE.md (internal, local only: `docs/plans/PROPOSALALLINREPORTMOBILE.md`), PROPOSALALLINREPORTMOBILEANDROIDE.md (internal, local only: `docs/plans/PROPOSALALLINREPORTMOBILEANDROIDE.md`), PROPOSALALLINREPORTMOBILEIOS.md (internal, local only: `docs/plans/PROPOSALALLINREPORTMOBILEIOS.md`)
+- Launch: PROPOSALFORALLINREPORT.md (internal, local only: `docs/plans/PROPOSALFORALLINREPORT.md`), PROPOSALFORALLINREPORTACTION.md (internal, local only: `docs/plans/PROPOSALFORALLINREPORTACTION.md`)
+- UI/UX: UIUX_PROPOSAL.md (internal, local only: `docs/plans/UIUX_PROPOSAL.md`), UIUX_GENERATION_PREP.md (internal, local only: `docs/plans/UIUX_GENERATION_PREP.md`)
 - Implementation plans (Aug 2026): [superpowers/plans/2026-08-06-track2-uiux-redesign.md](superpowers/plans/2026-08-06-track2-uiux-redesign.md), [superpowers/plans/2026-08-06-track3-mobile-rebuild.md](superpowers/plans/2026-08-06-track3-mobile-rebuild.md)
 
 ## Archive (history only)

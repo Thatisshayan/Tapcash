@@ -6,7 +6,7 @@
 > - Session auth uses jose-signed HTTP-only cookies (not Firebase ID tokens directly)
 > - `/api/payout` is now **admin-only** (user requests go through `/api/payouts/request`)
 > - New endpoints added: `/api/auth/session/user`, `/api/payouts/request`, `/api/postback/rapidoreach`, 6 Firestore content APIs, `/api/activity/live`, `/api/leaderboard/live`
-> - See [GROUNDTRUTH.md](../status/GROUNDTRUTH.md) for source-of-truth architecture
+> - See GROUNDTRUTH.md (internal, local only: `docs/status/GROUNDTRUTH.md`) for source-of-truth architecture
 
 Complete API reference for TapCash platform.
 
