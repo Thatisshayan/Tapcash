@@ -61,13 +61,24 @@ src/
 └── middleware/      # Legacy rate-limit config
 
 middleware.ts        # Root Edge middleware (route protection)
+mobile/              # Expo / React Native app (npm workspace)
+functions/           # Firebase Functions
+packages/tokens/     # Design tokens (Aurora)
+shared/              # Code shared by web and mobile
+src-electron/        # Electron desktop wrapper
+scripts/             # verify.sh / verify.ps1 (CI gate), audit gate, seeding
+audits/              # Dated audits (YYYY-MM-DD_<Agent>_<Scope>_Audit.md)
 
-docs/                # Full documentation
-├── API_DOCUMENTATION.md
-├── DEPLOYMENT_GUIDE.md
-├── DEVELOPER_GUIDE.md
-├── GROUNDTRUTH.md   # Source-of-truth handoff
-└── ...
+docs/
+├── START_HERE.md    # Current state, launch blockers, how to pick up the project
+├── README.md        # Index of every doc
+├── guides/          # Developer, API, deployment, mobile build, user guides
+├── operations/      # Launch/production checklists, security ops, payout status
+├── status/          # June 2026 status snapshots (GROUNDTRUTH, TODO, coverage)
+├── governance/      # Branch policy, deferred-work register
+├── plans/           # Web, mobile and UI/UX plans and proposals
+├── superpowers/     # Agent implementation plans
+└── archive/         # Finished sprint reports, retired configs (history only)
 ```
 
 ## Key Features
@@ -99,15 +110,15 @@ docs/                # Full documentation
 
 ## Deployment
 
-See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for full deployment instructions.
+See [docs/guides/DEPLOYMENT_GUIDE.md](./docs/guides/DEPLOYMENT_GUIDE.md) for full deployment instructions.
 
 ## Documentation
 
-All documentation is in the [`docs/`](./docs/) directory. **Start with [GROUNDTRUTH.md](./GROUNDTRUTH.md)** — it is the single source of truth for the current architecture.
+All documentation is in the [`docs/`](./docs/) directory. **Start with [docs/START_HERE.md](./docs/START_HERE.md)**: current state, launch blockers and next steps. The full index is [docs/README.md](./docs/README.md). GROUNDTRUTH.md (internal, local only: `docs/status/GROUNDTRUTH.md`) describes the architecture as of June 2026.
 
-- [API Reference](./docs/API_DOCUMENTATION.md)
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
-- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
-- [Payout Status](./docs/PAYOUT_STATUS.md)
-- [Test Coverage Report](./docs/TEST_COVERAGE_REPORT.md)
-- [Production Checklist](./docs/PRODUCTION_CHECKLIST.md)
+- [API Reference](./docs/guides/API_DOCUMENTATION.md)
+- [Deployment Guide](./docs/guides/DEPLOYMENT_GUIDE.md)
+- [Developer Guide](./docs/guides/DEVELOPER_GUIDE.md)
+- Payout Status (internal, local only: `docs/operations/PAYOUT_STATUS.md`)
+- Test Coverage Report (internal, local only: `docs/status/TEST_COVERAGE_REPORT.md`)
+- Production Checklist (internal, local only: `docs/operations/PRODUCTION_READINESS_CHECKLIST.md`)
