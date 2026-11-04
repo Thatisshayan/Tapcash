@@ -1,4 +1,4 @@
-import { validateOrigin } from "../origin";
+import { getAllowedOrigins, validateOrigin } from "../origin";
 import type { NextRequest } from "next/server";
 import { setNodeEnv } from "../testHelpers/testEnv";
 
@@ -77,5 +77,48 @@ describe("Origin Validation", () => {
     expect(result.error).toContain("Missing Origin");
 
     setNodeEnv(originalEnv as string);
+  });
+
+  describe("production allow-list", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalAllowed = process.env.ALLOWED_ORIGINS;
+
+    beforeEach(() => setNodeEnv("production"));
+    afterEach(() => {
+      setNodeEnv(originalEnv as string);
+      if (originalAllowed === undefined) delete process.env.ALLOWED_ORIGINS;
+      else process.env.ALLOWED_ORIGINS = originalAllowed;
+    });
+
+    it.each([
+      "https://tapcash.online",
+      "https://www.tapcash.online",
+      "https://tapcash-rose.vercel.app",
+    ])("allows %s", (origin) => {
+      expect(validateOrigin(mockRequest("POST", { origin })).valid).toBe(true);
+    });
+
+    it("rejects look-alike and other vercel.app origins", () => {
+      for (const origin of [
+        "https://tapcash-rose.vercel.app.evil.com",
+        "https://evil-tapcash-rose.vercel.app",
+        "https://tapcash-zyd5.vercel.app",
+        "http://tapcash-rose.vercel.app",
+      ]) {
+        expect(validateOrigin(mockRequest("POST", { origin })).valid).toBe(false);
+      }
+    });
+
+    it("does not allow localhost in production", () => {
+      expect(validateOrigin(mockRequest("POST", { origin: "http://localhost:3000" })).valid).toBe(false);
+    });
+
+    it("adds exact origins from ALLOWED_ORIGINS and ignores malformed entries", () => {
+      process.env.ALLOWED_ORIGINS = " https://staging.tapcash.online/ , not-a-url, https://x.example/path ";
+      expect(getAllowedOrigins()).toContain("https://staging.tapcash.online");
+      expect(getAllowedOrigins()).not.toContain("not-a-url");
+      expect(getAllowedOrigins().some((o) => o.includes("x.example"))).toBe(false);
+      expect(validateOrigin(mockRequest("POST", { origin: "https://staging.tapcash.online" })).valid).toBe(true);
+    });
   });
 });

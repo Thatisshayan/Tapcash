@@ -1,8 +1,29 @@
 import { NextRequest } from "next/server";
 
-const ALLOWED_ORIGINS = process.env.NODE_ENV === "production"
-  ? ["https://tapcash.online", "https://www.tapcash.online"]
-  : ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"];
+// Production origins allowed to send state-changing requests (POST/PUT/...).
+// tapcash-rose.vercel.app is the canonical project's public production alias;
+// it is the only working public URL while tapcash.online DNS is unresolved.
+const PRODUCTION_ORIGINS = [
+  "https://tapcash.online",
+  "https://www.tapcash.online",
+  "https://tapcash-rose.vercel.app",
+];
+
+const DEVELOPMENT_ORIGINS = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"];
+
+/**
+ * Read per request (not at module load) so NODE_ENV and the optional
+ * ALLOWED_ORIGINS env var (comma-separated exact origins, e.g.
+ * "https://staging.tapcash.online") are always honoured.
+ */
+export function getAllowedOrigins(): string[] {
+  const base = process.env.NODE_ENV === "production" ? PRODUCTION_ORIGINS : DEVELOPMENT_ORIGINS;
+  const extra = (process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((value) => value.trim().replace(/\/+$/, ""))
+    .filter((value) => /^https?:\/\/[^/\s]+$/.test(value));
+  return [...base, ...extra];
+}
 
 const SERVER_TO_SERVER_EXEMPT = [
   "/api/postback/",
@@ -32,7 +53,7 @@ export function validateOrigin(request: NextRequest): { valid: boolean; error?: 
     return { valid: true };
   }
 
-  if (!ALLOWED_ORIGINS.includes(origin)) {
+  if (!getAllowedOrigins().includes(origin)) {
     return { valid: false, error: "Origin not allowed" };
   }
 
