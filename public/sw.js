@@ -1,37 +1,61 @@
-const CACHE_NAME = "tapcash-v1";
-const STATIC_ASSETS = ["/", "/dashboard", "/manifest.json", "/icon.jpg"];
+// TapCash service worker.
+//
+// Scope on purpose: push notifications + offline caching of static,
+// content-hashed assets only. It must NEVER handle page navigations or HTML.
+//
+// v1 (until 2026-11-04) pre-cached "/" and "/dashboard" at install time and
+// served cached responses first. "/dashboard" was cached while logged out, so
+// the stored response was a redirect to /auth/signin; serving a redirected
+// response to a navigation makes the browser fail with net::ERR_FAILED, which
+// broke every refresh/direct load of signed-in pages. Caching user pages is
+// also unsafe for a financial app (stale balances, shared devices).
+// Bumping CACHE_NAME makes `activate` delete the v1 cache on existing devices.
+const CACHE_NAME = "tapcash-static-v2";
+const PRECACHE = ["/manifest.json", "/icon.jpg"];
+
+function isCacheableAsset(url, request) {
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith("/api/")) return false;
+  if (url.pathname.startsWith("/_next/static/")) return true;
+  if (url.pathname.startsWith("/fonts/")) return true;
+  if (url.pathname.startsWith("/images/")) return true;
+  return ["image", "font", "style", "script"].includes(request.destination);
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith("/api/")) return;
+  const request = event.request;
+  if (request.method !== "GET") return;
+  // Let the browser handle every page load (and its redirects) natively.
+  if (request.mode === "navigate" || request.destination === "document") return;
+
+  const url = new URL(request.url);
+  if (!isCacheableAsset(url, request)) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request).then((response) => {
-        if (response.ok) {
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        // Only store plain successful same-origin responses, never redirects.
+        if (response.ok && !response.redirected && response.type === "basic") {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       });
-      return cached || networkFetch;
     })
   );
 });
