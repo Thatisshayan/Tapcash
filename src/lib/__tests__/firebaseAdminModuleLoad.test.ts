@@ -8,39 +8,36 @@
  * cron). package.json "overrides" pins firebase-admin's jwks-rsa to 3.2.2,
  * which depends on jose 4 (ships CommonJS).
  *
- * The test loads jwks-rsa in a child Node process with require(esm)
- * disabled, so it fails on any Node version if the ESM-only chain returns.
+ * The check runs in a plain child Node process (outside Jest's module
+ * resolver and mocks) with require(esm) disabled, so it fails on any Node
+ * version if the ESM-only chain comes back.
  */
 import { execFileSync } from "child_process";
 import path from "path";
 
 const repoRoot = path.resolve(__dirname, "../../..");
 
-function resolveFromFirebaseAdmin(request: string): string {
-  const firebaseAdminDir = path.dirname(
-    require.resolve("firebase-admin/package.json", { paths: [repoRoot] })
-  );
-  return require.resolve(request, { paths: [firebaseAdminDir] });
-}
+const probe = `
+const fs = require("fs");
+const path = require("path");
+const adminDir = path.join(process.cwd(), "node_modules", "firebase-admin");
+const jwksEntry = require.resolve("jwks-rsa", { paths: [adminDir] });
+let dir = path.dirname(jwksEntry);
+while (!fs.existsSync(path.join(dir, "package.json"))) dir = path.dirname(dir);
+const version = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).version;
+const jwks = require(jwksEntry);
+if (typeof jwks !== "function") throw new Error("jwks-rsa export is not a function");
+process.stdout.write(JSON.stringify({ version }));
+`;
 
 describe("firebase-admin dependency chain loads without require(esm)", () => {
-  it("resolves jwks-rsa 3.x for firebase-admin", () => {
-    const pkgPath = resolveFromFirebaseAdmin("jwks-rsa/package.json");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { version } = require(pkgPath) as { version: string };
-    expect(version.startsWith("3.")).toBe(true);
-  });
-
-  it("can require jwks-rsa with --no-experimental-require-module", () => {
-    const jwksPath = resolveFromFirebaseAdmin("jwks-rsa");
-    const script = `const jwks = require(${JSON.stringify(jwksPath)});
-      if (typeof jwks !== "function") { throw new Error("jwks-rsa export is not a function"); }
-      process.stdout.write("ok");`;
+  it("loads firebase-admin's jwks-rsa (3.x) with --no-experimental-require-module", () => {
     const out = execFileSync(
       process.execPath,
-      ["--no-experimental-require-module", "-e", script],
-      { encoding: "utf8" }
+      ["--no-experimental-require-module", "-e", probe],
+      { cwd: repoRoot, encoding: "utf8" }
     );
-    expect(out).toBe("ok");
+    const { version } = JSON.parse(out) as { version: string };
+    expect(version.startsWith("3.")).toBe(true);
   });
 });
