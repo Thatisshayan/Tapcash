@@ -2,6 +2,102 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-11-04 — Claude Code — Sign-up/login rejected on the live URL ("Origin not allowed"): fixed
+
+**Fixed in `fix/origin-allow-vercel-domain`.** `src/lib/origin.ts` allowed POSTs in production only from `https://tapcash.online` and `https://www.tapcash.online`, and that domain doesn't resolve. Every state-changing request from the only working public URL (`https://tapcash-rose.vercel.app`) got `403 Origin validation failed: Origin not allowed`: sign-up, login session creation, payouts. Shayan hit it while trying to sign up. The fix adds `https://tapcash-rose.vercel.app` to the production list, adds an optional `ALLOWED_ORIGINS` env var (comma-separated exact origins), and reads the list per request. New tests cover look-alike origins, other `*.vercel.app` projects and `http://`.
+
+Still open, because the domain isn't live:
+- Transactional emails (`src/lib/email.ts`) and SEO metadata (`layout.tsx`, `sitemap.ts`, `robots.ts`, `PageMetadata.tsx`) hard-code `https://tapcash.online`, so email buttons point at a dead domain until DNS is fixed. Consider a `NEXT_PUBLIC_SITE_URL` env var.
+- Once `tapcash.online` works, decide whether to keep `tapcash-rose.vercel.app` in the allow-list or redirect it to the domain.
+
+## 2026-11-04 — Claude Code — Live web UI is a half-finished Aurora rollout
+
+**Status: open. Shayan wants a full page-by-page gallery first, then decides what to fix.**
+
+Seen on `https://tapcash-rose.vercel.app` (public pages only; logged-in pages need the auth fix in PR #149):
+- Navbar never reskinned: teal-green "TC" logo, green "Sign Up Free" button, green "NEW" badge. That's the retracted Neon look, against Aurora's "no green neon".
+- `public/images/logos/{timhortons,shoppers,cineplex,canadiantire}.svg` are all the same 2,116-byte "Wikimedia Error" HTML page saved as `.svg`. The official-logo download was blocked and never checked. The hero brand marquee shows broken images.
+- Fabricated stats, against `tokens.json` antiPatterns: `/how-it-works` shows "3.9M+ verified completions, 50K+ active earners, $2M+ total paid out, 24h"; the nav shows "2.3K+ cashed out today".
+- Mobile (390px) home hero is broken: the mascot is squeezed into a narrow column with a large empty area, and the headline is pushed below the fold.
+- Bordered chips and cards remain, against "no bounded card/box chrome".
+- `/auth/login` is a 404 (the real route is `/auth/signin`). Check for stale links to it.
+
+## 2026-11-04 — Claude Code — iOS app has never reached TestFlight
+
+**Status: open, needs Shayan (Apple account) first.**
+
+- EAS (`obsidianmedia`, logged in via `EXPO_TOKEN`): the last 10 iOS builds were all `preview` / internal, SDK 56, and no store build was ever made. 2026-08-26 `8fe665a1` failed bundling: it couldn't resolve `../src/lib/deepLinks` from `app/_layout.tsx`, although the file is in git at that commit. Probably incomplete upload contents. 2026-08-11 `a232498b` failed on an invalid signing certificate. Last successful build: 2026-07-06, ad-hoc.
+- `LAUNCH_CHECKLIST.md` and `NEEDSHAYANINPUT.md` claim build `6f27903f` "was submitted to TestFlight". That is almost certainly wrong (it's an ad-hoc preview build). Correct those docs.
+- Config issues: `app.json` and `app.config.js` both exist and `app.json` is ignored; the top-level `splash` key is invalid in the current SDK; camera/photo usage strings are declared but no image-picker is installed; `submit.production` has no `ascAppId`; `mobile/package-lock.json` is still on expo 56 while root resolves 57; the installed root `node_modules/expo` is 56.0.19; `expo doctor` reports duplicate react-native and expo-constants. `tsc` stops on TS5101 (`baseUrl` deprecated).
+- Steps: (1) Shayan checks or reissues the Distribution Certificate and creates an APNs key; (2) confirms Apple Developer membership, the App Store Connect app record and an API key/`ascAppId`, and considers publishing as an organization (guideline 5.1.1(ix) expects financial apps from a legal entity); (3–6) agent fixes deps, config and tsconfig and investigates the upload contents; (7) `eas build -p ios --profile production` + `eas submit` uses EAS credits, so it needs Shayan's OK.
+- The AgentMail key file referenced in the global instructions (`C:\Users\AgentDev\Downloads\agentmail_api_key_ClaudeCode-ObsidianTeamHQ.txt`) does not exist, so App Store mail could not be checked.
+
+## 2026-11-04 — Claude Code — Follow-ups from the auth outage fix (PR #149)
+
+- Remove the `overrides` pin (`firebase-admin` → `jwks-rsa 3.2.2`) once jwks-rsa ships a release that loads jose with dynamic `import()`. 4.1.0 still uses `require`.
+- Pin `engines.node` to one major (Vercel warns `>=20.9.0` auto-upgrades) so the function runtime is explicit.
+- Uptime monitoring evidently isn't alerting: sign-in was down three months unnoticed. Wire `better-uptime.yml` (or Vercel monitoring) to `/api/health`.
+
+## 2026-11-04 — Claude Code — Internal docs are still in public git history
+
+- Internal folders were untracked and gitignored today, but older versions remain readable in the public repo's history. Removing them needs `git filter-repo` plus a force push to `main` (and all open PRs rebased). That's destructive and needs Shayan's explicit approval. Alternative: make the repo private (on Free plan this disables branch protection; Pro keeps it).
+- `docs/governance/DEFERRED_WORK.md` (this file) stays public because agents need it, but it describes open security weaknesses. Consider moving the security-sensitive entries to an internal file.
+
+## 2026-11-04 — Claude Code — `main` has no branch protection; three Vercel projects deploy this repo
+
+**Status: branch protection DONE 2026-11-04 (PR + `gate` + up to date + admins + no force push/deletion; 0 approvals, because self-approval isn't possible). Vercel: `tapcash` is canonical; `tapcash-8z9f` builds switched off (Ignored Build Step `exit 0`); `tapcash-zyd5` still open (the change was blocked by a permission prompt), so Shayan should do it or delete both duplicates in the dashboard.**
+
+- `gh api repos/Thatisshayan/Tapcash/branches/main/protection` returns
+  `404 Branch not protected`. `REPO_RULES.md` Appendix A requires protection
+  (PR required, required checks, up to date, no force push or deletion). Today
+  nothing enforces the `gate` on GitHub; agents have to check it by hand.
+  Fix: Settings → Branches → add a rule for `main` per
+  `docs/governance/BRANCH_POLICY.md`.
+- GitHub deployment records show three Vercel projects, each producing a
+  **production** deploy on every push to `main`: `tapcash`, `tapcash-8z9f`,
+  `tapcash-zyd5` (all deployed `1544e01` on 2026-11-04, each responding
+  `HTTP 302`). Most likely only one is intended. Pick the canonical project,
+  attach `tapcash.online` to it, and disconnect the other two from the repo,
+  which also cuts preview-build usage to a third.
+- Also note: the GitHub Actions `Deploy to Production` job is skipped on
+  `main` because it depends on the failing `Security Scan` job, but Vercel's
+  Git integration deploys anyway. Production is updated on every merge.
+
+## 2026-11-04 — Claude Code — Dependabot group PR #136 bundles 7 major upgrades and cannot install
+
+**Status: open. Each major upgrade needs its own evaluated PR.**
+
+- #136 ("bump the dependencies group ... with 52 updates") fails the `gate`
+  build with `ERESOLVE`. Reproduced locally with
+  `npm install --package-lock-only`: it bumps `typescript` `^6.0.3` → `^7.0.2`,
+  but the latest `ts-jest` (`29.4.15`) declares peer `typescript >=4.3 <7`.
+  No `ts-jest` release supports TS 7 yet.
+- The same PR also carries these major bumps, each of which can break
+  runtime or tooling behavior in a payments app and deserves its own PR
+  with tests: `@sentry/nextjs` 10 → 11, `firebase` 12 → 13,
+  `framer-motion` 13 → 14, `vitest` 4 → 5, `electron` 43 → 45,
+  `eslint` 9 → 10, `typescript` 6 → 7 (blocked on ts-jest).
+- Shayan chose (2026-11-04) to merge the minor and patch Dependabot PRs one at
+  a time. #136 stays open or gets closed once its non-major parts land
+  through the individual PRs.
+- Suggested follow-up: add a Dependabot `ignore` rule for
+  `update-types: ["version-update:semver-major"]` on the grouped update in
+  `.github/dependabot.yml`, so majors arrive as separate PRs.
+
+## 2026-11-04 — Claude Code — Security Scan fails on every PR (`npm audit` gate)
+
+**Status: open, pre-existing, not part of the required `gate`.**
+
+- The `Security Scan` job reports `npm audit: 4 critical, 24 high, 70 moderate, 4 low`
+  on every open PR (e.g. run `41780345877` on #145, which changes no manifests).
+  Some `.audit-allowlist.json` exceptions also expired: `@expo/cli` and
+  `image-size` on 2026-11-01, `nanoid` on 2026-09-15.
+- Many flagged packages (`@sentry/nextjs`, `@fastify/busboy`, `@grpc/grpc-js`,
+  `@xmldom/xmldom`, `brace-expansion`, `compression`, `electron`, ...) have
+  open Dependabot PRs. Re-check the count after the Dependabot backlog is
+  merged, then either renew the expired allowlist entries with Shayan's
+  sign-off or fix the remaining findings.
+
 ## 2026-08-31 — Claude Code — `tapcash.online` custom domain does not resolve (DNS/registration issue, blocks Shayan action)
 
 **Status: blocked, needs Shayan's domain registrar / DNS access. Not a code issue.**

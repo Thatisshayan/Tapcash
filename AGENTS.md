@@ -15,9 +15,11 @@ Before planning, editing, or reporting completion, every agent must read:
 
 1. **[Baseline Rules](#baseline)** — Foundational agent rules (adapted from RemoteCliControl)
 2. [README.md](./README.md)
-3. [AGENT_HANDOFF.md](./AGENT_HANDOFF.md) or equivalent handoff documentation
-4. [PHASE summaries](.) — latest completion sprint notes
+3. [docs/START_HERE.md](./docs/START_HERE.md): current state, launch blockers, and where everything lives
+4. [docs/governance/DEFERRED_WORK.md](./docs/governance/DEFERRED_WORK.md): open and deferred items (newest first)
 5. [Next.js-specific rules](#nextjs-specific-rules) below
+
+Docs live under `docs/` (index: [docs/README.md](./docs/README.md)). The repo root keeps only README, AGENTS/CLAUDE, REPO_RULES, REPO_DIRECTIVE and tool config files. Put new docs in the matching `docs/` subfolder, not at the root.
 
 ## Baseline
 
