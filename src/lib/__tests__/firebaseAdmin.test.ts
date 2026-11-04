@@ -1,4 +1,11 @@
+/**
+ * @jest-environment node
+ */
 // src/lib/__tests__/firebaseAdmin.test.ts
+//
+// Runs in the node environment: firebaseAdmin is a server-only module, and
+// under jsdom the "browser" export condition makes jose (via firebase-admin
+// -> jwks-rsa) resolve to its ESM browser build, which Jest can't require.
 //
 // jest.setup.ts globally mocks @/lib/firebaseAdmin with a fixed stub object
 // (no firebaseAdminMode/firebaseAdminReady/firebaseAdminError fields) -- this
