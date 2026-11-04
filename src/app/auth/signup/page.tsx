@@ -13,11 +13,13 @@ import { auth } from "@/lib/firebase";
 import { getDeviceFingerprint } from "@/lib/fingerprint";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { getErrorMessage } from "@/lib/error";
+import { buildSignupPayload, signupErrorMessage } from "@/lib/validation/buildSignupPayload";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreedToPolicies, setAgreedToPolicies] = useState(false);
@@ -47,13 +49,15 @@ export default function SignUpPage() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name, deviceFingerprint: fingerprint }),
+        body: JSON.stringify(
+          buildSignupPayload({ name, email, password, dateOfBirth, agreedToPolicies }, fingerprint)
+        ),
       });
 
       let apiError = "Registration rejected.";
       try {
         const data = await response.json();
-        apiError = data.error || apiError;
+        apiError = signupErrorMessage(data, apiError);
       } catch {
         apiError = response.statusText || apiError;
       }
@@ -62,7 +66,7 @@ export default function SignUpPage() {
         throw new Error(apiError);
       }
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       await sendEmailVerification(userCredential.user);
 
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}&next=/dashboard`);
@@ -176,6 +180,20 @@ export default function SignUpPage() {
                     placeholder="********"
                     className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] placeholder:text-[rgba(245,243,239,0.28)] focus:border-[#D9B678] focus:outline-none transition-colors"
                   />
+                </label>
+
+                <label className="block">
+                  <span className="block text-xs font-black uppercase tracking-[0.24em] text-[rgba(245,243,239,0.45)]">Date of birth</span>
+                  <input
+                    type="date"
+                    required
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
+                    aria-describedby="dob-hint"
+                    className="mt-3 w-full border-b border-[rgba(245,243,239,0.14)] bg-transparent px-1 py-3 text-sm text-[#F5F3EF] [color-scheme:dark] focus:border-[#D9B678] focus:outline-none transition-colors"
+                  />
+                  <span id="dob-hint" className="mt-2 block text-xs text-[rgba(245,243,239,0.35)]">Used only to confirm you meet the minimum age.</span>
                 </label>
 
                 <label className="flex items-start gap-3 rounded-2xl px-1 py-2">
