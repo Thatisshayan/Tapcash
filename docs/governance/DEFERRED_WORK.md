@@ -2,6 +2,14 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-11-04 — Claude Code — Sign-up/login rejected on the live URL ("Origin not allowed"): fixed
+
+**Fixed in `fix/origin-allow-vercel-domain`.** `src/lib/origin.ts` allowed POSTs in production only from `https://tapcash.online` and `https://www.tapcash.online`, and that domain doesn't resolve. Every state-changing request from the only working public URL (`https://tapcash-rose.vercel.app`) got `403 Origin validation failed: Origin not allowed`: sign-up, login session creation, payouts. Shayan hit it while trying to sign up. The fix adds `https://tapcash-rose.vercel.app` to the production list, adds an optional `ALLOWED_ORIGINS` env var (comma-separated exact origins), and reads the list per request. New tests cover look-alike origins, other `*.vercel.app` projects and `http://`.
+
+Still open, because the domain isn't live:
+- Transactional emails (`src/lib/email.ts`) and SEO metadata (`layout.tsx`, `sitemap.ts`, `robots.ts`, `PageMetadata.tsx`) hard-code `https://tapcash.online`, so email buttons point at a dead domain until DNS is fixed. Consider a `NEXT_PUBLIC_SITE_URL` env var.
+- Once `tapcash.online` works, decide whether to keep `tapcash-rose.vercel.app` in the allow-list or redirect it to the domain.
+
 ## 2026-11-04 — Claude Code — Live web UI is a half-finished Aurora rollout
 
 **Status: open. Shayan wants a full page-by-page gallery first, then decides what to fix.**
