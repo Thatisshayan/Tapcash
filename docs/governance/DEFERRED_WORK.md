@@ -2,6 +2,41 @@
 
 > Rule 12 — deferred work must survive the session. Entries are actionable by a future agent.
 
+## 2026-11-04 — Claude Code — Dependabot group PR #136 bundles 7 major upgrades and cannot install
+
+**Status: open. Each major upgrade needs its own evaluated PR.**
+
+- #136 ("bump the dependencies group ... with 52 updates") fails the `gate`
+  build with `ERESOLVE`. Reproduced locally with
+  `npm install --package-lock-only`: it bumps `typescript` `^6.0.3` → `^7.0.2`,
+  but the latest `ts-jest` (`29.4.15`) declares peer `typescript >=4.3 <7`.
+  No `ts-jest` release supports TS 7 yet.
+- The same PR also carries these major bumps, each of which can break
+  runtime or tooling behavior in a payments app and deserves its own PR
+  with tests: `@sentry/nextjs` 10 → 11, `firebase` 12 → 13,
+  `framer-motion` 13 → 14, `vitest` 4 → 5, `electron` 43 → 45,
+  `eslint` 9 → 10, `typescript` 6 → 7 (blocked on ts-jest).
+- Shayan chose (2026-11-04) to merge the minor and patch Dependabot PRs one at
+  a time. #136 stays open or gets closed once its non-major parts land
+  through the individual PRs.
+- Suggested follow-up: add a Dependabot `ignore` rule for
+  `update-types: ["version-update:semver-major"]` on the grouped update in
+  `.github/dependabot.yml`, so majors arrive as separate PRs.
+
+## 2026-11-04 — Claude Code — Security Scan fails on every PR (`npm audit` gate)
+
+**Status: open, pre-existing, not part of the required `gate`.**
+
+- The `Security Scan` job reports `npm audit: 4 critical, 24 high, 70 moderate, 4 low`
+  on every open PR (e.g. run `41780345877` on #145, which changes no manifests).
+  Some `.audit-allowlist.json` exceptions also expired: `@expo/cli` and
+  `image-size` on 2026-11-01, `nanoid` on 2026-09-15.
+- Many flagged packages (`@sentry/nextjs`, `@fastify/busboy`, `@grpc/grpc-js`,
+  `@xmldom/xmldom`, `brace-expansion`, `compression`, `electron`, ...) have
+  open Dependabot PRs. Re-check the count after the Dependabot backlog is
+  merged, then either renew the expired allowlist entries with Shayan's
+  sign-off or fix the remaining findings.
+
 ## 2026-08-31 — Claude Code — `tapcash.online` custom domain does not resolve (DNS/registration issue, blocks Shayan action)
 
 **Status: blocked, needs Shayan's domain registrar / DNS access. Not a code issue.**

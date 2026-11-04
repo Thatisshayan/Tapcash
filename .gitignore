@@ -116,3 +116,6 @@ audits/private/
 
 # Local agent tooling state (Claude Code settings + nested worktrees)
 .claude/
+
+# Serena MCP local project config
+.serena/
